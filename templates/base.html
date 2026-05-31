@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Restaurante San Antonio{% endblock %}</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── VARIABLES ──────────────────────────────────────── */
+    :root {
+      --rojo:      #8B1A1A;
+      --rojo-osc:  #6B1212;
+      --dorado:    #C8860A;
+      --crema:     #FDF3E3;
+      --crema2:    #F5E6CC;
+      --marron:    #2D1B00;
+      --verde:     #2C4A1E;
+      --gris:      #6B5B4B;
+      --blanco:    #FFFDF9;
+      --sombra:    0 4px 24px rgba(45,27,0,.12);
+      --sombra-lg: 0 8px 40px rgba(45,27,0,.18);
+    }
+
+    /* ── RESET & BASE ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Jost', sans-serif;
+      background: var(--crema);
+      color: var(--marron);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TEXTURA DE FONDO ───────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(200,134,10,.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139,26,26,.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    main { position: relative; z-index: 1; flex: 1; }
+
+    /* ── NAVBAR ─────────────────────────────────────────── */
+    .navbar {
+      background: var(--rojo);
+      padding: .9rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(139,26,26,.35);
+    }
+
+    .navbar-brand {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: #fff;
+      text-decoration: none;
+      letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .navbar-brand span { opacity: .85; font-size: 1.4rem; }
+
+    .nav-links { display: flex; gap: .25rem; align-items: center; }
+
+    .nav-links a {
+      color: rgba(255,255,255,.88);
+      text-decoration: none;
+      font-size: .85rem;
+      font-weight: 500;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      padding: .45rem .85rem;
+      border-radius: 4px;
+      transition: background .2s, color .2s;
+    }
+    .nav-links a:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .nav-links a.btn-nav {
+      background: var(--dorado);
+      color: #fff;
+      border-radius: 4px;
+    }
+    .nav-links a.btn-nav:hover { background: #a86f08; }
+
+    .nav-user {
+      color: rgba(255,255,255,.7);
+      font-size: .78rem;
+      padding: .3rem .7rem;
+      background: rgba(255,255,255,.12);
+      border-radius: 20px;
+      letter-spacing: .3px;
+    }
+
+    /* ── ALERTAS ─────────────────────────────────────────── */
+    .alerta-wrapper { max-width: 900px; margin: 1rem auto 0; padding: 0 1.5rem; }
+    .alerta {
+      padding: .85rem 1.2rem;
+      border-radius: 8px;
+      margin-bottom: .6rem;
+      font-size: .9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      animation: slideDown .35s ease;
+    }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+    .alerta-success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .alerta-danger   { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .alerta-warning  { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+    .alerta-info     { background: #d1ecf1; color: #0c5460; border-left: 4px solid #17a2b8; }
+    .alerta-close {
+      margin-left: auto;
+      background: none; border: none;
+      font-size: 1.1rem; cursor: pointer; opacity: .55;
+    }
+    .alerta-close:hover { opacity: 1; }
+
+    /* ── BOTONES ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .65rem 1.5rem;
+      border-radius: 6px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 600;
+      font-size: .9rem;
+      letter-spacing: .4px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+      border: 2px solid transparent;
+    }
+    .btn-rojo  { background: var(--rojo); color: #fff; }
+    .btn-rojo:hover  { background: var(--rojo-osc); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,26,26,.3); }
+    .btn-dorado { background: var(--dorado); color: #fff; }
+    .btn-dorado:hover { background: #a86f08; }
+    .btn-outline { background: transparent; color: var(--rojo); border-color: var(--rojo); }
+    .btn-outline:hover { background: var(--rojo); color: #fff; }
+    .btn-sm { padding: .4rem 1rem; font-size: .8rem; }
+
+    /* ── CARDS ───────────────────────────────────────────── */
+    .card {
+      background: var(--blanco);
+      border-radius: 12px;
+      box-shadow: var(--sombra);
+      overflow: hidden;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--sombra-lg); }
+    .card-body { padding: 1.4rem; }
+
+    /* ── BADGES ──────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: .25rem .65rem;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .badge-entrada { background: #FFF0CC; color: #7A5200; }
+    .badge-segundo { background: #FCE8E8; color: var(--rojo); }
+    .badge-pendiente  { background: #FFF3CD; color: #856404; }
+    .badge-confirmado { background: #CCE5FF; color: #004085; }
+    .badge-listo      { background: #D4EDDA; color: #155724; }
+    .badge-entregado  { background: #C3E6CB; color: #0A3F1C; }
+    .badge-cancelado  { background: #F5C6CB; color: #721C24; }
+
+    /* ── DIVISOR DECORATIVO ─────────────────────────────── */
+    .divider {
+      display: flex; align-items: center; gap: 1rem;
+      margin: 2rem 0 1.5rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: linear-gradient(to right, transparent, var(--crema2), transparent);
+    }
+    .divider-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.3rem;
+      color: var(--rojo);
+      white-space: nowrap;
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────── */
+    footer {
+      background: var(--rojo);
+      color: rgba(255,255,255,.8);
+      text-align: center;
+      padding: 1.2rem;
+      font-size: .82rem;
+      letter-spacing: .3px;
+      position: relative; z-index: 1;
+    }
+    footer strong { color: var(--dorado); }
+
+    /* ── FORMULARIOS ─────────────────────────────────────── */
+    .form-group { margin-bottom: 1.2rem; }
+    .form-label {
+      display: block;
+      font-weight: 600;
+      font-size: .85rem;
+      margin-bottom: .45rem;
+      color: var(--gris);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .form-control {
+      width: 100%;
+      padding: .7rem 1rem;
+      border: 1.5px solid #E8D5B7;
+      border-radius: 8px;
+      font-family: 'Jost', sans-serif;
+      font-size: .95rem;
+      background: var(--blanco);
+      color: var(--marron);
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--dorado);
+      box-shadow: 0 0 0 3px rgba(200,134,10,.15);
+    }
+    select.form-control { cursor: pointer; }
+
+    /* ── TABLA ───────────────────────────────────────────── */
+    .tabla-wrapper { overflow-x: auto; border-radius: 12px; box-shadow: var(--sombra); }
+    table { width: 100%; border-collapse: collapse; background: var(--blanco); }
+    thead tr { background: var(--rojo); color: #fff; }
+    thead th {
+      padding: 1rem 1.2rem;
+      font-weight: 600;
+      font-size: .82rem;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      text-align: left;
+    }
+    tbody tr { border-bottom: 1px solid #F0E4CC; transition: background .15s; }
+    tbody tr:hover { background: #FDF0DE; }
+    tbody td { padding: .9rem 1.2rem; font-size: .92rem; }
+
+    /* ── CONTAINER ───────────────────────────────────────── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+    .mt-4 { margin-top: 2rem; }
+    .mb-4 { margin-bottom: 2rem; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="navbar-brand"><span>🍽️</span> San Antonio</a>
+  <div class="nav-links">
+    <a href="/">Menú</a>
+    {% if session.nombre %}
+      <a href="/pedido" class="btn-nav">🛒 Pedir</a>
+      <a href="/mis_pedidos">Mis Pedidos</a>
+      <span class="nav-user">👤 {{ session.nombre }}</span>
+      <a href="/salir">Salir</a>
+    {% else %}
+      <a href="/registro" class="btn-nav">Registrarse</a>
+    {% endif %}
+    {% if session.es_admin %}
+      <a href="/admin" style="background:var(--dorado);color:#fff;padding:.4rem .85rem;border-radius:4px;font-size:.8rem;font-weight:600">⚙️ Admin</a>
+      <a href="/admin/logout" style="opacity:.75;font-size:.8rem">Salir Admin</a>
+    {% else %}
+      <a href="/admin/login" style="opacity:.6;font-size:.78rem;padding:.35rem .7rem;border-radius:4px;border:1px solid rgba(255,255,255,.3)">⚙️ Admin</a>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- ALERTAS -->
+<div class="alerta-wrapper">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alerta alerta-{{ category }}">
+        {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+        {{ message }}
+        <button class="alerta-close" onclick="this.parentElement.remove()">×</button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<!-- CONTENIDO -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- FOOTER -->
+<footer>
+  © 2024 <strong>Restaurante San Antonio</strong> — Trabajo Aplicativo · Gestión de Base de Datos
+</footer>
+
+</body>
+</html>

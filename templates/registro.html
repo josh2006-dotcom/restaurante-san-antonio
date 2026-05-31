@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .registro-page {
+    min-height: calc(100vh - 140px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+  .registro-box {
+    width: 100%;
+    max-width: 480px;
+  }
+  .registro-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra-lg);
+    overflow: hidden;
+  }
+  .registro-header {
+    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+  .registro-icon {
+    width: 64px; height: 64px;
+    background: rgba(255,255,255,.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    margin: 0 auto 1rem;
+  }
+  .registro-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: .4rem;
+  }
+  .registro-header p { color: rgba(255,255,255,.7); font-size: .9rem; }
+
+  .registro-body { padding: 2rem; }
+
+  .input-icon-wrap {
+    position: relative;
+  }
+  .input-icon-wrap .icon {
+    position: absolute;
+    left: .9rem; top: 50%; transform: translateY(-50%);
+    font-size: 1rem; opacity: .5;
+    pointer-events: none;
+  }
+  .input-icon-wrap .form-control { padding-left: 2.4rem; }
+  .input-icon-wrap textarea.form-control { padding-left: 2.4rem; padding-top: .7rem; }
+
+  .ya-cliente {
+    text-align: center;
+    margin-top: 1.4rem;
+    font-size: .87rem;
+    color: var(--gris);
+  }
+  .ya-cliente a { color: var(--rojo); font-weight: 600; text-decoration: none; }
+  .ya-cliente a:hover { text-decoration: underline; }
+
+  .hint {
+    font-size: .78rem;
+    color: var(--gris);
+    margin-top: .35rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="registro-page">
+  <div class="registro-box">
+
+    <div class="registro-card">
+      <div class="registro-header">
+        <div class="registro-icon">👤</div>
+        <h1>Crear Cuenta</h1>
+        <p>Regístrate para hacer tus pedidos en San Antonio</p>
+      </div>
+
+      <div class="registro-body">
+        <form method="POST" action="/registro">
+
+          <div class="form-group">
+            <label class="form-label">Nombre completo *</label>
+            <div class="input-icon-wrap">
+              <span class="icon">✏️</span>
+              <input type="text" name="nombre" class="form-control"
+                     placeholder="Ej: Luis Clemente García"
+                     required autocomplete="name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Teléfono *</label>
+            <div class="input-icon-wrap">
+              <span class="icon">📱</span>
+              <input type="tel" name="telefono" class="form-control"
+                     placeholder="987 654 321"
+                     required autocomplete="tel">
+            </div>
+            <p class="hint">Si ya tienes cuenta, ingresa tu número para retomar sesión.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Dirección / Referencia</label>
+            <div class="input-icon-wrap">
+              <span class="icon">📍</span>
+              <textarea name="direccion" class="form-control" rows="2"
+                        placeholder="Ej: frente al parque, casa azul con reja..."></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-rojo" style="width:100%;justify-content:center;font-size:1rem;padding:.8rem">
+            Registrarme →
+          </button>
+
+        </form>
+
+        <div class="ya-cliente">
+          ¿Ya pediste antes? Ingresa tu teléfono y te reconoceremos automáticamente 😊
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--rojo) 0%, #5A0F0F 100%);
+    padding: 4.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 10% 50%, rgba(200,134,10,.2) 0%, transparent 40%),
+      radial-gradient(circle at 90% 30%, rgba(255,200,100,.1) 0%, transparent 35%);
+  }
+  .hero-content { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+  .hero-eyebrow {
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--dorado);
+    margin-bottom: .8rem;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .hero-sub {
+    color: rgba(255,255,255,.75);
+    font-size: 1.05rem;
+    font-weight: 300;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+  .hero-decor {
+    color: var(--dorado);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    margin-bottom: 2rem;
+    opacity: .9;
+  }
+  .hero-btns { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+
+  /* MENÚ */
+  .menu-section { padding: 3rem 0; }
+  .section-header { margin-bottom: 2rem; }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    color: var(--rojo);
+    font-weight: 600;
+  }
+  .section-line {
+    width: 50px; height: 3px;
+    background: var(--dorado);
+    margin-top: .5rem;
+    border-radius: 2px;
+  }
+
+  .platos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .plato-card {
+    background: var(--blanco);
+    border-radius: 12px;
+    padding: 1.4rem;
+    box-shadow: var(--sombra);
+    transition: transform .25s, box-shadow .25s;
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+  .plato-card::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle at top right, rgba(200,134,10,.08), transparent 70%);
+  }
+  .plato-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sombra-lg);
+  }
+  .plato-card.entrada { border-left-color: var(--dorado); }
+  .plato-card.segundo { border-left-color: var(--rojo); }
+
+  .plato-nombre {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--marron);
+    margin: .5rem 0 .3rem;
+  }
+  .plato-precio {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--verde);
+  }
+  .plato-precio span { font-size: .8rem; font-weight: 400; color: var(--gris); }
+
+  /* CARTELITO DISPONIBLE */
+  .disponible-tag {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .72rem; color: var(--verde); font-weight: 600;
+    background: rgba(44,74,30,.1);
+    padding: .2rem .6rem; border-radius: 20px;
+  }
+  .disponible-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--verde);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:.5; transform:scale(1.4); }
+  }
+
+  /* CTA FINAL */
+  .cta-section {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    margin-top: 3rem;
+  }
+  .cta-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    color: #fff; font-size: 2rem; margin-bottom: .7rem;
+  }
+  .cta-section p { color: rgba(255,255,255,.7); margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <p class="hero-eyebrow">🇵🇪 Lima, Perú</p>
+    <h1 class="hero-title">Restaurante<br>San Antonio</h1>
+    <p class="hero-decor">"Sabores que cuentan nuestra historia"</p>
+    <p class="hero-sub">Comida peruana auténtica, elaborada con ingredientes frescos<br>y recetas que pasan de generación en generación.</p>
+    <div class="hero-btns">
+      {% if session.nombre %}
+        <a href="/pedido" class="btn btn-dorado">🛒 Hacer un Pedido</a>
+        <a href="/mis_pedidos" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5)">Ver mis Pedidos</a>
+      {% else %}
+        <a href="/registro" class="btn btn-dorado">Crear cuenta gratis</a>
+        <a href="#menu" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.5)">Ver el Menú ↓</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- MENÚ -->
+<section class="menu-section" id="menu">
+  <div class="container">
+
+    <!-- ENTRADAS -->
+    <div class="section-header">
+      <h2 class="section-title">🥗 Entradas</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="platos-grid" style="margin-bottom:3rem">
+      {% for p in platos if p[3] == 'entrada' %}
+      <div class="plato-card entrada">
+        <span class="badge badge-entrada">Entrada</span>
+        <h3 class="plato-nombre">{{ p[1] }}</h3>
+        <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
+        <div class="disponible-tag" style="margin-top:.6rem">
+          <span class="disponible-dot"></span> Disponible
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="divider">
+      <span class="divider-text">✦ Platos de Fondo ✦</span>
+    </div>
+
+    <!-- SEGUNDOS -->
+    <div class="section-header">
+      <h2 class="section-title">🍽️ Segundos</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="platos-grid">
+      {% for p in platos if p[3] == 'segundo' %}
+      <div class="plato-card segundo">
+        <span class="badge badge-segundo">Segundo</span>
+        <h3 class="plato-nombre">{{ p[1] }}</h3>
+        <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
+        <div class="disponible-tag" style="margin-top:.6rem">
+          <span class="disponible-dot"></span> Disponible
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+{% if not session.nombre %}
+<section class="cta-section">
+  <h2>¿Listo para pedir?</h2>
+  <p>Regístrate en segundos y empieza a disfrutar nuestra carta.</p>
+  <a href="/registro" class="btn btn-dorado">Crear mi cuenta →</a>
+</section>
+{% endif %}
+
+{% endblock %}

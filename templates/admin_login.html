@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .admin-login-page {
+    min-height: calc(100vh - 140px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem;
+  }
+  .login-card {
+    width: 100%; max-width: 380px;
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra-lg);
+    overflow: hidden;
+  }
+  .login-header {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    padding: 2rem;
+    text-align: center;
+    color: #fff;
+  }
+  .login-header .icon { font-size: 2.5rem; margin-bottom: .5rem; }
+  .login-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; margin-bottom: .3rem;
+  }
+  .login-header p { font-size: .82rem; opacity: .7; }
+  .login-body { padding: 2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="icon">⚙️</div>
+      <h2>Panel Admin</h2>
+      <p>Restaurante San Antonio</p>
+    </div>
+    <div class="login-body">
+      <form method="POST" action="/admin/login">
+        <div class="form-group">
+          <label class="form-label">Contraseña de administrador</label>
+          <input type="password" name="password" class="form-control"
+                 placeholder="••••••••" required autofocus>
+        </div>
+        <button type="submit" class="btn btn-rojo" style="width:100%;justify-content:center">
+          Ingresar al Panel
+        </button>
+      </form>
+      <div style="text-align:center;margin-top:1rem">
+        <a href="/" style="font-size:.82rem;color:var(--gris)">← Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

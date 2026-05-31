@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .admin-page { padding: 2rem 0 4rem; }
+
+  /* Barra admin */
+  .admin-topbar {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: #fff;
+  }
+  .admin-topbar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; font-weight: 700;
+  }
+  .admin-topbar p { font-size: .82rem; opacity: .7; }
+
+  /* KPIs */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .kpi-card {
+    background: var(--blanco);
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: var(--sombra);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .kpi-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .kpi-icon.rojo  { background: #FCE8E8; }
+  .kpi-icon.dorado { background: #FFF0CC; }
+  .kpi-icon.verde  { background: #D4EDDA; }
+  .kpi-icon.azul   { background: #CCE5FF; }
+  .kpi-valor {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1;
+  }
+  .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Tabla de pedidos */
+  .admin-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem;
+  }
+
+  .estado-select {
+    border: 1.5px solid #D0B896;
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    font-family: 'Jost', sans-serif;
+    font-size: .82rem;
+    background: var(--blanco);
+    cursor: pointer;
+    color: var(--marron);
+  }
+
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #2C4A1E; color: #fff;
+    padding: .8rem 1.3rem;
+    border-radius: 8px;
+    font-size: .88rem;
+    display: none;
+    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
+
+  /* Filtros */
+  .filtros {
+    display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem;
+  }
+  .filtro-btn {
+    padding: .35rem .9rem;
+    border-radius: 20px;
+    border: 1.5px solid #D0B896;
+    background: var(--blanco);
+    font-size: .8rem;
+    cursor: pointer;
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+    transition: all .2s;
+    color: var(--gris);
+  }
+  .filtro-btn:hover, .filtro-btn.activo {
+    background: var(--rojo); color: #fff; border-color: var(--rojo);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="admin-page">
+
+  <!-- Barra superior -->
+  <div class="admin-topbar">
+    <div>
+      <h1>⚙️ Panel de Administración</h1>
+      <p>Restaurante San Antonio — Gestión de Pedidos</p>
+    </div>
+    <a href="/admin/logout" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">
+      Cerrar sesión
+    </a>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-icon rojo">🧾</div>
+      <div>
+        <div class="kpi-valor">{{ total_pedidos }}</div>
+        <div class="kpi-label">Total Pedidos</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon dorado">⏳</div>
+      <div>
+        <div class="kpi-valor">{{ pendientes }}</div>
+        <div class="kpi-label">Pendientes</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon verde">💰</div>
+      <div>
+        <div class="kpi-valor">S/ {{ "%.0f"|format(ingresos) }}</div>
+        <div class="kpi-label">Ingresos (entregados)</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon azul">👥</div>
+      <div>
+        <div class="kpi-valor">{{ total_clientes }}</div>
+        <div class="kpi-label">Clientes Registrados</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de pedidos -->
+  <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
+
+  <!-- Filtros rápidos -->
+  <div class="filtros">
+    <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('pendiente', this)">⏳ Pendientes</button>
+    <button class="filtro-btn" onclick="filtrar('confirmado', this)">✅ Confirmados</button>
+    <button class="filtro-btn" onclick="filtrar('listo', this)">🟢 Listos</button>
+    <button class="filtro-btn" onclick="filtrar('entregado', this)">📦 Entregados</button>
+    <button class="filtro-btn" onclick="filtrar('cancelado', this)">❌ Cancelados</button>
+  </div>
+
+  <div class="tabla-wrapper">
+    <table id="tabla-pedidos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cliente</th>
+          <th>Fecha</th>
+          <th>Entrega</th>
+          <th>Hora Est.</th>
+          <th>Total</th>
+          <th>Estado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in pedidos %}
+        <tr data-estado="{{ p[5] }}" id="fila-{{ p[0] }}">
+          <td><strong>#{{ p[0] }}</strong></td>
+          <td>{{ p[1] }}</td>
+          <td>{{ p[2].strftime('%d/%m/%Y %H:%M') }}</td>
+          <td>{% if p[3] == 'delivery' %}🚚 Delivery{% else %}🏪 Local{% endif %}</td>
+          <td>{{ p[4] or '—' }}</td>
+          <td><strong style="color:var(--verde)">S/ {{ "%.2f"|format(p[6]) }}</strong></td>
+          <td id="estado-badge-{{ p[0] }}">
+            <span class="badge badge-{{ p[5] }}">{{ p[5]|capitalize }}</span>
+          </td>
+          <td>
+            <select class="estado-select" onchange="cambiarEstado({{ p[0] }}, this.value)" id="sel-{{ p[0] }}">
+              <option value="pendiente"  {% if p[5]=='pendiente'  %}selected{% endif %}>Pendiente</option>
+              <option value="confirmado" {% if p[5]=='confirmado' %}selected{% endif %}>Confirmado</option>
+              <option value="listo"      {% if p[5]=='listo'      %}selected{% endif %}>Listo</option>
+              <option value="entregado"  {% if p[5]=='entregado'  %}selected{% endif %}>Entregado</option>
+              <option value="cancelado"  {% if p[5]=='cancelado'  %}selected{% endif %}>Cancelado</option>
+            </select>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</div>
+
+<!-- Toast de confirmación -->
+<div class="toast" id="toast">✅ Estado actualizado</div>
+
+<script>
+function cambiarEstado(idPedido, nuevoEstado) {
+  const formData = new FormData();
+  formData.append('id_pedido', idPedido);
+  formData.append('estado', nuevoEstado);
+
+  fetch('/admin/actualizar_estado', {
+    method: 'POST',
+    body: formData
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      // Actualizar badge
+      const badgeCell = document.getElementById('estado-badge-' + idPedido);
+      badgeCell.innerHTML = `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
+      // Actualizar data-estado de la fila (para el filtro)
+      document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
+      // Mostrar toast
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2500);
+    }
+  })
+  .catch(() => alert('Error al actualizar. Revisa la conexión.'));
+}
+
+function filtrar(estado, btn) {
+  // Actualizar botones
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+
+  // Filtrar filas
+  document.querySelectorAll('#tabla-pedidos tbody tr').forEach(fila => {
+    if (estado === 'todos' || fila.dataset.estado === estado) {
+      fila.style.display = '';
+    } else {
+      fila.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

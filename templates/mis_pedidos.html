@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .pedidos-page { padding: 2.5rem 0 4rem; }
+  .page-header { margin-bottom: 2rem; }
+  .page-header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; color: var(--rojo);
+  }
+  .page-header p { color: var(--gris); font-size: .9rem; margin-top: .3rem; }
+
+  /* Tarjeta de pedido */
+  .pedido-card {
+    background: var(--blanco);
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+    margin-bottom: 1.2rem;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .pedido-card:hover { box-shadow: var(--sombra-lg); }
+
+  .pedido-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: #FFFBF4;
+    border-bottom: 1px solid #F0E4CC;
+    cursor: pointer;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .pedido-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--rojo);
+  }
+  .pedido-meta {
+    font-size: .82rem;
+    color: var(--gris);
+    display: flex; gap: 1rem; flex-wrap: wrap;
+  }
+  .pedido-meta span { display: flex; align-items: center; gap: .3rem; }
+  .pedido-header-right {
+    display: flex; align-items: center; gap: 1rem; margin-left: auto;
+  }
+  .pedido-total-tag {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--verde);
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .pedido-body { padding: 1.2rem 1.5rem; display: none; }
+  .pedido-body.abierto { display: block; }
+
+  /* Detalle de platos */
+  .detalle-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .detalle-table thead tr { background: #F7ECD8; }
+  .detalle-table th {
+    padding: .6rem .9rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--gris);
+  }
+  .detalle-table td {
+    padding: .65rem .9rem;
+    border-bottom: 1px solid #F0E4CC;
+    vertical-align: top;
+  }
+  .detalle-table tr:last-child td { border-bottom: none; }
+
+  .pers-tag {
+    display: inline-block;
+    font-size: .72rem;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    margin: .1rem;
+  }
+  .pers-tag.quitar  { background: #FCE8E8; color: var(--rojo); }
+  .pers-tag.agregar { background: #D4EDDA; color: var(--verde); }
+  .pers-tag.cambiar { background: #CCE5FF; color: #004085; }
+
+  .toggle-icon { transition: transform .2s; display: inline-block; }
+  .abierto-header .toggle-icon { transform: rotate(180deg); }
+
+  /* Vacío */
+  .vacio-msg {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--blanco);
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+  }
+  .vacio-msg .icon { font-size: 3rem; margin-bottom: 1rem; }
+  .vacio-msg h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; color: var(--rojo); margin-bottom: .5rem;
+  }
+  .vacio-msg p { color: var(--gris); margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="pedidos-page">
+
+    <div class="page-header">
+      <h1>📋 Mis Pedidos</h1>
+      <p>Bienvenido, <strong>{{ session.nombre }}</strong> — aquí están todos tus pedidos.</p>
+    </div>
+
+    {% if pedidos %}
+      {% for ped in pedidos %}
+      <div class="pedido-card">
+
+        <div class="pedido-card-header" onclick="toggleDetalle({{ ped[0] }}, this)">
+          <div>
+            <div class="pedido-num">Pedido #{{ ped[0] }}</div>
+            <div class="pedido-meta">
+              <span>📅 {{ ped[1].strftime('%d/%m/%Y %H:%M') }}</span>
+              <span>{% if ped[2] == 'delivery' %}🚚 Delivery{% else %}🏪 Recojo local{% endif %}</span>
+              {% if ped[3] %}<span>🕐 {{ ped[3] }}</span>{% endif %}
+            </div>
+          </div>
+          <div class="pedido-header-right">
+            {% set est = ped[4] %}
+            <span class="badge badge-{{ est }}">{{ est|capitalize }}</span>
+            <span class="pedido-total-tag">S/ {{ "%.2f"|format(ped[5]) }}</span>
+            <span class="toggle-icon" style="color:var(--gris)">▼</span>
+          </div>
+        </div>
+
+        <div class="pedido-body" id="body-{{ ped[0] }}">
+          <table class="detalle-table">
+            <thead>
+              <tr>
+                <th>Plato</th>
+                <th>Cant.</th>
+                <th>Precio unit.</th>
+                <th>Personalizaciones</th>
+                <th style="text-align:right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for det in detalles[ped[0]] %}
+              <tr>
+                <td><strong>{{ det.nombre }}</strong></td>
+                <td>{{ det.cantidad }}</td>
+                <td>S/ {{ "%.2f"|format(det.precio_unitario) }}</td>
+                <td>
+                  {% if det.personalizaciones %}
+                    {% for pers in det.personalizaciones %}
+                      <span class="pers-tag {{ pers[0] }}">{{ pers[0] }} {{ pers[1] }}{% if pers[2] > 0 %} +S/{{ "%.2f"|format(pers[2]) }}{% endif %}</span>
+                    {% endfor %}
+                  {% else %}
+                    <span style="color:var(--gris);font-size:.82rem">Sin cambios</span>
+                  {% endif %}
+                </td>
+                <td style="text-align:right;font-weight:700;color:var(--verde)">
+                  S/ {{ "%.2f"|format(det.subtotal) }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo);font-size:1rem;padding-top:.8rem">
+                  Total del pedido:
+                </td>
+                <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.1rem;padding-top:.8rem">
+                  S/ {{ "%.2f"|format(ped[5]) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div style="text-align:center;margin-top:2rem">
+        <a href="/pedido" class="btn btn-rojo">➕ Hacer otro pedido</a>
+      </div>
+
+    {% else %}
+      <div class="vacio-msg">
+        <div class="icon">🍽️</div>
+        <h3>Aún no tienes pedidos</h3>
+        <p>¡Haz tu primer pedido y disfruta de nuestra carta!</p>
+        <a href="/pedido" class="btn btn-rojo">Pedir ahora</a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+function toggleDetalle(id, headerEl) {
+  const body = document.getElementById('body-' + id);
+  const isOpen = body.classList.contains('abierto');
+  body.classList.toggle('abierto', !isOpen);
+  headerEl.classList.toggle('abierto-header', !isOpen);
+}
+</script>
+{% endblock %}
