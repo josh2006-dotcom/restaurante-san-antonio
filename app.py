@@ -1,7 +1,6 @@
 from flask import (Flask, render_template, request,
                    redirect, url_for, session, flash, jsonify)
 from database import get_connection
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
@@ -13,7 +12,7 @@ app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
 def index():
     conn = get_connection()
     cur  = conn.cursor()
-    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = 1 ORDER BY tipo, nombre")
+    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
     conn.close()
     return render_template('index.html', platos=platos)
@@ -175,8 +174,8 @@ def pedido():
         flash('¡Pedido realizado con éxito! Pronto lo confirmaremos. 🍽️', 'success')
         return redirect(url_for('mis_pedidos'))
 
-    # GET: cargar platos y opciones
-    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = 1 ORDER BY tipo, nombre")
+    # GET: cargar platos y opciones (CORREGIDO: TRUE en lugar de 1)
+    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
     cur.execute("SELECT id_opcion, accion, ingrediente, costo_extra FROM Opcion_Personalizacion ORDER BY accion")
     opciones = cur.fetchall()
