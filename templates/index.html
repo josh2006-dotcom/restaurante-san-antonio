@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -76,19 +77,11 @@
   .plato-card {
     background: var(--blanco);
     border-radius: 12px;
-    padding: 1.4rem;
+    overflow: hidden;
     box-shadow: var(--sombra);
     transition: transform .25s, box-shadow .25s;
     border-left: 4px solid transparent;
     position: relative;
-    overflow: hidden;
-  }
-  .plato-card::after {
-    content: '';
-    position: absolute;
-    top: 0; right: 0;
-    width: 60px; height: 60px;
-    background: radial-gradient(circle at top right, rgba(200,134,10,.08), transparent 70%);
   }
   .plato-card:hover {
     transform: translateY(-4px);
@@ -97,12 +90,32 @@
   .plato-card.entrada { border-left-color: var(--dorado); }
   .plato-card.segundo { border-left-color: var(--rojo); }
 
+  /* IMAGEN DEL PLATO */
+  .plato-img {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .plato-body {
+    padding: 1rem 1.2rem 1.2rem;
+    position: relative;
+  }
+  .plato-body::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle at top right, rgba(200,134,10,.08), transparent 70%);
+  }
+
   .plato-nombre {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.2rem;
     font-weight: 600;
     color: var(--marron);
-    margin: .5rem 0 .3rem;
+    margin: .4rem 0 .3rem;
   }
   .plato-precio {
     font-size: 1.35rem;
@@ -164,6 +177,28 @@
   </div>
 </section>
 
+<!-- Mapa de imágenes por nombre de plato -->
+{% set img_entrada = {
+  'ceviche':              'imagenes_entrada/ceviche.jpg',
+  'choclo con queso':     'imagenes_entrada/choclo_con_queso.jpg',
+  'papa a la huancaina':  'imagenes_entrada/papa_a_la_huancaina.jpg',
+  'sopa de pollo':        'imagenes_entrada/sopa_de_pollo.jpg',
+  'tamal':                'imagenes_entrada/tamal.jpg',
+  'tequeños':             'imagenes_entrada/tequenos.jpg'
+} %}
+
+{% set img_plato = {
+  'aji de gallina':         'imagenes_plato/aji_de_gallina.jpg',
+  'arroz con pollo':        'imagenes_plato/arroz_con_pollo.jpg',
+  'bisteck a lo pobre':     'imagenes_plato/bisteck_a_lo_pobre.jpg',
+  'cabrito a la norteña':   'imagenes_plato/cabrito_a_la_nortena.jpg',
+  'chaufa':                 'imagenes_plato/chaufa.jpg',
+  'lomo saltado':           'imagenes_plato/lomo_saltado.jpg',
+  'pescado frito':          'imagenes_plato/pescado_frito.jpg',
+  'seco de res':            'imagenes_plato/seco_de_res.jpg',
+  'tallarines verdes':      'imagenes_plato/tallarines_verdes.jpg'
+} %}
+
 <!-- MENÚ -->
 <section class="menu-section" id="menu">
   <div class="container">
@@ -175,12 +210,21 @@
     </div>
     <div class="platos-grid" style="margin-bottom:3rem">
       {% for p in platos if p[3] == 'entrada' %}
+      {% set nombre_key = p[1]|lower %}
       <div class="plato-card entrada">
-        <span class="badge badge-entrada">Entrada</span>
-        <h3 class="plato-nombre">{{ p[1] }}</h3>
-        <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
-        <div class="disponible-tag" style="margin-top:.6rem">
-          <span class="disponible-dot"></span> Disponible
+        <img
+          class="plato-img"
+          src="{{ url_for('static', filename=img_entrada.get(nombre_key, 'imagenes_entrada/ceviche.jpg')) }}"
+          alt="{{ p[1] }}"
+          onerror="this.src='{{ url_for('static', filename='imagenes_entrada/ceviche.jpg') }}'"
+        >
+        <div class="plato-body">
+          <span class="badge badge-entrada">Entrada</span>
+          <h3 class="plato-nombre">{{ p[1] }}</h3>
+          <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
+          <div class="disponible-tag" style="margin-top:.6rem">
+            <span class="disponible-dot"></span> Disponible
+          </div>
         </div>
       </div>
       {% endfor %}
@@ -197,12 +241,21 @@
     </div>
     <div class="platos-grid">
       {% for p in platos if p[3] == 'segundo' %}
+      {% set nombre_key = p[1]|lower %}
       <div class="plato-card segundo">
-        <span class="badge badge-segundo">Segundo</span>
-        <h3 class="plato-nombre">{{ p[1] }}</h3>
-        <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
-        <div class="disponible-tag" style="margin-top:.6rem">
-          <span class="disponible-dot"></span> Disponible
+        <img
+          class="plato-img"
+          src="{{ url_for('static', filename=img_plato.get(nombre_key, 'imagenes_plato/lomo_saltado.jpg')) }}"
+          alt="{{ p[1] }}"
+          onerror="this.src='{{ url_for('static', filename='imagenes_plato/lomo_saltado.jpg') }}'"
+        >
+        <div class="plato-body">
+          <span class="badge badge-segundo">Segundo</span>
+          <h3 class="plato-nombre">{{ p[1] }}</h3>
+          <p class="plato-precio">S/ {{ "%.2f"|format(p[2]) }} <span>por plato</span></p>
+          <div class="disponible-tag" style="margin-top:.6rem">
+            <span class="disponible-dot"></span> Disponible
+          </div>
         </div>
       </div>
       {% endfor %}
