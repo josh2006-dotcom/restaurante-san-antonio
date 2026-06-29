@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -78,7 +79,7 @@
                    placeholder="Del 23 al 27 de Junio 2026">
           </div>
 
-          {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'] %}
+          {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
           {% set m = menu_dict.get(dia) %}
           <div class="semana-input">
             <span class="semana-dia-label">{{ dia }}</span>
