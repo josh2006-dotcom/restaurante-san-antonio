@@ -1,10 +1,10 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
 <style>
   .admin-page { padding: 2rem 0 4rem; }
 
-  /* Barra admin */
   .admin-topbar {
     background: linear-gradient(135deg, #2D1B00, #5A2A00);
     padding: 1rem 1.5rem;
@@ -24,7 +24,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
   .kpi-card {
     background: var(--blanco);
@@ -40,7 +40,7 @@
     font-size: 1.5rem;
     flex-shrink: 0;
   }
-  .kpi-icon.rojo  { background: #FCE8E8; }
+  .kpi-icon.rojo   { background: #FCE8E8; }
   .kpi-icon.dorado { background: #FFF0CC; }
   .kpi-icon.verde  { background: #D4EDDA; }
   .kpi-icon.azul   { background: #CCE5FF; }
@@ -50,12 +50,48 @@
   }
   .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
 
-  /* Tabla de pedidos */
+  /* Accesos rápidos */
+  .accesos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .acceso-card {
+    background: var(--blanco);
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: var(--sombra);
+    display: flex; align-items: center; gap: 1rem;
+    text-decoration: none;
+    color: var(--marron);
+    transition: transform .2s, box-shadow .2s;
+    border-left: 4px solid var(--dorado);
+  }
+  .acceso-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--sombra-lg);
+  }
+  .acceso-card .acceso-icon {
+    font-size: 1.8rem;
+    width: 48px; height: 48px;
+    background: #FFF0CC;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .acceso-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem; font-weight: 700;
+    margin-bottom: .2rem;
+  }
+  .acceso-card p { font-size: .78rem; color: var(--gris); }
+
+  /* Tabla */
   .admin-section-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem;
   }
-
   .estado-select {
     border: 1.5px solid #D0B896;
     border-radius: 6px;
@@ -66,7 +102,6 @@
     cursor: pointer;
     color: var(--marron);
   }
-
   .toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     background: #2C4A1E; color: #fff;
@@ -80,7 +115,6 @@
   }
   @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
 
-  /* Filtros */
   .filtros {
     display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem;
   }
@@ -149,10 +183,21 @@
     </div>
   </div>
 
+  <!-- Accesos rápidos -->
+  <h2 class="admin-section-title">🔧 Herramientas</h2>
+  <div class="accesos-grid" style="margin-bottom:2.5rem">
+    <a href="/admin/menu_semanal" class="acceso-card">
+      <div class="acceso-icon">📅</div>
+      <div>
+        <h3>Menú Semanal</h3>
+        <p>Agregar, editar o borrar el menú de cada día</p>
+      </div>
+    </a>
+  </div>
+
   <!-- Tabla de pedidos -->
   <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
 
-  <!-- Filtros rápidos -->
   <div class="filtros">
     <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
     <button class="filtro-btn" onclick="filtrar('pendiente', this)">⏳ Pendientes</button>
@@ -206,7 +251,6 @@
 </div>
 </div>
 
-<!-- Toast de confirmación -->
 <div class="toast" id="toast">✅ Estado actualizado</div>
 
 <script>
@@ -222,12 +266,9 @@ function cambiarEstado(idPedido, nuevoEstado) {
   .then(r => r.json())
   .then(data => {
     if (data.ok) {
-      // Actualizar badge
       const badgeCell = document.getElementById('estado-badge-' + idPedido);
       badgeCell.innerHTML = `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
-      // Actualizar data-estado de la fila (para el filtro)
       document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
-      // Mostrar toast
       const toast = document.getElementById('toast');
       toast.style.display = 'block';
       setTimeout(() => { toast.style.display = 'none'; }, 2500);
@@ -237,19 +278,11 @@ function cambiarEstado(idPedido, nuevoEstado) {
 }
 
 function filtrar(estado, btn) {
-  // Actualizar botones
   document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
   btn.classList.add('activo');
-
-  // Filtrar filas
   document.querySelectorAll('#tabla-pedidos tbody tr').forEach(fila => {
-    if (estado === 'todos' || fila.dataset.estado === estado) {
-      fila.style.display = '';
-    } else {
-      fila.style.display = 'none';
-    }
+    fila.style.display = (estado === 'todos' || fila.dataset.estado === estado) ? '' : 'none';
   });
 }
 </script>
 {% endblock %}
-
