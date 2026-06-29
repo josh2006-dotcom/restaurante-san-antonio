@@ -210,7 +210,7 @@ def pedido():
 
             cur.execute("""
                 INSERT INTO Detalle_Pedido (id_pedido, id_plato, cantidad, precio_unitario, subtotal)
-                VALUES (%s, %s, 1, %s, %s)
+                VALUES (%s, %s, %s, %s, %s)
                 RETURNING id_detalle
             """, (id_pedido, id_plato, cantidad, precio_final, subtotal))
             id_detalle = cur.fetchone()[0]
