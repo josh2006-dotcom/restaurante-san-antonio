@@ -1,5 +1,5 @@
-{% extends "base.html" %}
 
+{% extends "base.html" %}
 {% block extra_head %}
 <style>
   .registro-page {
@@ -8,6 +8,10 @@
     align-items: center;
     justify-content: center;
     padding: 3rem 1.5rem;
+    background-image: url("{{ url_for('static', filename='fondo_cuenta.png') }}");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
   .registro-box {
     width: 100%;
@@ -40,9 +44,7 @@
     margin-bottom: .4rem;
   }
   .registro-header p { color: rgba(255,255,255,.7); font-size: .9rem; }
-
   .registro-body { padding: 2rem; }
-
   .input-icon-wrap {
     position: relative;
   }
@@ -54,7 +56,6 @@
   }
   .input-icon-wrap .form-control { padding-left: 2.4rem; }
   .input-icon-wrap textarea.form-control { padding-left: 2.4rem; padding-top: .7rem; }
-
   .ya-cliente {
     text-align: center;
     margin-top: 1.4rem;
@@ -63,7 +64,6 @@
   }
   .ya-cliente a { color: var(--rojo); font-weight: 600; text-decoration: none; }
   .ya-cliente a:hover { text-decoration: underline; }
-
   .hint {
     font-size: .78rem;
     color: var(--gris);
@@ -71,21 +71,17 @@
   }
 </style>
 {% endblock %}
-
 {% block content %}
 <section class="registro-page">
   <div class="registro-box">
-
     <div class="registro-card">
       <div class="registro-header">
         <div class="registro-icon">👤</div>
         <h1>Crear Cuenta</h1>
         <p>Regístrate para hacer tus pedidos en San Antonio</p>
       </div>
-
       <div class="registro-body">
         <form method="POST" action="/registro">
-
           <div class="form-group">
             <label class="form-label">Nombre completo *</label>
             <div class="input-icon-wrap">
@@ -95,7 +91,6 @@
                      required autocomplete="name">
             </div>
           </div>
-
           <div class="form-group">
             <label class="form-label">Teléfono *</label>
             <div class="input-icon-wrap">
@@ -106,7 +101,6 @@
             </div>
             <p class="hint">Si ya tienes cuenta, ingresa tu número para retomar sesión.</p>
           </div>
-
           <div class="form-group">
             <label class="form-label">Dirección / Referencia</label>
             <div class="input-icon-wrap">
@@ -115,19 +109,15 @@
                         placeholder="Ej: frente al parque, casa azul con reja..."></textarea>
             </div>
           </div>
-
           <button type="submit" class="btn btn-rojo" style="width:100%;justify-content:center;font-size:1rem;padding:.8rem">
             Registrarme →
           </button>
-
         </form>
-
         <div class="ya-cliente">
           ¿Ya pediste antes? Ingresa tu teléfono y te reconoceremos automáticamente 😊
         </div>
       </div>
     </div>
-
   </div>
 </section>
 {% endblock %}
