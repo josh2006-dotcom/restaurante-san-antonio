@@ -142,7 +142,6 @@
   }
   .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -190,85 +189,6 @@
       <div><h3>Reportes</h3><p>Ganancias, cancelados y estadísticas de ventas</p></div>
     </a>
   </div>
-  <div class="reportes-grid">
-
-    <!-- REPORTE GANANCIAS -->
-    <div class="reporte-card">
-      <div class="reporte-header verde">
-        <div>
-          <h3>💰 Reporte de Ganancias</h3>
-          <p>Pedidos entregados — confirmaciones de pago</p>
-        </div>
-      </div>
-      <div class="reporte-kpis">
-        <div class="reporte-kpi">
-          <div class="reporte-kpi-val verde">S/ {{ "%.2f"|format(ingresos) }}</div>
-          <div class="reporte-kpi-lbl">Total Ganado</div>
-        </div>
-        <div class="reporte-kpi">
-          <div class="reporte-kpi-val verde">{{ ganancias_por_dia|length }}</div>
-          <div class="reporte-kpi-lbl">Días con ventas</div>
-        </div>
-      </div>
-      <div class="reporte-chart">
-        <canvas id="chartGanancias" height="200"></canvas>
-      </div>
-      {% if platos_top %}
-      <div style="padding: 0 1.4rem; margin-bottom:.5rem">
-        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">🏆 Platos más vendidos</p>
-      </div>
-      <div class="top-platos">
-        {% for pt in platos_top %}
-        <div class="top-plato-item">
-          <div class="top-plato-num">{{ loop.index }}</div>
-          <div class="top-plato-nombre">{{ pt[0] }}</div>
-          <div class="top-plato-cant">{{ pt[1] }} uds</div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- REPORTE CANCELADOS -->
-    <div class="reporte-card">
-      <div class="reporte-header rojo">
-        <div>
-          <h3>⚠️ Reporte de Cancelados</h3>
-          <p>Posibles devoluciones o pérdidas</p>
-        </div>
-      </div>
-      <div class="reporte-kpis">
-        <div class="reporte-kpi">
-          <div class="reporte-kpi-val rojo">{{ total_cancelados }}</div>
-          <div class="reporte-kpi-lbl">Total Cancelados</div>
-        </div>
-        <div class="reporte-kpi">
-          <div class="reporte-kpi-val rojo">S/ {{ "%.2f"|format(monto_cancelados) }}</div>
-          <div class="reporte-kpi-lbl">Monto en riesgo</div>
-        </div>
-      </div>
-      <div class="reporte-chart">
-        <canvas id="chartCancelados" height="200"></canvas>
-      </div>
-      <!-- Tabla cancelados recientes -->
-      <div style="padding: 0 1.4rem 1.4rem">
-        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">Últimos cancelados</p>
-        {% set cancelados = pedidos | selectattr('5', 'equalto', 'cancelado') | list %}
-        {% if cancelados %}
-          {% for p in cancelados[:5] %}
-          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px dashed #F0E4CC;font-size:.85rem">
-            <span><strong>#{{ p[0] }}</strong> — {{ p[1] }}</span>
-            <span style="color:var(--rojo);font-weight:700">S/ {{ "%.2f"|format(p[6]) }}</span>
-          </div>
-          {% endfor %}
-        {% else %}
-          <p style="color:var(--gris);font-size:.85rem;text-align:center;padding:1rem">Sin cancelados recientes ✅</p>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-
   <!-- Tabla pedidos -->
   <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
   <div class="filtros">
@@ -315,62 +235,6 @@
 <div class="toast" id="toast">✅ Estado actualizado</div>
 
 <script>
-// Datos para gráficas desde Jinja
-const diasGanancias = [{% for g in ganancias_por_dia %}"{{ g[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
-const montosGanancias = [{% for g in ganancias_por_dia %}{{ g[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
-
-const diasCancelados = [{% for c in cancelados_por_dia %}"{{ c[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
-const cantCancelados = [{% for c in cancelados_por_dia %}{{ c[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
-const montoCancelados = [{% for c in cancelados_por_dia %}{{ c[2] }}{% if not loop.last %},{% endif %}{% endfor %}];
-
-// Gráfica ganancias
-const ctxG = document.getElementById('chartGanancias').getContext('2d');
-new Chart(ctxG, {
-  type: 'bar',
-  data: {
-    labels: diasGanancias.length ? diasGanancias : ['Sin datos'],
-    datasets: [{
-      label: 'Ganancias S/',
-      data: diasGanancias.length ? montosGanancias : [0],
-      backgroundColor: 'rgba(44,74,30,0.7)',
-      borderColor: '#2C4A1E',
-      borderWidth: 2,
-      borderRadius: 6,
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } }
-    }
-  }
-});
-
-// Gráfica cancelados
-const ctxC = document.getElementById('chartCancelados').getContext('2d');
-new Chart(ctxC, {
-  type: 'line',
-  data: {
-    labels: diasCancelados.length ? diasCancelados : ['Sin datos'],
-    datasets: [{
-      label: 'Cancelados',
-      data: diasCancelados.length ? cantCancelados : [0],
-      borderColor: '#8B1A1A',
-      backgroundColor: 'rgba(139,26,26,0.1)',
-      borderWidth: 2,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#8B1A1A',
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  }
-});
-
 function cambiarEstado(idPedido, nuevoEstado) {
   const formData = new FormData();
   formData.append('id_pedido', idPedido);
