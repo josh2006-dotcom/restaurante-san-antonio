@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .admin-page { padding: 2rem 0 4rem; }
+
+  /* Barra admin */
+  .admin-topbar {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: #fff;
+  }
+  .admin-topbar h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem; font-weight: 700;
+  }
+  .admin-topbar p { font-size: .82rem; opacity: .7; }
+  .admin-topbar-actions { display: flex; gap: .7rem; align-items: center; }
+
+  /* Semana */
+  .semana-banner {
+    background: #FFF8EE;
+    border: 1.5px solid #E8C97A;
+    border-radius: 10px;
+    padding: .8rem 1.2rem;
+    margin-bottom: 1.8rem;
+    display: flex; align-items: center; gap: .8rem;
+    font-size: .9rem; color: var(--marron);
+  }
+  .semana-banner span { font-weight: 700; color: #8B1A1A; }
+
+  /* Grid de días */
+  .dias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .dia-card {
+    background: var(--blanco);
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .dia-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+
+  .dia-header {
+    background: linear-gradient(135deg, #8B1A1A, #B22222);
+    padding: .7rem 1.1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dia-nombre {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem; font-weight: 700; color: #fff;
+  }
+  .dia-icono { font-size: 1.2rem; }
+
+  .dia-body { padding: 1rem 1.1rem; }
+
+  .campo-grupo { margin-bottom: .9rem; }
+  .campo-grupo:last-child { margin-bottom: 0; }
+
+  .campo-label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--gris);
+    margin-bottom: .3rem;
+  }
+
+  .campo-input {
+    width: 100%;
+    border: 1.5px solid #D0B896;
+    border-radius: 8px;
+    padding: .55rem .8rem;
+    font-family: 'Jost', sans-serif;
+    font-size: .88rem;
+    color: var(--marron);
+    background: #FDFAF5;
+    box-sizing: border-box;
+    transition: border-color .2s, background .2s;
+  }
+  .campo-input:focus {
+    outline: none;
+    border-color: #8B1A1A;
+    background: #fff;
+  }
+  .campo-input::placeholder { color: #BBA98A; }
+
+  /* Acciones del formulario */
+  .form-actions {
+    background: var(--blanco);
+    border-radius: 14px;
+    box-shadow: var(--sombra);
+    padding: 1.3rem 1.5rem;
+    display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+  }
+
+  .semana-input-wrap {
+    display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 200px;
+  }
+  .semana-input-wrap label {
+    font-size: .8rem; font-weight: 700; color: var(--gris);
+    white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .4px;
+  }
+  .semana-input {
+    border: 1.5px solid #D0B896;
+    border-radius: 8px;
+    padding: .5rem .8rem;
+    font-family: 'Jost', sans-serif;
+    font-size: .88rem;
+    color: var(--marron);
+    background: #FDFAF5;
+    flex: 1;
+  }
+  .semana-input:focus { outline: none; border-color: #8B1A1A; background: #fff; }
+
+  .btn-guardar {
+    background: #8B1A1A;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: .6rem 1.5rem;
+    font-family: 'Jost', sans-serif;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    white-space: nowrap;
+  }
+  .btn-guardar:hover { background: #6B1010; }
+  .btn-guardar:active { transform: scale(.97); }
+
+  .btn-limpiar {
+    background: transparent;
+    color: #8B1A1A;
+    border: 1.5px solid #8B1A1A;
+    border-radius: 8px;
+    padding: .55rem 1.2rem;
+    font-family: 'Jost', sans-serif;
+    font-size: .88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .btn-limpiar:hover { background: #8B1A1A; color: #fff; }
+
+  /* Advertencia limpiar */
+  .advertencia {
+    background: #FFF3CD;
+    border: 1.5px solid #FFCA28;
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    font-size: .8rem;
+    color: #7A5C00;
+    display: flex; align-items: center; gap: .5rem;
+  }
+
+  /* Modal confirmación */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 380px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    animation: popIn .25s ease;
+  }
+  @keyframes popIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem; color: #8B1A1A; margin-bottom: .5rem;
+  }
+  .modal p { font-size: .88rem; color: var(--gris); margin-bottom: 1.5rem; }
+  .modal-btns { display: flex; gap: .8rem; justify-content: center; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #2C4A1E; color: #fff;
+    padding: .8rem 1.3rem;
+    border-radius: 8px;
+    font-size: .88rem;
+    display: none;
+    z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
+
+  /* Vista previa actual */
+  .preview-card {
+    background: #F8F0E3;
+    border: 1.5px dashed #D0B896;
+    border-radius: 10px;
+    padding: .5rem .9rem;
+    font-size: .8rem;
+    color: #6B5B4B;
+    margin-top: .4rem;
+  }
+  .preview-card strong { color: var(--marron); }
+
+  @media (max-width: 600px) {
+    .dias-grid { grid-template-columns: 1fr; }
+    .form-actions { flex-direction: column; }
+    .admin-topbar { flex-direction: column; align-items: flex-start; gap: .8rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="admin-page">
+
+  <!-- Barra superior -->
+  <div class="admin-topbar">
+    <div>
+      <h1>📅 Menú Semanal</h1>
+      <p>Asigna entradas y segundos para cada día de la semana</p>
+    </div>
+    <div class="admin-topbar-actions">
+      <a href="/admin" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">
+        ← Panel Admin
+      </a>
+      <a href="/admin/logout" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">
+        Cerrar sesión
+      </a>
+    </div>
+  </div>
+
+  <!-- Semana activa -->
+  {% if menu %}
+  <div class="semana-banner">
+    📌 Semana activa:
+    <span>{{ menu[0][3] if menu[0][3] else 'Sin nombre de semana' }}</span>
+    — {{ menu|length }} día(s) con menú
+  </div>
+  {% else %}
+  <div class="advertencia" style="margin-bottom:1.5rem">
+    ⚠️ <strong>No hay menú cargado aún.</strong> Completa los campos y guarda para publicar el menú de la semana.
+  </div>
+  {% endif %}
+
+  <form method="POST" id="form-menu">
+
+    <!-- Grid de días -->
+    <div class="dias-grid">
+      {% set dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'] %}
+      {% set iconos = ['☀️','🌤','🌥','🌦','🎉','🌟','🏖'] %}
+      {% set menu_dict = {} %}
+      {% for m in menu %}
+        {% if menu_dict.update({m[0]: m}) %}{% endif %}
+      {% endfor %}
+
+      {% for i in range(dias|length) %}
+        {% set dia = dias[i] %}
+        {% set datos = menu_dict.get(dia, ('', '', '', '')) %}
+        <div class="dia-card">
+          <div class="dia-header">
+            <span class="dia-nombre">{{ dia }}</span>
+            <span class="dia-icono">{{ iconos[i] }}</span>
+          </div>
+          <div class="dia-body">
+            <div class="campo-grupo">
+              <label class="campo-label" for="entrada_{{ dia }}">🥗 Entrada</label>
+              <input
+                type="text"
+                id="entrada_{{ dia }}"
+                name="entrada_{{ dia }}"
+                class="campo-input"
+                placeholder="Ej: Ceviche, Papa a la huancaína…"
+                value="{{ datos[1] or '' }}"
+                autocomplete="off"
+              >
+              {% if datos[1] %}
+              <div class="preview-card">Actual: <strong>{{ datos[1] }}</strong></div>
+              {% endif %}
+            </div>
+            <div class="campo-grupo">
+              <label class="campo-label" for="segundo_{{ dia }}">🍽️ Segundo</label>
+              <input
+                type="text"
+                id="segundo_{{ dia }}"
+                name="segundo_{{ dia }}"
+                class="campo-input"
+                placeholder="Ej: Lomo saltado, Arroz con pollo…"
+                value="{{ datos[2] or '' }}"
+                autocomplete="off"
+              >
+              {% if datos[2] %}
+              <div class="preview-card">Actual: <strong>{{ datos[2] }}</strong></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Acciones -->
+    <div class="form-actions">
+      <div class="semana-input-wrap">
+        <label for="semana">📆 Semana:</label>
+        <input
+          type="text"
+          id="semana"
+          name="semana"
+          class="semana-input"
+          placeholder="Ej: 30 Jun – 6 Jul 2025"
+          value="{{ menu[0][3] if menu and menu[0][3] else '' }}"
+        >
+      </div>
+      <button type="button" class="btn-limpiar" onclick="confirmarLimpiar()">
+        🗑️ Nueva semana
+      </button>
+      <button type="submit" class="btn-guardar">
+        💾 Guardar menú
+      </button>
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+<!-- Modal confirmación "Nueva semana" -->
+<div class="modal-overlay" id="modal-limpiar">
+  <div class="modal">
+    <h3>¿Iniciar nueva semana?</h3>
+    <p>Esto borrará todo el menú actual y dejará los campos en blanco para que puedas ingresar los platos de la nueva semana.</p>
+    <div class="modal-btns">
+      <button class="btn-limpiar" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" onclick="limpiarYEnviar()">Sí, nueva semana</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ Menú guardado correctamente</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const toast = document.getElementById('toast');
+        toast.textContent = "{{ messages[0][1] }}";
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+      });
+    </script>
+  {% endif %}
+{% endwith %}
+
+<script>
+function confirmarLimpiar() {
+  document.getElementById('modal-limpiar').classList.add('visible');
+}
+function cerrarModal() {
+  document.getElementById('modal-limpiar').classList.remove('visible');
+}
+function limpiarYEnviar() {
+  // Vaciar todos los campos
+  document.querySelectorAll('.campo-input').forEach(i => i.value = '');
+  document.getElementById('semana').value = '';
+  cerrarModal();
+  document.getElementById('form-menu').submit();
+}
+// Cerrar modal si se hace click fuera
+document.getElementById('modal-limpiar').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+</script>
+{% endblock %}
