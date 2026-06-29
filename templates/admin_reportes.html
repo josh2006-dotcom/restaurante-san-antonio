@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .reportes-page { padding: 2.5rem 0 4rem; }
+
+  .reportes-topbar {
+    background: linear-gradient(135deg, #1a5c2a, #2C4A1E);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: #fff;
+  }
+  .reportes-topbar h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
+  .reportes-topbar p { font-size: .82rem; opacity: .7; }
+
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--blanco); border-radius: 12px;
+    padding: 1.3rem 1.5rem; box-shadow: var(--sombra);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .kpi-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+  .kpi-icon.verde  { background: #D4EDDA; }
+  .kpi-icon.rojo   { background: #FCE8E8; }
+  .kpi-icon.naranja { background: #FFE8CC; }
+  .kpi-icon.morado { background: #EDE0FF; }
+  .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1; }
+  .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem;
+  }
+
+  .reportes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem; margin-bottom: 2.5rem;
+  }
+  @media (max-width: 768px) { .reportes-grid { grid-template-columns: 1fr; } }
+
+  .reporte-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+  }
+  .reporte-header { padding: 1rem 1.4rem; display: flex; align-items: center; gap: .7rem; }
+  .reporte-header.verde { background: linear-gradient(135deg, #1a5c2a, #2C4A1E); }
+  .reporte-header.rojo  { background: linear-gradient(135deg, #8B1A1A, #5A0F0F); }
+  .reporte-header h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 1.2rem; font-weight: 700; }
+  .reporte-header p { color: rgba(255,255,255,.7); font-size: .78rem; margin-top: .1rem; }
+
+  .reporte-kpis { display: flex; gap: 1rem; padding: 1rem 1.4rem; border-bottom: 1px solid #F0E4CC; }
+  .reporte-kpi { flex: 1; text-align: center; }
+  .reporte-kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
+  .reporte-kpi-val.verde { color: var(--verde); }
+  .reporte-kpi-val.rojo  { color: var(--rojo); }
+  .reporte-kpi-lbl { font-size: .72rem; color: var(--gris); text-transform: uppercase; letter-spacing: .5px; }
+
+  .reporte-chart { padding: 1rem 1.4rem 1.4rem; }
+  .reporte-chart canvas { width: 100% !important; }
+
+  .top-platos { padding: 0 1.4rem 1.4rem; }
+  .top-plato-item {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .5rem 0; border-bottom: 1px dashed #F0E4CC; font-size: .88rem;
+  }
+  .top-plato-item:last-child { border-bottom: none; }
+  .top-plato-num { width: 24px; height: 24px; border-radius: 50%; background: var(--dorado); color: #fff; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .top-plato-nombre { flex: 1; font-weight: 600; color: var(--marron); }
+  .top-plato-cant { font-weight: 700; color: var(--verde); }
+
+  .cancelados-tabla { padding: 0 1.4rem 1.4rem; }
+  .cancelado-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: .55rem 0; border-bottom: 1px dashed #F0E4CC; font-size: .85rem;
+  }
+  .cancelado-row:last-child { border-bottom: none; }
+  .cancelado-id { font-weight: 700; color: var(--marron); margin-right: .5rem; }
+  .cancelado-cliente { color: var(--gris); }
+  .cancelado-monto { font-weight: 700; color: var(--rojo); }
+  .cancelado-fecha { font-size: .75rem; color: var(--gris); margin-top: .1rem; }
+
+  /* Gráfica grande de ventas por día */
+  .chart-full-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .chart-full-header {
+    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
+    padding: 1rem 1.4rem;
+  }
+  .chart-full-header h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 1.2rem; font-weight: 700; }
+  .chart-full-header p { color: rgba(255,255,255,.7); font-size: .78rem; }
+  .chart-full-body { padding: 1.4rem; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="reportes-page">
+
+  <div class="reportes-topbar">
+    <div>
+      <h1>📊 Reportes y Estadísticas</h1>
+      <p>Ganancias, cancelados y análisis de ventas — Últimos 30 días</p>
+    </div>
+    <a href="/admin" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">← Volver al Admin</a>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-icon verde">💰</div>
+      <div><div class="kpi-valor">S/ {{ "%.2f"|format(ingresos) }}</div><div class="kpi-label">Total Ganancias</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon verde">📦</div>
+      <div><div class="kpi-valor">{{ ganancias_por_dia|length }}</div><div class="kpi-label">Días con ventas</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon rojo">❌</div>
+      <div><div class="kpi-valor">{{ total_cancelados }}</div><div class="kpi-label">Total Cancelados</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon morado">💸</div>
+      <div><div class="kpi-valor">S/ {{ "%.2f"|format(monto_cancelados) }}</div><div class="kpi-label">Posibles Devoluciones</div></div>
+    </div>
+  </div>
+
+  <!-- Gráfica combinada -->
+  <div class="chart-full-card">
+    <div class="chart-full-header">
+      <h3>📈 Ganancias vs Cancelados por día</h3>
+      <p>Comparativa de los últimos 30 días</p>
+    </div>
+    <div class="chart-full-body">
+      <canvas id="chartCombinado" height="100"></canvas>
+    </div>
+  </div>
+
+  <!-- Reportes detalle -->
+  <div class="reportes-grid">
+
+    <!-- GANANCIAS -->
+    <div class="reporte-card">
+      <div class="reporte-header verde">
+        <div>
+          <h3>💰 Reporte de Ganancias</h3>
+          <p>Pedidos entregados — confirmaciones de pago</p>
+        </div>
+      </div>
+      <div class="reporte-kpis">
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val verde">S/ {{ "%.2f"|format(ingresos) }}</div>
+          <div class="reporte-kpi-lbl">Total Ganado</div>
+        </div>
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val verde">{{ ganancias_por_dia|length }}</div>
+          <div class="reporte-kpi-lbl">Días activos</div>
+        </div>
+      </div>
+      <div class="reporte-chart">
+        <canvas id="chartGanancias" height="180"></canvas>
+      </div>
+      {% if platos_top %}
+      <div style="padding: 0 1.4rem .5rem">
+        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">🏆 Platos más vendidos</p>
+      </div>
+      <div class="top-platos">
+        {% for pt in platos_top %}
+        <div class="top-plato-item">
+          <div class="top-plato-num">{{ loop.index }}</div>
+          <div class="top-plato-nombre">{{ pt[0] }}</div>
+          <div class="top-plato-cant">{{ pt[1] }} uds</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- CANCELADOS -->
+    <div class="reporte-card">
+      <div class="reporte-header rojo">
+        <div>
+          <h3>⚠️ Reporte de Cancelados</h3>
+          <p>Posibles devoluciones o pérdidas</p>
+        </div>
+      </div>
+      <div class="reporte-kpis">
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val rojo">{{ total_cancelados }}</div>
+          <div class="reporte-kpi-lbl">Total Cancelados</div>
+        </div>
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val rojo">S/ {{ "%.2f"|format(monto_cancelados) }}</div>
+          <div class="reporte-kpi-lbl">Monto en riesgo</div>
+        </div>
+      </div>
+      <div class="reporte-chart">
+        <canvas id="chartCancelados" height="180"></canvas>
+      </div>
+      <div style="padding: 0 1.4rem .5rem">
+        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">Últimos cancelados</p>
+      </div>
+      <div class="cancelados-tabla">
+        {% if cancelados_recientes %}
+          {% for c in cancelados_recientes %}
+          <div class="cancelado-row">
+            <div>
+              <span class="cancelado-id">#{{ c[0] }}</span>
+              <span class="cancelado-cliente">{{ c[1] }}</span>
+              <div class="cancelado-fecha">{{ c[2].strftime('%d/%m/%Y %H:%M') }}</div>
+            </div>
+            <span class="cancelado-monto">S/ {{ "%.2f"|format(c[3]) }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--gris);font-size:.85rem;text-align:center;padding:1rem">Sin cancelados ✅</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<script>
+const diasG = [{% for g in ganancias_por_dia %}"{{ g[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const montosG = [{% for g in ganancias_por_dia %}{{ g[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
+const diasC = [{% for c in cancelados_por_dia %}"{{ c[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const cantC = [{% for c in cancelados_por_dia %}{{ c[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
+const montoC = [{% for c in cancelados_por_dia %}{{ c[2] }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+// Todos los días únicos combinados
+const todosDias = [...new Set([...diasG, ...diasC])].sort();
+
+// Gráfica combinada
+new Chart(document.getElementById('chartCombinado').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: todosDias.length ? todosDias : ['Sin datos'],
+    datasets: [
+      {
+        label: 'Ganancias S/',
+        data: todosDias.map(d => { const i = diasG.indexOf(d); return i >= 0 ? montosG[i] : 0; }),
+        backgroundColor: 'rgba(44,74,30,0.7)',
+        borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 4,
+      },
+      {
+        label: 'Cancelados S/',
+        data: todosDias.map(d => { const i = diasC.indexOf(d); return i >= 0 ? montoC[i] : 0; }),
+        backgroundColor: 'rgba(139,26,26,0.6)',
+        borderColor: '#8B1A1A', borderWidth: 2, borderRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top' } },
+    scales: { y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } } }
+  }
+});
+
+// Gráfica ganancias por día
+new Chart(document.getElementById('chartGanancias').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: diasG.length ? diasG : ['Sin datos'],
+    datasets: [{ label: 'S/', data: diasG.length ? montosG : [0], backgroundColor: 'rgba(44,74,30,0.7)', borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 6 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } } } }
+});
+
+// Gráfica cancelados
+new Chart(document.getElementById('chartCancelados').getContext('2d'), {
+  type: 'line',
+  data: {
+    labels: diasC.length ? diasC : ['Sin datos'],
+    datasets: [{ label: 'Cancelados', data: diasC.length ? cantC : [0], borderColor: '#8B1A1A', backgroundColor: 'rgba(139,26,26,0.1)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#8B1A1A' }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+</script>
+{% endblock %}
