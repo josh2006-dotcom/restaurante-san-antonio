@@ -333,13 +333,57 @@ def admin():
     cur.execute("SELECT COUNT(*) FROM Cliente")
     total_clientes = cur.fetchone()[0]
 
+    cur.execute("SELECT COUNT(*) FROM Pedido WHERE estado = 'cancelado'")
+    total_cancelados = cur.fetchone()[0]
+
+    cur.execute("SELECT COALESCE(SUM(total), 0) FROM Pedido WHERE estado = 'cancelado'")
+    monto_cancelados = cur.fetchone()[0]
+
+    # Ganancias por dia (ultimos 7 dias)
+    cur.execute("""
+        SELECT DATE(fecha_pedido) as dia, COALESCE(SUM(total), 0) as ganancia
+        FROM Pedido WHERE estado = 'entregado'
+        AND fecha_pedido >= NOW() - INTERVAL '7 days'
+        GROUP BY DATE(fecha_pedido)
+        ORDER BY dia
+    """)
+    ganancias_por_dia = cur.fetchall()
+
+    # Cancelados por dia (ultimos 7 dias)
+    cur.execute("""
+        SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
+        FROM Pedido WHERE estado = 'cancelado'
+        AND fecha_pedido >= NOW() - INTERVAL '7 days'
+        GROUP BY DATE(fecha_pedido)
+        ORDER BY dia
+    """)
+    cancelados_por_dia = cur.fetchall()
+
+    # Platos mas vendidos
+    cur.execute("""
+        SELECT pl.nombre, SUM(dp.cantidad) as total_vendido
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        JOIN Pedido p ON p.id_pedido = dp.id_pedido
+        WHERE p.estado = 'entregado'
+        GROUP BY pl.nombre
+        ORDER BY total_vendido DESC
+        LIMIT 5
+    """)
+    platos_top = cur.fetchall()
+
     conn.close()
     return render_template('admin.html',
                            pedidos=pedidos,
                            total_pedidos=total_pedidos,
                            pendientes=pendientes,
                            ingresos=float(ingresos),
-                           total_clientes=total_clientes)
+                           total_clientes=total_clientes,
+                           total_cancelados=total_cancelados,
+                           monto_cancelados=float(monto_cancelados),
+                           ganancias_por_dia=ganancias_por_dia,
+                           cancelados_por_dia=cancelados_por_dia,
+                           platos_top=platos_top)
 
 @app.route('/admin/actualizar_estado', methods=['POST'])
 def actualizar_estado():
