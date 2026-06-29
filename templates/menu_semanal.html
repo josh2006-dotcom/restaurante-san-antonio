@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -20,53 +21,45 @@
   .semanal-hero h1 {
     font-family: 'Cormorant Garamond', serif;
     font-size: clamp(2rem, 4vw, 3rem);
-    color: #fff;
-    font-weight: 700;
-    margin-bottom: .5rem;
+    color: #fff; font-weight: 700; margin-bottom: .5rem;
   }
   .semanal-hero p { color: rgba(255,255,255,.75); font-size: 1rem; }
-  .semanal-hero .semana-badge {
+  .semana-badge {
     display: inline-block;
-    background: var(--dorado);
-    color: #fff;
-    font-size: .8rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding: .35rem 1rem;
-    border-radius: 20px;
-    margin-bottom: 1rem;
+    background: var(--dorado); color: #fff;
+    font-size: .8rem; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: .35rem 1rem; border-radius: 20px; margin-bottom: 1rem;
   }
 
   .semanal-section { padding: 3rem 0; }
 
-  .dias-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-  }
+  /* ACORDEÓN */
+  .acordeon { display: flex; flex-direction: column; gap: .8rem; }
 
-  .dia-card {
+  .dia-acordeon {
     background: var(--blanco);
-    border-radius: 16px;
-    overflow: hidden;
+    border-radius: 14px;
     box-shadow: var(--sombra);
-    transition: transform .25s, box-shadow .25s;
+    overflow: hidden;
+    transition: box-shadow .25s;
   }
-  .dia-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--sombra-lg);
-  }
+  .dia-acordeon:hover { box-shadow: var(--sombra-lg); }
 
-  .dia-header {
-    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
-    padding: 1rem 1.4rem;
+  .dia-trigger {
     display: flex;
     align-items: center;
-    gap: .8rem;
+    gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    cursor: pointer;
+    user-select: none;
+    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
+    transition: opacity .2s;
   }
+  .dia-trigger:hover { opacity: .93; }
+
   .dia-icon {
-    width: 42px; height: 42px;
+    width: 44px; height: 44px;
     background: rgba(255,255,255,.15);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -75,68 +68,67 @@
   }
   .dia-nombre {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #fff;
+    font-size: 1.35rem; font-weight: 700; color: #fff; flex: 1;
   }
+  .dia-resumen {
+    font-size: .78rem; color: rgba(255,255,255,.65);
+    margin-top: .15rem;
+  }
+  .dia-chevron {
+    color: rgba(255,255,255,.8);
+    font-size: 1.1rem;
+    transition: transform .3s;
+    flex-shrink: 0;
+  }
+  .dia-acordeon.abierto .dia-chevron { transform: rotate(180deg); }
 
-  .dia-body { padding: 1.2rem 1.4rem; }
+  /* CONTENIDO DEL DÍA */
+  .dia-contenido {
+    display: none;
+    padding: 1.2rem 1.5rem;
+  }
+  .dia-acordeon.abierto .dia-contenido { display: block; }
 
   .plato-item {
     display: flex;
-    align-items: flex-start;
-    gap: .8rem;
-    padding: .7rem 0;
-    border-bottom: 1px solid #F0E4CC;
+    align-items: center;
+    gap: 1rem;
+    padding: .8rem 0;
+    border-bottom: 1px dashed #F0E4CC;
   }
   .plato-item:last-child { border-bottom: none; }
 
   .plato-item-img {
-    width: 56px; height: 56px;
+    width: 64px; height: 64px;
     border-radius: 10px;
     object-fit: cover;
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(0,0,0,.12);
   }
   .plato-item-img-placeholder {
-    width: 56px; height: 56px;
+    width: 64px; height: 64px;
     border-radius: 10px;
     background: var(--crema2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     flex-shrink: 0;
   }
-
   .plato-item-info { flex: 1; }
   .plato-item-tipo {
-    font-size: .68rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: .2rem;
+    font-size: .7rem; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: .2rem;
   }
   .tipo-entrada { color: var(--dorado); }
   .tipo-segundo { color: var(--rojo); }
   .plato-item-nombre {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: var(--marron);
-    line-height: 1.3;
+    font-size: 1.1rem; font-weight: 600; color: var(--marron);
   }
 
   .vacio-msg {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--gris);
+    text-align: center; padding: 3rem 1rem; color: var(--gris);
   }
   .vacio-msg .vacio-icon { font-size: 3rem; margin-bottom: 1rem; }
-  .vacio-msg p { font-size: .95rem; }
-
-  .dia-icons = {
-    'Lunes': '🌅', 'Martes': '🌤️', 'Miércoles': '⛅',
-    'Jueves': '🌞', 'Viernes': '🎉', 'Sábado': '😎', 'Domingo': '🌟'
-  }
 </style>
 {% endblock %}
 
@@ -148,7 +140,7 @@
       <div class="semana-badge">📅 {{ menu[0][3] if menu[0][3] else 'Semana actual' }}</div>
     {% endif %}
     <h1>🍽️ Menú Semanal</h1>
-    <p>Descubre lo que preparamos para ti cada día de la semana</p>
+    <p>Haz clic en el día para ver qué preparamos para ti</p>
   </div>
 </section>
 
@@ -162,39 +154,53 @@
 } %}
 
 {% set img_plato = {
-  'aji de gallina':         'imagenes_plato/aji_de_gallina.jpg',
-  'arroz con pollo':        'imagenes_plato/arroz_con_pollo.jpg',
-  'bisteck a lo pobre':     'imagenes_plato/bisteck_a_lo_pobre.jpg',
-  'cabrito a la norteña':   'imagenes_plato/cabrito_a_la_nortena.jpg',
-  'chaufa':                 'imagenes_plato/chaufa.jpg',
-  'lomo saltado':           'imagenes_plato/lomo_saltado.jpg',
-  'pescado frito':          'imagenes_plato/pescado_frito.jpg',
-  'seco de res':            'imagenes_plato/seco_de_res.jpg',
-  'tallarines verdes':      'imagenes_plato/tallarines_verdes.jpg'
+  'aji de gallina':       'imagenes_plato/aji_de_gallina.jpg',
+  'arroz con pollo':      'imagenes_plato/arroz_con_pollo.jpg',
+  'bisteck a lo pobre':   'imagenes_plato/bisteck_a_lo_pobre.jpg',
+  'cabrito a la norteña': 'imagenes_plato/cabrito_a_la_nortena.jpg',
+  'chaufa':               'imagenes_plato/chaufa.jpg',
+  'lomo saltado':         'imagenes_plato/lomo_saltado.jpg',
+  'pescado frito':        'imagenes_plato/pescado_frito.jpg',
+  'seco de res':          'imagenes_plato/seco_de_res.jpg',
+  'tallarines verdes':    'imagenes_plato/tallarines_verdes.jpg'
 } %}
 
 {% set dia_icons = {
   'Lunes': '🌅', 'Martes': '🌤️', 'Miércoles': '⛅',
-  'Jueves': '🌞', 'Viernes': '🎉', 'Sábado': '😎', 'Domingo': '🌟'
+  'Jueves': '🌞', 'Viernes': '🎉', 'Sábado': '😎'
 } %}
+
+{% set menu_dict = {} %}
+{% for m in menu %}
+  {% if menu_dict.update({m[0]: m}) %}{% endif %}
+{% endfor %}
 
 <section class="semanal-section">
   <div class="container">
 
     {% if menu %}
-    <div class="dias-grid">
-      {% for m in menu %}
-      <div class="dia-card">
-        <div class="dia-header">
-          <div class="dia-icon">{{ dia_icons.get(m[0], '📅') }}</div>
-          <span class="dia-nombre">{{ m[0] }}</span>
+    <div class="acordeon">
+      {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
+      {% set m = menu_dict.get(dia) %}
+      {% if m %}
+      <div class="dia-acordeon" id="dia-{{ loop.index }}">
+        <div class="dia-trigger" onclick="toggleDia('dia-{{ loop.index }}')">
+          <div class="dia-icon">{{ dia_icons.get(dia, '📅') }}</div>
+          <div>
+            <div class="dia-nombre">{{ dia }}</div>
+            <div class="dia-resumen">
+              {% if m[1] %}🥗 {{ m[1] }}{% endif %}
+              {% if m[1] and m[2] %} &nbsp;·&nbsp; {% endif %}
+              {% if m[2] %}🍽️ {{ m[2] }}{% endif %}
+            </div>
+          </div>
+          <span class="dia-chevron">▼</span>
         </div>
-        <div class="dia-body">
+        <div class="dia-contenido">
 
-          <!-- ENTRADA -->
           {% if m[1] %}
+          {% set key_e = m[1]|lower %}
           <div class="plato-item">
-            {% set key_e = m[1]|lower %}
             {% if img_entrada.get(key_e) %}
               <img class="plato-item-img"
                    src="{{ url_for('static', filename=img_entrada.get(key_e)) }}"
@@ -211,10 +217,9 @@
           </div>
           {% endif %}
 
-          <!-- SEGUNDO -->
           {% if m[2] %}
+          {% set key_p = m[2]|lower %}
           <div class="plato-item">
-            {% set key_p = m[2]|lower %}
             {% if img_plato.get(key_p) %}
               <img class="plato-item-img"
                    src="{{ url_for('static', filename=img_plato.get(key_p)) }}"
@@ -233,6 +238,7 @@
 
         </div>
       </div>
+      {% endif %}
       {% endfor %}
     </div>
 
@@ -249,5 +255,17 @@
 
   </div>
 </section>
+
+<script>
+function toggleDia(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('abierto');
+}
+// Abrir el primero por defecto
+document.addEventListener('DOMContentLoaded', () => {
+  const primero = document.querySelector('.dia-acordeon');
+  if (primero) primero.classList.add('abierto');
+});
+</script>
 
 {% endblock %}
