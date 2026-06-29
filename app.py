@@ -205,13 +205,14 @@ def pedido():
                     costo_extra += float(op_row[0])
 
             precio_final = precio_base + costo_extra
-            subtotal     = precio_final
+            cantidad     = int(request.form.get(f'cantidad_{id_plato}', 1))
+            subtotal     = precio_final * cantidad
 
             cur.execute("""
                 INSERT INTO Detalle_Pedido (id_pedido, id_plato, cantidad, precio_unitario, subtotal)
                 VALUES (%s, %s, 1, %s, %s)
                 RETURNING id_detalle
-            """, (id_pedido, id_plato, precio_final, subtotal))
+            """, (id_pedido, id_plato, cantidad, precio_final, subtotal))
             id_detalle = cur.fetchone()[0]
 
             for op_id in opciones_ids:
