@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -15,7 +16,6 @@
     .resumen-sticky { position: static !important; }
   }
 
-  /* ── ENCABEZADO ─────────────────────────────────────── */
   .page-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 2rem;
@@ -24,7 +24,6 @@
   }
   .page-sub { color: var(--gris); font-size: .9rem; margin-bottom: 1.8rem; }
 
-  /* ── SECCIÓN DE ENTREGA ─────────────────────────────── */
   .entrega-box {
     background: var(--blanco);
     border-radius: 12px;
@@ -40,7 +39,6 @@
   }
   .entrega-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
-  /* ── TARJETAS DE PLATOS ─────────────────────────────── */
   .seccion-titulo {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.5rem;
@@ -83,20 +81,42 @@
     background: var(--dorado); border-color: var(--dorado); color: #fff;
   }
   .plato-info { flex: 1; }
-  .plato-info-nombre {
-    font-weight: 600; font-size: .98rem;
-    color: var(--marron);
+  .plato-info-nombre { font-weight: 600; font-size: .98rem; color: var(--marron); }
+  .plato-info-tipo { font-size: .78rem; color: var(--gris); text-transform: uppercase; letter-spacing: .5px; }
+  .plato-precio-tag { font-size: 1.1rem; font-weight: 700; color: var(--verde); }
+
+  /* ── CANTIDAD ── */
+  .cantidad-control {
+    display: none;
+    align-items: center;
+    gap: .5rem;
+    margin-left: auto;
+    background: var(--crema);
+    border-radius: 20px;
+    padding: .2rem .4rem;
   }
-  .plato-info-tipo {
-    font-size: .78rem;
-    color: var(--gris);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-  .plato-precio-tag {
+  .plato-item.seleccionado .cantidad-control { display: flex; }
+  .cantidad-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--verde);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    line-height: 1;
+  }
+  .cantidad-btn.menos { background: #FCE8E8; color: var(--rojo); }
+  .cantidad-btn.menos:hover { background: var(--rojo); color: #fff; }
+  .cantidad-btn.mas { background: #D4EDDA; color: var(--verde); }
+  .cantidad-btn.mas:hover { background: var(--verde); color: #fff; }
+  .cantidad-num {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--marron);
+    min-width: 20px;
+    text-align: center;
   }
 
   /* Personalizaciones */
@@ -107,17 +127,12 @@
     background: #FFFBF4;
   }
   .plato-item.seleccionado .pers-panel { display: block; }
-
   .pers-titulo {
-    font-size: .8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    color: var(--gris);
-    margin-bottom: .8rem;
+    font-size: .8rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .6px;
+    color: var(--gris); margin-bottom: .8rem;
     display: flex; align-items: center; gap: .4rem;
   }
-
   .pers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -136,121 +151,42 @@
   .pers-opcion:hover { border-color: var(--dorado); background: #FFF8EC; }
   .pers-opcion input[type="checkbox"] { accent-color: var(--dorado); cursor: pointer; }
   .pers-opcion.marcada { border-color: var(--dorado); background: #FFF0CC; }
-
   .pers-accion {
-    font-size: .7rem;
-    padding: .15rem .45rem;
-    border-radius: 3px;
-    font-weight: 700;
-    text-transform: uppercase;
+    font-size: .7rem; padding: .15rem .45rem;
+    border-radius: 3px; font-weight: 700; text-transform: uppercase;
   }
   .pers-accion.quitar  { background: #FCE8E8; color: var(--rojo); }
   .pers-accion.agregar { background: #D4EDDA; color: var(--verde); }
   .pers-accion.cambiar { background: #CCE5FF; color: #004085; }
+  .pers-costo { margin-left: auto; font-weight: 600; color: var(--dorado); font-size: .82rem; white-space: nowrap; }
 
-  .pers-costo {
-    margin-left: auto;
-    font-weight: 600;
-    color: var(--dorado);
-    font-size: .82rem;
-    white-space: nowrap;
-  }
-
-  /* ── RESUMEN STICKY ─────────────────────────────────── */
-  .resumen-sticky {
-    position: sticky;
-    top: 80px;
-  }
-  .resumen-card {
-    background: var(--blanco);
-    border-radius: 16px;
-    box-shadow: var(--sombra-lg);
-    overflow: hidden;
-  }
-  .resumen-header {
-    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
-    padding: 1.2rem 1.5rem;
-    color: #fff;
-  }
-  .resumen-header h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-  }
+  /* ── RESUMEN ── */
+  .resumen-sticky { position: sticky; top: 80px; }
+  .resumen-card { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra-lg); overflow: hidden; }
+  .resumen-header { background: linear-gradient(135deg, var(--rojo), #5A0F0F); padding: 1.2rem 1.5rem; color: #fff; }
+  .resumen-header h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; }
   .resumen-header p { font-size: .8rem; opacity: .7; margin-top: .2rem; }
-
   .resumen-body { padding: 1.2rem 1.5rem; }
-
-  .resumen-vacio {
-    text-align: center;
-    padding: 2rem 1rem;
-    color: var(--gris);
-  }
+  .resumen-vacio { text-align: center; padding: 2rem 1rem; color: var(--gris); }
   .resumen-vacio-icon { font-size: 2.5rem; margin-bottom: .5rem; }
   .resumen-vacio p { font-size: .88rem; }
-
   .resumen-items { list-style: none; margin-bottom: 1rem; }
   .resumen-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: .6rem 0;
-    border-bottom: 1px dashed #EDD9B5;
-    font-size: .88rem;
-    gap: .5rem;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: .6rem 0; border-bottom: 1px dashed #EDD9B5;
+    font-size: .88rem; gap: .5rem;
   }
   .resumen-item:last-child { border-bottom: none; }
   .resumen-item-nombre { color: var(--marron); font-weight: 600; flex: 1; }
-  .resumen-item-extras {
-    font-size: .75rem;
-    color: var(--gris);
-    margin-top: .2rem;
-    font-style: italic;
-  }
-  .resumen-item-precio {
-    font-weight: 700;
-    color: var(--verde);
-    white-space: nowrap;
-  }
-
-  .resumen-separador {
-    height: 1px;
-    background: #EDD9B5;
-    margin: .8rem 0;
-  }
-
-  .resumen-subtotal {
-    display: flex;
-    justify-content: space-between;
-    font-size: .88rem;
-    color: var(--gris);
-    margin-bottom: .3rem;
-  }
-  .resumen-total {
-    display: flex;
-    justify-content: space-between;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--rojo);
-    font-family: 'Cormorant Garamond', serif;
-    margin-top: .5rem;
-  }
+  .resumen-item-extras { font-size: .75rem; color: var(--gris); margin-top: .2rem; font-style: italic; }
+  .resumen-item-precio { font-weight: 700; color: var(--verde); white-space: nowrap; }
+  .resumen-separador { height: 1px; background: #EDD9B5; margin: .8rem 0; }
+  .resumen-subtotal { display: flex; justify-content: space-between; font-size: .88rem; color: var(--gris); margin-bottom: .3rem; }
+  .resumen-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: var(--rojo); font-family: 'Cormorant Garamond', serif; margin-top: .5rem; }
   .resumen-total-num { font-size: 1.4rem; }
-
   .resumen-footer { padding: 1rem 1.5rem 1.5rem; }
-  .btn-confirmar {
-    width: 100%;
-    justify-content: center;
-    font-size: 1rem;
-    padding: .85rem;
-    opacity: .5;
-    pointer-events: none;
-    transition: all .2s;
-  }
-  .btn-confirmar.activo {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .btn-confirmar { width: 100%; justify-content: center; font-size: 1rem; padding: .85rem; opacity: .5; pointer-events: none; transition: all .2s; }
+  .btn-confirmar.activo { opacity: 1; pointer-events: auto; }
 </style>
 {% endblock %}
 
@@ -259,26 +195,23 @@
 <form method="POST" action="/pedido" id="form-pedido">
 <div class="pedido-layout">
 
-  <!-- ── COLUMNA IZQUIERDA: Selección ─────────────────── -->
   <div>
     <h1 class="page-title">🛒 Hacer Pedido</h1>
     <p class="page-sub">Hola, <strong>{{ session.nombre }}</strong> — selecciona tus platos y personalízalos a tu gusto.</p>
 
-    <!-- Datos de entrega -->
     <div class="entrega-box">
       <h3>📦 Datos de Entrega</h3>
       <div class="entrega-grid">
         <div class="form-group" style="margin:0">
           <label class="form-label">Tipo de entrega</label>
-          <select name="tipo_entrega" class="form-control" id="tipo-entrega">
+          <select name="tipo_entrega" class="form-control">
             <option value="delivery">🚚 Delivery</option>
             <option value="recoge_local">🏪 Recojo en local</option>
           </select>
         </div>
         <div class="form-group" style="margin:0">
           <label class="form-label">Hora estimada</label>
-          <input type="text" name="hora_estimada" class="form-control"
-                 placeholder="Ej: 1:00 PM">
+          <input type="text" name="hora_estimada" class="form-control" placeholder="Ej: 1:00 PM">
         </div>
       </div>
     </div>
@@ -288,20 +221,25 @@
     <div class="platos-list">
       {% for p in platos if p[3] == 'entrada' %}
       <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}">
-        <div class="plato-header" onclick="togglePlato({{ p[0] }})">
+        <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
           <div class="plato-check" id="check-{{ p[0] }}"></div>
           <div class="plato-info">
             <div class="plato-info-nombre">{{ p[1] }}</div>
             <div class="plato-info-tipo">Entrada</div>
           </div>
           <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
+          <!-- Control de cantidad -->
+          <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
+            <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
+            <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
+            <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+          </div>
         </div>
-        <!-- Panel de personalización -->
-        <div class="pers-panel" id="pers-{{ p[0] }}">
+        <div class="pers-panel">
           <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
           <div class="pers-grid">
             {% for op in opciones %}
-            <label class="pers-opcion" id="label-op-{{ p[0] }}-{{ op[0] }}"
+            <label class="pers-opcion"
                    data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
                    data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
               <input type="checkbox"
@@ -310,16 +248,14 @@
                      onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
               <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
               <span>{{ op[2] }}</span>
-              {% if op[3] > 0 %}
-                <span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>
-              {% endif %}
+              {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
             </label>
             {% endfor %}
           </div>
         </div>
-        <!-- Hidden checkbox para el plato -->
-        <input type="checkbox" name="platos" value="{{ p[0] }}"
-               id="plato-input-{{ p[0] }}" style="display:none">
+        <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
+        <!-- Inputs ocultos para cantidad -->
+        <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
       </div>
       {% endfor %}
     </div>
@@ -329,19 +265,24 @@
     <div class="platos-list">
       {% for p in platos if p[3] == 'segundo' %}
       <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}">
-        <div class="plato-header" onclick="togglePlato({{ p[0] }})">
+        <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
           <div class="plato-check" id="check-{{ p[0] }}"></div>
           <div class="plato-info">
             <div class="plato-info-nombre">{{ p[1] }}</div>
             <div class="plato-info-tipo">Segundo</div>
           </div>
           <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
+          <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
+            <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
+            <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
+            <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+          </div>
         </div>
-        <div class="pers-panel" id="pers-{{ p[0] }}">
+        <div class="pers-panel">
           <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
           <div class="pers-grid">
             {% for op in opciones %}
-            <label class="pers-opcion" id="label-op-{{ p[0] }}-{{ op[0] }}"
+            <label class="pers-opcion"
                    data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
                    data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
               <input type="checkbox"
@@ -350,59 +291,40 @@
                      onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
               <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
               <span>{{ op[2] }}</span>
-              {% if op[3] > 0 %}
-                <span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>
-              {% endif %}
+              {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
             </label>
             {% endfor %}
           </div>
         </div>
-        <input type="checkbox" name="platos" value="{{ p[0] }}"
-               id="plato-input-{{ p[0] }}" style="display:none">
+        <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
+        <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
       </div>
       {% endfor %}
     </div>
   </div>
 
-  <!-- ── COLUMNA DERECHA: Resumen ──────────────────────── -->
+  <!-- RESUMEN -->
   <div class="resumen-sticky">
     <div class="resumen-card">
       <div class="resumen-header">
         <h3>📋 Tu Pedido</h3>
         <p>Resumen en tiempo real</p>
       </div>
-
       <div class="resumen-body">
-        <!-- Estado vacío -->
         <div class="resumen-vacio" id="resumen-vacio">
           <div class="resumen-vacio-icon">🍽️</div>
           <p>Selecciona platos<br>para ver el resumen</p>
         </div>
-
-        <!-- Items -->
         <ul class="resumen-items" id="resumen-items" style="display:none"></ul>
-
         <div id="resumen-totales" style="display:none">
           <div class="resumen-separador"></div>
-          <div class="resumen-subtotal">
-            <span>Subtotal platos</span>
-            <span id="res-subtotal">S/ 0.00</span>
-          </div>
-          <div class="resumen-subtotal">
-            <span>Extra personalizaciones</span>
-            <span id="res-extras">S/ 0.00</span>
-          </div>
-          <div class="resumen-total">
-            <span>Total a pagar</span>
-            <span class="resumen-total-num" id="res-total">S/ 0.00</span>
-          </div>
+          <div class="resumen-subtotal"><span>Subtotal platos</span><span id="res-subtotal">S/ 0.00</span></div>
+          <div class="resumen-subtotal"><span>Extra personalizaciones</span><span id="res-extras">S/ 0.00</span></div>
+          <div class="resumen-total"><span>Total a pagar</span><span class="resumen-total-num" id="res-total">S/ 0.00</span></div>
         </div>
       </div>
-
       <div class="resumen-footer">
-        <button type="submit" class="btn btn-rojo btn-confirmar" id="btn-confirmar">
-          ✅ Confirmar Pedido
-        </button>
+        <button type="submit" class="btn btn-rojo btn-confirmar" id="btn-confirmar">✅ Confirmar Pedido</button>
         <p style="text-align:center;font-size:.75rem;color:var(--gris);margin-top:.7rem">
           Tu pedido quedará en estado <em>pendiente</em> hasta que lo confirmemos.
         </p>
@@ -415,47 +337,50 @@
 </div>
 
 <script>
-// Estado del carrito en JavaScript
-const carrito = {};   // { id_plato: { nombre, precioBase, extras: { id_op: {nombre, costo} } } }
+const carrito = {};
 
-function togglePlato(idPlato) {
+function togglePlato(idPlato, event) {
   const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
   const inputCheck = document.getElementById(`plato-input-${idPlato}`);
   const estaSeleccionado = item.classList.contains('seleccionado');
   const checkDiv = document.getElementById(`check-${idPlato}`);
 
   if (estaSeleccionado) {
-    // Deseleccionar: quitar del carrito
     item.classList.remove('seleccionado');
     checkDiv.innerHTML = '';
     inputCheck.checked = false;
     delete carrito[idPlato];
-    // Desmarcar todas sus opciones
+    document.getElementById(`cantidad-num-${idPlato}`).textContent = '1';
+    document.getElementById(`cantidad-input-${idPlato}`).value = '1';
     item.querySelectorAll('input[type="checkbox"]').forEach(cb => {
       cb.checked = false;
       cb.closest('.pers-opcion').classList.remove('marcada');
     });
   } else {
-    // Seleccionar: agregar al carrito
     item.classList.add('seleccionado');
     checkDiv.innerHTML = '✓';
     inputCheck.checked = true;
     const nombre = item.dataset.nombre;
     const precio = parseFloat(item.dataset.precio);
-    carrito[idPlato] = { nombre, precioBase: precio, extras: {} };
+    carrito[idPlato] = { nombre, precioBase: precio, cantidad: 1, extras: {} };
   }
+  actualizarResumen();
+}
+
+function cambiarCantidad(idPlato, delta) {
+  if (!carrito[idPlato]) return;
+  const nueva = Math.max(1, (carrito[idPlato].cantidad || 1) + delta);
+  carrito[idPlato].cantidad = nueva;
+  document.getElementById(`cantidad-num-${idPlato}`).textContent = nueva;
+  document.getElementById(`cantidad-input-${idPlato}`).value = nueva;
   actualizarResumen();
 }
 
 function toggleOpcion(idPlato, idOpcion, costo, accion, ingrediente, checkbox) {
   if (!carrito[idPlato]) return;
   const label = checkbox.closest('.pers-opcion');
-
   if (checkbox.checked) {
-    carrito[idPlato].extras[idOpcion] = {
-      nombre: `${accion} ${ingrediente}`,
-      costo: parseFloat(costo)
-    };
+    carrito[idPlato].extras[idOpcion] = { nombre: `${accion} ${ingrediente}`, costo: parseFloat(costo) };
     label.classList.add('marcada');
   } else {
     delete carrito[idPlato].extras[idOpcion];
@@ -485,31 +410,31 @@ function actualizarResumen() {
   btnConfirmar.classList.add('activo');
 
   let subtotalPlatos = 0;
-  let subtotalExtras  = 0;
+  let subtotalExtras = 0;
   let html = '';
 
   for (const idPlato of ids) {
     const p = carrito[idPlato];
-    subtotalPlatos += p.precioBase;
+    const cantidad = p.cantidad || 1;
+    subtotalPlatos += p.precioBase * cantidad;
 
     let extrasTexto = '';
-    let costoExtras  = 0;
+    let costoExtras = 0;
     for (const op of Object.values(p.extras)) {
-      costoExtras  += op.costo;
-      extrasTexto  += `<br>· ${op.nombre}${op.costo > 0 ? ' (+S/'+op.costo.toFixed(2)+')' : ''}`;
+      costoExtras += op.costo;
+      extrasTexto += `<br>· ${op.nombre}${op.costo > 0 ? ' (+S/'+op.costo.toFixed(2)+')' : ''}`;
     }
-    subtotalExtras += costoExtras;
-    const totalItem = p.precioBase + costoExtras;
+    subtotalExtras += costoExtras * cantidad;
+    const totalItem = (p.precioBase + costoExtras) * cantidad;
 
     html += `
       <li class="resumen-item">
         <div>
-          <div class="resumen-item-nombre">${p.nombre}</div>
+          <div class="resumen-item-nombre">${cantidad > 1 ? `x${cantidad} ` : ''}${p.nombre}</div>
           ${extrasTexto ? `<div class="resumen-item-extras">${extrasTexto}</div>` : ''}
         </div>
         <span class="resumen-item-precio">S/ ${totalItem.toFixed(2)}</span>
-      </li>
-    `;
+      </li>`;
   }
 
   itemsList.innerHTML = html;
