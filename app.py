@@ -430,6 +430,71 @@ def salir():
     flash(f'Hasta pronto, {nombre}. 👋', 'info')
     return redirect(url_for('index'))
 
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  REPORTES ADMIN                                      ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/reportes')
+def admin_reportes():
+    if not session.get('es_admin'):
+        return redirect(url_for('admin_login'))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    cur.execute("SELECT COALESCE(SUM(total), 0) FROM Pedido WHERE estado = 'entregado'")
+    ingresos = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM Pedido WHERE estado = 'cancelado'")
+    total_cancelados = cur.fetchone()[0]
+
+    cur.execute("SELECT COALESCE(SUM(total), 0) FROM Pedido WHERE estado = 'cancelado'")
+    monto_cancelados = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT DATE(fecha_pedido) as dia, COALESCE(SUM(total), 0) as ganancia
+        FROM Pedido WHERE estado = 'entregado'
+        AND fecha_pedido >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(fecha_pedido) ORDER BY dia
+    """)
+    ganancias_por_dia = cur.fetchall()
+
+    cur.execute("""
+        SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
+        FROM Pedido WHERE estado = 'cancelado'
+        AND fecha_pedido >= NOW() - INTERVAL '30 days'
+        GROUP BY DATE(fecha_pedido) ORDER BY dia
+    """)
+    cancelados_por_dia = cur.fetchall()
+
+    cur.execute("""
+        SELECT pl.nombre, SUM(dp.cantidad) as total_vendido
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        JOIN Pedido p ON p.id_pedido = dp.id_pedido
+        WHERE p.estado = 'entregado'
+        GROUP BY pl.nombre ORDER BY total_vendido DESC LIMIT 5
+    """)
+    platos_top = cur.fetchall()
+
+    cur.execute("""
+        SELECT p.id_pedido, c.nombre, p.fecha_pedido, p.total
+        FROM Pedido p JOIN Cliente c ON c.id_cliente = p.id_cliente
+        WHERE p.estado = 'cancelado'
+        ORDER BY p.fecha_pedido DESC LIMIT 10
+    """)
+    cancelados_recientes = cur.fetchall()
+
+    conn.close()
+    return render_template('admin_reportes.html',
+        ingresos=float(ingresos),
+        total_cancelados=total_cancelados,
+        monto_cancelados=float(monto_cancelados),
+        ganancias_por_dia=ganancias_por_dia,
+        cancelados_por_dia=cancelados_por_dia,
+        platos_top=platos_top,
+        cancelados_recientes=cancelados_recientes)
+
 # ╔══════════════════════════════════════════════════════════╗
 # ║  DIAGNÓSTICO                                            ║
 # ╚══════════════════════════════════════════════════════════╝
