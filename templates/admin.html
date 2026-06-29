@@ -13,16 +13,12 @@
     margin-bottom: 2rem;
     color: #fff;
   }
-  .admin-topbar h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; font-weight: 700;
-  }
+  .admin-topbar h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
   .admin-topbar p { font-size: .82rem; opacity: .7; }
 
-  /* KPIs */
   .kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
   }
@@ -33,24 +29,16 @@
     box-shadow: var(--sombra);
     display: flex; align-items: center; gap: 1rem;
   }
-  .kpi-icon {
-    width: 52px; height: 52px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-  }
+  .kpi-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
   .kpi-icon.rojo   { background: #FCE8E8; }
   .kpi-icon.dorado { background: #FFF0CC; }
   .kpi-icon.verde  { background: #D4EDDA; }
   .kpi-icon.azul   { background: #CCE5FF; }
-  .kpi-valor {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1;
-  }
+  .kpi-icon.naranja { background: #FFE8CC; }
+  .kpi-icon.morado { background: #EDE0FF; }
+  .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1; }
   .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
 
-  /* Accesos rápidos */
   .accesos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -58,146 +46,237 @@
     margin-bottom: 2.5rem;
   }
   .acceso-card {
-    background: var(--blanco);
-    border-radius: 12px;
-    padding: 1.3rem 1.5rem;
-    box-shadow: var(--sombra);
-    display: flex; align-items: center; gap: 1rem;
-    text-decoration: none;
-    color: var(--marron);
+    background: var(--blanco); border-radius: 12px; padding: 1.3rem 1.5rem;
+    box-shadow: var(--sombra); display: flex; align-items: center; gap: 1rem;
+    text-decoration: none; color: var(--marron);
     transition: transform .2s, box-shadow .2s;
     border-left: 4px solid var(--dorado);
   }
-  .acceso-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--sombra-lg);
-  }
-  .acceso-card .acceso-icon {
-    font-size: 1.8rem;
-    width: 48px; height: 48px;
-    background: #FFF0CC;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .acceso-card h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem; font-weight: 700;
-    margin-bottom: .2rem;
-  }
+  .acceso-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-lg); }
+  .acceso-card .acceso-icon { font-size: 1.8rem; width: 48px; height: 48px; background: #FFF0CC; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .acceso-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
   .acceso-card p { font-size: .78rem; color: var(--gris); }
 
-  /* Tabla */
   .admin-section-title {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem;
   }
-  .estado-select {
-    border: 1.5px solid #D0B896;
-    border-radius: 6px;
-    padding: .35rem .6rem;
-    font-family: 'Jost', sans-serif;
-    font-size: .82rem;
+
+  /* REPORTES */
+  .reportes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (max-width: 768px) { .reportes-grid { grid-template-columns: 1fr; } }
+
+  .reporte-card {
     background: var(--blanco);
-    cursor: pointer;
-    color: var(--marron);
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+  }
+  .reporte-header {
+    padding: 1rem 1.4rem;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .reporte-header.verde { background: linear-gradient(135deg, #1a5c2a, #2C4A1E); }
+  .reporte-header.rojo  { background: linear-gradient(135deg, #8B1A1A, #5A0F0F); }
+  .reporte-header h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 1.2rem; font-weight: 700; }
+  .reporte-header p { color: rgba(255,255,255,.7); font-size: .78rem; margin-top: .1rem; }
+  .reporte-kpis {
+    display: flex; gap: 1rem;
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid #F0E4CC;
+  }
+  .reporte-kpi { flex: 1; text-align: center; }
+  .reporte-kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
+  .reporte-kpi-val.verde { color: var(--verde); }
+  .reporte-kpi-val.rojo  { color: var(--rojo); }
+  .reporte-kpi-lbl { font-size: .72rem; color: var(--gris); text-transform: uppercase; letter-spacing: .5px; }
+  .reporte-chart { padding: 1rem 1.4rem 1.4rem; }
+  .reporte-chart canvas { width: 100% !important; }
+
+  /* TOP PLATOS */
+  .top-platos { padding: 1rem 1.4rem 1.4rem; }
+  .top-plato-item {
+    display: flex; align-items: center; gap: .8rem;
+    padding: .5rem 0; border-bottom: 1px dashed #F0E4CC;
+    font-size: .88rem;
+  }
+  .top-plato-item:last-child { border-bottom: none; }
+  .top-plato-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--dorado); color: #fff;
+    font-size: .72rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .top-plato-nombre { flex: 1; font-weight: 600; color: var(--marron); }
+  .top-plato-cant { font-weight: 700; color: var(--verde); }
+
+  /* TABLA */
+  .estado-select {
+    border: 1.5px solid #D0B896; border-radius: 6px;
+    padding: .35rem .6rem; font-family: 'Jost', sans-serif;
+    font-size: .82rem; background: var(--blanco);
+    cursor: pointer; color: var(--marron);
   }
   .toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     background: #2C4A1E; color: #fff;
-    padding: .8rem 1.3rem;
-    border-radius: 8px;
-    font-size: .88rem;
-    display: none;
-    z-index: 999;
+    padding: .8rem 1.3rem; border-radius: 8px;
+    font-size: .88rem; display: none; z-index: 999;
     box-shadow: 0 4px 16px rgba(0,0,0,.2);
     animation: slideUp .3s ease;
   }
   @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
-
-  .filtros {
-    display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem;
-  }
+  .filtros { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
   .filtro-btn {
-    padding: .35rem .9rem;
-    border-radius: 20px;
-    border: 1.5px solid #D0B896;
-    background: var(--blanco);
-    font-size: .8rem;
-    cursor: pointer;
-    font-family: 'Jost', sans-serif;
-    font-weight: 600;
-    transition: all .2s;
-    color: var(--gris);
+    padding: .35rem .9rem; border-radius: 20px;
+    border: 1.5px solid #D0B896; background: var(--blanco);
+    font-size: .8rem; cursor: pointer;
+    font-family: 'Jost', sans-serif; font-weight: 600;
+    transition: all .2s; color: var(--gris);
   }
-  .filtro-btn:hover, .filtro-btn.activo {
-    background: var(--rojo); color: #fff; border-color: var(--rojo);
-  }
+  .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="container">
 <div class="admin-page">
 
-  <!-- Barra superior -->
   <div class="admin-topbar">
     <div>
       <h1>⚙️ Panel de Administración</h1>
       <p>Restaurante San Antonio — Gestión de Pedidos</p>
     </div>
-    <a href="/admin/logout" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">
-      Cerrar sesión
-    </a>
+    <a href="/admin/logout" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">Cerrar sesión</a>
   </div>
 
   <!-- KPIs -->
   <div class="kpis">
     <div class="kpi-card">
       <div class="kpi-icon rojo">🧾</div>
-      <div>
-        <div class="kpi-valor">{{ total_pedidos }}</div>
-        <div class="kpi-label">Total Pedidos</div>
-      </div>
+      <div><div class="kpi-valor">{{ total_pedidos }}</div><div class="kpi-label">Total Pedidos</div></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-icon dorado">⏳</div>
-      <div>
-        <div class="kpi-valor">{{ pendientes }}</div>
-        <div class="kpi-label">Pendientes</div>
-      </div>
+      <div><div class="kpi-valor">{{ pendientes }}</div><div class="kpi-label">Pendientes</div></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-icon verde">💰</div>
-      <div>
-        <div class="kpi-valor">S/ {{ "%.0f"|format(ingresos) }}</div>
-        <div class="kpi-label">Ingresos (entregados)</div>
-      </div>
+      <div><div class="kpi-valor">S/ {{ "%.0f"|format(ingresos) }}</div><div class="kpi-label">Ingresos (entregados)</div></div>
     </div>
     <div class="kpi-card">
       <div class="kpi-icon azul">👥</div>
-      <div>
-        <div class="kpi-valor">{{ total_clientes }}</div>
-        <div class="kpi-label">Clientes Registrados</div>
-      </div>
+      <div><div class="kpi-valor">{{ total_clientes }}</div><div class="kpi-label">Clientes Registrados</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon naranja">❌</div>
+      <div><div class="kpi-valor">{{ total_cancelados }}</div><div class="kpi-label">Cancelados</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon morado">💸</div>
+      <div><div class="kpi-valor">S/ {{ "%.0f"|format(monto_cancelados) }}</div><div class="kpi-label">Posibles Devoluciones</div></div>
     </div>
   </div>
 
-  <!-- Accesos rápidos -->
+  <!-- Herramientas -->
   <h2 class="admin-section-title">🔧 Herramientas</h2>
   <div class="accesos-grid" style="margin-bottom:2.5rem">
     <a href="/admin/menu_semanal" class="acceso-card">
       <div class="acceso-icon">📅</div>
-      <div>
-        <h3>Menú Semanal</h3>
-        <p>Agregar, editar o borrar el menú de cada día</p>
-      </div>
+      <div><h3>Menú Semanal</h3><p>Agregar, editar o borrar el menú de cada día</p></div>
     </a>
   </div>
 
-  <!-- Tabla de pedidos -->
-  <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
+  <!-- REPORTES -->
+  <h2 class="admin-section-title">📊 Reportes</h2>
+  <div class="reportes-grid">
 
+    <!-- REPORTE GANANCIAS -->
+    <div class="reporte-card">
+      <div class="reporte-header verde">
+        <div>
+          <h3>💰 Reporte de Ganancias</h3>
+          <p>Pedidos entregados — confirmaciones de pago</p>
+        </div>
+      </div>
+      <div class="reporte-kpis">
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val verde">S/ {{ "%.2f"|format(ingresos) }}</div>
+          <div class="reporte-kpi-lbl">Total Ganado</div>
+        </div>
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val verde">{{ ganancias_por_dia|length }}</div>
+          <div class="reporte-kpi-lbl">Días con ventas</div>
+        </div>
+      </div>
+      <div class="reporte-chart">
+        <canvas id="chartGanancias" height="200"></canvas>
+      </div>
+      {% if platos_top %}
+      <div style="padding: 0 1.4rem; margin-bottom:.5rem">
+        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">🏆 Platos más vendidos</p>
+      </div>
+      <div class="top-platos">
+        {% for pt in platos_top %}
+        <div class="top-plato-item">
+          <div class="top-plato-num">{{ loop.index }}</div>
+          <div class="top-plato-nombre">{{ pt[0] }}</div>
+          <div class="top-plato-cant">{{ pt[1] }} uds</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- REPORTE CANCELADOS -->
+    <div class="reporte-card">
+      <div class="reporte-header rojo">
+        <div>
+          <h3>⚠️ Reporte de Cancelados</h3>
+          <p>Posibles devoluciones o pérdidas</p>
+        </div>
+      </div>
+      <div class="reporte-kpis">
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val rojo">{{ total_cancelados }}</div>
+          <div class="reporte-kpi-lbl">Total Cancelados</div>
+        </div>
+        <div class="reporte-kpi">
+          <div class="reporte-kpi-val rojo">S/ {{ "%.2f"|format(monto_cancelados) }}</div>
+          <div class="reporte-kpi-lbl">Monto en riesgo</div>
+        </div>
+      </div>
+      <div class="reporte-chart">
+        <canvas id="chartCancelados" height="200"></canvas>
+      </div>
+      <!-- Tabla cancelados recientes -->
+      <div style="padding: 0 1.4rem 1.4rem">
+        <p style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gris);margin-bottom:.5rem">Últimos cancelados</p>
+        {% set cancelados = pedidos | selectattr('5', 'equalto', 'cancelado') | list %}
+        {% if cancelados %}
+          {% for p in cancelados[:5] %}
+          <div style="display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px dashed #F0E4CC;font-size:.85rem">
+            <span><strong>#{{ p[0] }}</strong> — {{ p[1] }}</span>
+            <span style="color:var(--rojo);font-weight:700">S/ {{ "%.2f"|format(p[6]) }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p style="color:var(--gris);font-size:.85rem;text-align:center;padding:1rem">Sin cancelados recientes ✅</p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Tabla pedidos -->
+  <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
   <div class="filtros">
     <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
     <button class="filtro-btn" onclick="filtrar('pendiente', this)">⏳ Pendientes</button>
@@ -206,20 +285,10 @@
     <button class="filtro-btn" onclick="filtrar('entregado', this)">📦 Entregados</button>
     <button class="filtro-btn" onclick="filtrar('cancelado', this)">❌ Cancelados</button>
   </div>
-
   <div class="tabla-wrapper">
     <table id="tabla-pedidos">
       <thead>
-        <tr>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Entrega</th>
-          <th>Hora Est.</th>
-          <th>Total</th>
-          <th>Estado</th>
-          <th>Acción</th>
-        </tr>
+        <tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
       </thead>
       <tbody>
         {% for p in pedidos %}
@@ -230,11 +299,9 @@
           <td>{% if p[3] == 'delivery' %}🚚 Delivery{% else %}🏪 Local{% endif %}</td>
           <td>{{ p[4] or '—' }}</td>
           <td><strong style="color:var(--verde)">S/ {{ "%.2f"|format(p[6]) }}</strong></td>
-          <td id="estado-badge-{{ p[0] }}">
-            <span class="badge badge-{{ p[5] }}">{{ p[5]|capitalize }}</span>
-          </td>
+          <td id="estado-badge-{{ p[0] }}"><span class="badge badge-{{ p[5] }}">{{ p[5]|capitalize }}</span></td>
           <td>
-            <select class="estado-select" onchange="cambiarEstado({{ p[0] }}, this.value)" id="sel-{{ p[0] }}">
+            <select class="estado-select" onchange="cambiarEstado({{ p[0] }}, this.value)">
               <option value="pendiente"  {% if p[5]=='pendiente'  %}selected{% endif %}>Pendiente</option>
               <option value="confirmado" {% if p[5]=='confirmado' %}selected{% endif %}>Confirmado</option>
               <option value="listo"      {% if p[5]=='listo'      %}selected{% endif %}>Listo</option>
@@ -254,27 +321,79 @@
 <div class="toast" id="toast">✅ Estado actualizado</div>
 
 <script>
+// Datos para gráficas desde Jinja
+const diasGanancias = [{% for g in ganancias_por_dia %}"{{ g[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const montosGanancias = [{% for g in ganancias_por_dia %}{{ g[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+const diasCancelados = [{% for c in cancelados_por_dia %}"{{ c[0].strftime('%d/%m') }}"{% if not loop.last %},{% endif %}{% endfor %}];
+const cantCancelados = [{% for c in cancelados_por_dia %}{{ c[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
+const montoCancelados = [{% for c in cancelados_por_dia %}{{ c[2] }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+// Gráfica ganancias
+const ctxG = document.getElementById('chartGanancias').getContext('2d');
+new Chart(ctxG, {
+  type: 'bar',
+  data: {
+    labels: diasGanancias.length ? diasGanancias : ['Sin datos'],
+    datasets: [{
+      label: 'Ganancias S/',
+      data: diasGanancias.length ? montosGanancias : [0],
+      backgroundColor: 'rgba(44,74,30,0.7)',
+      borderColor: '#2C4A1E',
+      borderWidth: 2,
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } }
+    }
+  }
+});
+
+// Gráfica cancelados
+const ctxC = document.getElementById('chartCancelados').getContext('2d');
+new Chart(ctxC, {
+  type: 'line',
+  data: {
+    labels: diasCancelados.length ? diasCancelados : ['Sin datos'],
+    datasets: [{
+      label: 'Cancelados',
+      data: diasCancelados.length ? cantCancelados : [0],
+      borderColor: '#8B1A1A',
+      backgroundColor: 'rgba(139,26,26,0.1)',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#8B1A1A',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+
 function cambiarEstado(idPedido, nuevoEstado) {
   const formData = new FormData();
   formData.append('id_pedido', idPedido);
   formData.append('estado', nuevoEstado);
-
-  fetch('/admin/actualizar_estado', {
-    method: 'POST',
-    body: formData
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.ok) {
-      const badgeCell = document.getElementById('estado-badge-' + idPedido);
-      badgeCell.innerHTML = `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
-      document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
-      const toast = document.getElementById('toast');
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 2500);
-    }
-  })
-  .catch(() => alert('Error al actualizar. Revisa la conexión.'));
+  fetch('/admin/actualizar_estado', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const badgeCell = document.getElementById('estado-badge-' + idPedido);
+        badgeCell.innerHTML = `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
+        document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+      }
+    })
+    .catch(() => alert('Error al actualizar.'));
 }
 
 function filtrar(estado, btn) {
