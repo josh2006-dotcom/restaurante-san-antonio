@@ -18,6 +18,78 @@ def index():
     return render_template('index.html', platos=platos)
 
 # ╔══════════════════════════════════════════════════════╗
+# ║  MENÚ SEMANAL — Público                              ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/menu_semanal')
+def menu_semanal():
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        SELECT dia, entrada, segundo, semana
+        FROM Menu_Semanal
+        ORDER BY
+          CASE dia
+            WHEN 'Lunes'     THEN 1
+            WHEN 'Martes'    THEN 2
+            WHEN 'Miércoles' THEN 3
+            WHEN 'Jueves'    THEN 4
+            WHEN 'Viernes'   THEN 5
+            WHEN 'Sábado'    THEN 6
+            WHEN 'Domingo'   THEN 7
+          END
+    """)
+    menu = cur.fetchall()
+    conn.close()
+    return render_template('menu_semanal.html', menu=menu)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  MENÚ SEMANAL — Admin editar                         ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/menu_semanal', methods=['GET', 'POST'])
+def admin_menu_semanal():
+    if not session.get('es_admin'):
+        return redirect(url_for('admin_login'))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    if request.method == 'POST':
+        dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+        semana = request.form.get('semana', '')
+        # Borrar menú actual y reemplazar
+        cur.execute("DELETE FROM Menu_Semanal")
+        for dia in dias:
+            entrada = request.form.get(f'entrada_{dia}', '').strip()
+            segundo = request.form.get(f'segundo_{dia}', '').strip()
+            if entrada or segundo:
+                cur.execute("""
+                    INSERT INTO Menu_Semanal (dia, entrada, segundo, semana)
+                    VALUES (%s, %s, %s, %s)
+                """, (dia, entrada, segundo, semana))
+        conn.commit()
+        conn.close()
+        flash('¡Menú semanal actualizado! ✅', 'success')
+        return redirect(url_for('admin_menu_semanal'))
+
+    cur.execute("""
+        SELECT dia, entrada, segundo, semana
+        FROM Menu_Semanal
+        ORDER BY
+          CASE dia
+            WHEN 'Lunes'     THEN 1
+            WHEN 'Martes'    THEN 2
+            WHEN 'Miércoles' THEN 3
+            WHEN 'Jueves'    THEN 4
+            WHEN 'Viernes'   THEN 5
+            WHEN 'Sábado'    THEN 6
+            WHEN 'Domingo'   THEN 7
+          END
+    """)
+    menu = cur.fetchall()
+    conn.close()
+    return render_template('admin_menu_semanal.html', menu=menu)
+
+# ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/registro', methods=['GET', 'POST'])
@@ -34,19 +106,16 @@ def registro():
         conn = get_connection()
         cur  = conn.cursor()
 
-        # Verificar si ya existe ese teléfono
         cur.execute("SELECT id_cliente, nombre FROM Cliente WHERE telefono = %s", (telefono,))
         existe = cur.fetchone()
 
         if existe:
-            # Ya existe: iniciar sesión directamente
             session['id_cliente'] = existe[0]
             session['nombre']     = existe[1]
             conn.close()
             flash(f'¡Bienvenido de vuelta, {existe[1]}!', 'info')
             return redirect(url_for('index'))
 
-        # Insertar nuevo cliente
         cur.execute(
             "INSERT INTO Cliente (nombre, telefono, direccion_referencia) VALUES (%s, %s, %s)",
             (nombre, telefono, direccion)
@@ -69,7 +138,6 @@ def registro():
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/api/opciones')
 def api_opciones():
-    """Retorna todas las opciones de personalización en JSON."""
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
@@ -113,7 +181,6 @@ def pedido():
             conn.close()
             return redirect(url_for('pedido'))
 
-        # 1. Crear el pedido y obtener el ID usando RETURNING
         cur.execute("""
             INSERT INTO Pedido (fecha_pedido, id_cliente, tipo_entrega, hora_estimada, estado, total)
             VALUES (NOW(), %s, %s, %s, 'pendiente', 0)
@@ -122,7 +189,6 @@ def pedido():
         id_pedido = cur.fetchone()[0]
         conn.commit()
 
-        # 2. Insertar detalles y personalizaciones
         for id_plato in platos_ids:
             cur.execute("SELECT precio FROM Plato WHERE id_plato = %s", (id_plato,))
             row = cur.fetchone()
@@ -130,7 +196,6 @@ def pedido():
                 continue
             precio_base = float(row[0])
 
-            # Extra por personalizaciones de ESTE plato
             opciones_ids = request.form.getlist(f'opciones_{id_plato}')
             costo_extra  = 0.0
             for op_id in opciones_ids:
@@ -140,7 +205,7 @@ def pedido():
                     costo_extra += float(op_row[0])
 
             precio_final = precio_base + costo_extra
-            subtotal     = precio_final  # cantidad siempre 1 por ahora
+            subtotal     = precio_final
 
             cur.execute("""
                 INSERT INTO Detalle_Pedido (id_pedido, id_plato, cantidad, precio_unitario, subtotal)
@@ -149,7 +214,6 @@ def pedido():
             """, (id_pedido, id_plato, precio_final, subtotal))
             id_detalle = cur.fetchone()[0]
 
-            # Insertar personalizaciones
             for op_id in opciones_ids:
                 cur.execute("""
                     INSERT INTO Detalle_Personalizacion (id_detalle, id_opcion)
@@ -158,7 +222,6 @@ def pedido():
 
         conn.commit()
 
-        # 3. Actualizar total del pedido
         cur.execute("""
             UPDATE Pedido
             SET total = (
@@ -174,7 +237,6 @@ def pedido():
         flash('¡Pedido realizado con éxito! Pronto lo confirmaremos. 🍽️', 'success')
         return redirect(url_for('mis_pedidos'))
 
-    # GET: cargar platos y opciones (CORREGIDO: TRUE en lugar de 1)
     cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
     cur.execute("SELECT id_opcion, accion, ingrediente, costo_extra FROM Opcion_Personalizacion ORDER BY accion")
@@ -204,7 +266,6 @@ def mis_pedidos():
     """, (session['id_cliente'],))
     pedidos = cur.fetchall()
 
-    # Para cada pedido, obtener sus detalles
     detalles_por_pedido = {}
     for ped in pedidos:
         cur.execute("""
@@ -244,14 +305,12 @@ def mis_pedidos():
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/admin')
 def admin():
-    # Contraseña simple de admin (para un trabajo universitario está bien)
     if not session.get('es_admin'):
         return redirect(url_for('admin_login'))
 
     conn = get_connection()
     cur  = conn.cursor()
 
-    # Todos los pedidos con nombre de cliente
     cur.execute("""
         SELECT p.id_pedido, c.nombre, p.fecha_pedido,
                p.tipo_entrega, p.hora_estimada, p.estado, p.total
@@ -261,7 +320,6 @@ def admin():
     """)
     pedidos = cur.fetchall()
 
-    # Estadísticas rápidas
     cur.execute("SELECT COUNT(*) FROM Pedido")
     total_pedidos = cur.fetchone()[0]
 
@@ -287,7 +345,7 @@ def actualizar_estado():
     if not session.get('es_admin'):
         return jsonify({'error': 'No autorizado'}), 403
 
-    id_pedido  = request.form.get('id_pedido')
+    id_pedido    = request.form.get('id_pedido')
     nuevo_estado = request.form.get('estado')
 
     estados_validos = ['pendiente', 'confirmado', 'listo', 'entregado', 'cancelado']
@@ -305,7 +363,7 @@ def actualizar_estado():
 def admin_login():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password == 'admin123':   # ← Cambia esta contraseña si quieres
+        if password == 'admin123':
             session['es_admin'] = True
             return redirect(url_for('admin'))
         flash('Contraseña incorrecta.', 'danger')
@@ -328,12 +386,11 @@ def salir():
     return redirect(url_for('index'))
 
 # ╔══════════════════════════════════════════════════════════╗
-# ║  RUTA DE DIAGNÓSTICO (simplificada para PostgreSQL)     ║
+# ║  DIAGNÓSTICO                                            ║
 # ╚══════════════════════════════════════════════════════════╝
 @app.route('/diagnostico')
 def diagnostico():
     resultados = []
-    # Verificar conexión
     bd_ok = False
     try:
         conn = get_connection()
@@ -343,14 +400,13 @@ def diagnostico():
     except Exception as e:
         resultados.append(('Conexión a PostgreSQL', str(e)[:120], False))
 
-    # Tablas si hay conexión
     tabla_resultados = []
     if bd_ok:
         try:
             conn = get_connection()
             cur = conn.cursor()
             for tabla in ['Cliente','Plato','Opcion_Personalizacion',
-                          'Pedido','Detalle_Pedido','Detalle_Personalizacion']:
+                          'Pedido','Detalle_Pedido','Detalle_Personalizacion','Menu_Semanal']:
                 cur.execute(f"SELECT COUNT(*) FROM {tabla}")
                 n = cur.fetchone()[0]
                 tabla_resultados.append((tabla, n, n > 0))
@@ -358,46 +414,28 @@ def diagnostico():
         except Exception as e:
             tabla_resultados.append(('Error', str(e), False))
 
-    # Construir HTML
     css = """<!DOCTYPE html><html lang="es"><head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Diagnóstico</title>
+    <meta charset="UTF-8"><title>Diagnóstico</title>
     <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       body{font-family:'Jost',sans-serif;background:#FDF3E3;color:#2D1B00;margin:0;padding:2rem}
       h1{color:#8B1A1A;font-size:1.8rem;margin-bottom:.3rem}
-      p{color:#6B5B4B;margin-bottom:2rem}
       .card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:1.5rem;margin-bottom:1.5rem}
-      h2{font-size:1.1rem;margin-bottom:1rem;color:#2D1B00}
       .row{display:flex;align-items:center;gap:1rem;padding:.6rem 0;border-bottom:1px solid #F0E4CC;font-size:.9rem}
       .row:last-child{border-bottom:none}
-      .ico{font-size:1.1rem;width:1.5rem;text-align:center;flex-shrink:0}
-      .label{font-weight:600;min-width:220px}
-      .val{color:#6B5B4B;flex:1;word-break:break-all}
-      .num{font-weight:700;font-size:1.1rem;min-width:60px;text-align:right;color:#2C4A1E}
+      .ico{font-size:1.1rem;width:1.5rem} .label{font-weight:600;min-width:220px}
+      .val{color:#6B5B4B;flex:1} .num{font-weight:700;color:#2C4A1E;min-width:60px;text-align:right}
       a{display:inline-block;margin-top:1rem;background:#8B1A1A;color:#fff;padding:.6rem 1.4rem;border-radius:6px;text-decoration:none;font-weight:600}
-      a:hover{background:#6B1212}
-      .ok{color:#2C4A1E} .err{color:#8B1A1A}
     </style></head><body>
-    <h1>🔍 Diagnóstico del Sistema</h1>
-    <p>Verificación de conexión y datos — Restaurante San Antonio (PostgreSQL)</p>"""
+    <h1>🔍 Diagnóstico</h1>"""
 
-    filas_conexion = ""
-    for label, val, ok in resultados:
-        ico   = "✅" if ok else "❌"
-        clase = "ok" if ok else "err"
-        filas_conexion += f'<div class="row"><span class="ico">{ico}</span><span class="label {clase}">{label}</span><span class="val">{val}</span></div>'
+    filas = "".join(f'<div class="row"><span class="ico">{"✅" if ok else "❌"}</span><span class="label">{l}</span><span class="val">{v}</span></div>' for l,v,ok in resultados)
+    filas_t = "".join(f'<div class="row"><span class="ico">{"✅" if ok else "⚠️"}</span><span class="label">{t}</span><span class="num">{n} filas</span></div>' for t,n,ok in tabla_resultados)
 
-    filas_tablas = ""
-    for t, n, ok in tabla_resultados:
-        ico = "✅" if ok else "⚠️"
-        filas_tablas += f'<div class="row"><span class="ico">{ico}</span><span class="label">{t}</span><span class="num">{n} filas</span></div>'
-
-    seccion_tablas = ""
-    if filas_tablas:
-        seccion_tablas = f'<div class="card"><h2>📊 Tablas y Datos</h2>{filas_tablas}</div>'
-
-    html = css + f'<div class="card"><h2>⚙️ Conexión a la Base de Datos</h2>{filas_conexion}</div>' + seccion_tablas + '<a href="/">← Volver al inicio</a></body></html>'
+    html = css + f'<div class="card"><h2>Conexión</h2>{filas}</div>'
+    if filas_t:
+        html += f'<div class="card"><h2>Tablas</h2>{filas_t}</div>'
+    html += '<a href="/">← Volver</a></body></html>'
     return html
 
 if __name__ == '__main__':
