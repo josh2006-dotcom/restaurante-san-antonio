@@ -175,14 +175,7 @@
       <div class="kpi-icon azul">👥</div>
       <div><div class="kpi-valor">{{ total_clientes }}</div><div class="kpi-label">Clientes Registrados</div></div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon naranja">❌</div>
-      <div><div class="kpi-valor">{{ total_cancelados }}</div><div class="kpi-label">Cancelados</div></div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-icon morado">💸</div>
-      <div><div class="kpi-valor">S/ {{ "%.0f"|format(monto_cancelados) }}</div><div class="kpi-label">Posibles Devoluciones</div></div>
-    </div>
+
   </div>
 
   <!-- Herramientas -->
@@ -192,10 +185,11 @@
       <div class="acceso-icon">📅</div>
       <div><h3>Menú Semanal</h3><p>Agregar, editar o borrar el menú de cada día</p></div>
     </a>
+    <a href="/admin/reportes" class="acceso-card" style="border-left-color:var(--verde)">
+      <div class="acceso-icon" style="background:#D4EDDA">📊</div>
+      <div><h3>Reportes</h3><p>Ganancias, cancelados y estadísticas de ventas</p></div>
+    </a>
   </div>
-
-  <!-- REPORTES -->
-  <h2 class="admin-section-title">📊 Reportes</h2>
   <div class="reportes-grid">
 
     <!-- REPORTE GANANCIAS -->
