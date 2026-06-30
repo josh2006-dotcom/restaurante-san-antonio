@@ -141,6 +141,25 @@
     transition: all .2s; color: var(--gris);
   }
   .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+  .btn-eliminar {
+    background: #FCE8E8; color: var(--rojo);
+    border: none; border-radius: 6px;
+    width: 30px; height: 30px;
+    font-size: .85rem; font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    flex-shrink: 0;
+  }
+  .btn-eliminar:hover { background: var(--rojo); color: #fff; }
+  .toast-error {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #8B1A1A; color: #fff;
+    padding: .8rem 1.3rem; border-radius: 8px;
+    font-size: .88rem; display: none; z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
 </style>
 {% endblock %}
 
@@ -202,7 +221,7 @@
   <div class="tabla-wrapper">
     <table id="tabla-pedidos">
       <thead>
-        <tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
+        <tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th></th></tr>
       </thead>
       <tbody>
         {% for p in pedidos %}
@@ -252,6 +271,27 @@ function cambiarEstado(idPedido, nuevoEstado) {
       }
     })
     .catch(() => alert('Error al actualizar.'));
+}
+
+function eliminarPedido(idPedido) {
+  if (!confirm('¿Seguro que deseas eliminar el pedido #' + idPedido + '? Esta acción no se puede deshacer.')) return;
+  const formData = new FormData();
+  formData.append('id_pedido', idPedido);
+  fetch('/admin/eliminar_pedido', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const fila = document.getElementById('fila-' + idPedido);
+        fila.style.transition = 'opacity .3s';
+        fila.style.opacity = '0';
+        setTimeout(() => fila.remove(), 300);
+        const toast = document.getElementById('toast');
+        toast.textContent = '🗑️ Pedido #' + idPedido + ' eliminado';
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; toast.textContent = '✅ Estado actualizado'; }, 2500);
+      }
+    })
+    .catch(() => alert('Error al eliminar.'));
 }
 
 function filtrar(estado, btn) {
