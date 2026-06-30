@@ -6,8 +6,7 @@
   .admin-semanal { padding: 2.5rem 0; }
   .admin-semanal h1 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem; color: var(--rojo);
-    margin-bottom: .3rem;
+    font-size: 2rem; color: var(--rojo); margin-bottom: .3rem;
   }
   .admin-semanal p { color: var(--gris); margin-bottom: 2rem; }
 
@@ -20,35 +19,58 @@
   .semana-form-header h2 { color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; }
   .semana-form-body { padding: 1.8rem; }
 
-  .semana-input {
+  .dia-box {
     background: var(--crema);
-    border-radius: 10px;
-    padding: 1rem 1.4rem;
-    margin-bottom: .8rem;
-    display: flex; align-items: center; gap: 1rem;
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
   }
-  .semana-dia-label {
+  .dia-box-header {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem; font-weight: 700;
+    font-size: 1.25rem; font-weight: 700;
     color: var(--rojo);
-    min-width: 100px;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .5rem;
   }
-  .semana-inputs-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: .8rem;
-    flex: 1;
-  }
-  .semana-field label {
-    display: block;
+
+  .tipo-grupo { margin-bottom: 1rem; }
+  .tipo-grupo:last-child { margin-bottom: 0; }
+  .tipo-label {
     font-size: .72rem; font-weight: 700;
     letter-spacing: 1px; text-transform: uppercase;
-    color: var(--gris); margin-bottom: .3rem;
+    color: var(--gris); margin-bottom: .5rem;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  @media (max-width: 600px) {
-    .semana-inputs-row { grid-template-columns: 1fr; }
-    .semana-input { flex-direction: column; align-items: flex-start; }
+  .btn-agregar {
+    background: var(--dorado); color: #fff;
+    border: none; border-radius: 6px;
+    width: 24px; height: 24px;
+    font-size: 1rem; font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
   }
+  .btn-agregar:hover { background: #a86f08; }
+
+  .plato-input-row {
+    display: flex; gap: .5rem;
+    margin-bottom: .5rem;
+    align-items: center;
+  }
+  .plato-input-row input {
+    flex: 1;
+  }
+  .btn-quitar {
+    background: #FCE8E8; color: var(--rojo);
+    border: none; border-radius: 6px;
+    width: 32px; height: 32px;
+    font-size: .9rem; font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .btn-quitar:hover { background: var(--rojo); color: #fff; }
 </style>
 {% endblock %}
 
@@ -57,12 +79,7 @@
   <div class="container">
     <a href="/admin" class="btn btn-outline btn-sm" style="margin-bottom:1.5rem">← Volver al Admin</a>
     <h1>📅 Editar Menú Semanal</h1>
-    <p>Actualiza el menú de cada día. Los cambios se reflejan inmediatamente en la página pública.</p>
-
-    {% set menu_dict = {} %}
-    {% for m in menu %}
-      {% if menu_dict.update({m[0]: m}) %}{% endif %}
-    {% endfor %}
+    <p>Agrega tantas entradas y segundos como quieras por día. Los cambios se reflejan inmediatamente en la página pública.</p>
 
     <div class="semana-form">
       <div class="semana-form-header">
@@ -70,33 +87,67 @@
         <h2>Programación Semanal</h2>
       </div>
       <div class="semana-form-body">
-        <form method="POST" action="/admin/menu_semanal">
+        <form method="POST" action="/admin/menu_semanal" id="form-menu-semanal">
 
           <div class="form-group">
             <label class="form-label">Semana (ej: "Del 23 al 27 de Junio")</label>
             <input type="text" name="semana" class="form-control"
-                   value="{{ menu[0][3] if menu else '' }}"
+                   value="{{ semana_actual }}"
                    placeholder="Del 23 al 27 de Junio 2026">
           </div>
 
           {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
-          {% set m = menu_dict.get(dia) %}
-          <div class="semana-input">
-            <span class="semana-dia-label">{{ dia }}</span>
-            <div class="semana-inputs-row">
-              <div class="semana-field">
-                <label>🥗 Entrada</label>
-                <input type="text" name="entrada_{{ dia }}" class="form-control"
-                       value="{{ m[1] if m else '' }}"
-                       placeholder="Ej: Ceviche">
+          {% set entradas = menu.get(dia, {}).get('entradas', []) %}
+          {% set segundos = menu.get(dia, {}).get('segundos', []) %}
+          <div class="dia-box">
+            <div class="dia-box-header">📌 {{ dia }}</div>
+
+            <!-- ENTRADAS -->
+            <div class="tipo-grupo">
+              <div class="tipo-label">
+                <span>🥗 Entradas</span>
+                <button type="button" class="btn-agregar" onclick="agregarPlato('{{ dia }}', 'entrada')">+</button>
               </div>
-              <div class="semana-field">
-                <label>🍽️ Segundo</label>
-                <input type="text" name="segundo_{{ dia }}" class="form-control"
-                       value="{{ m[2] if m else '' }}"
-                       placeholder="Ej: Lomo saltado">
+              <div id="entradas-{{ dia }}">
+                {% if entradas %}
+                  {% for e in entradas %}
+                  <div class="plato-input-row">
+                    <input type="text" name="entrada_{{ dia }}_{{ loop.index0 }}" class="form-control" value="{{ e }}" placeholder="Ej: Ceviche">
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="plato-input-row">
+                    <input type="text" name="entrada_{{ dia }}_0" class="form-control" placeholder="Ej: Ceviche">
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                {% endif %}
               </div>
             </div>
+
+            <!-- SEGUNDOS -->
+            <div class="tipo-grupo">
+              <div class="tipo-label">
+                <span>🍽️ Segundos</span>
+                <button type="button" class="btn-agregar" onclick="agregarPlato('{{ dia }}', 'segundo')">+</button>
+              </div>
+              <div id="segundos-{{ dia }}">
+                {% if segundos %}
+                  {% for s in segundos %}
+                  <div class="plato-input-row">
+                    <input type="text" name="segundo_{{ dia }}_{{ loop.index0 }}" class="form-control" value="{{ s }}" placeholder="Ej: Lomo saltado">
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="plato-input-row">
+                    <input type="text" name="segundo_{{ dia }}_0" class="form-control" placeholder="Ej: Lomo saltado">
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
           </div>
           {% endfor %}
 
@@ -111,4 +162,34 @@
 
   </div>
 </section>
+
+<script>
+function agregarPlato(dia, tipo) {
+  const contenedor = document.getElementById(`${tipo}s-${dia}`);
+  const cantidadActual = contenedor.querySelectorAll('input').length;
+  const row = document.createElement('div');
+  row.className = 'plato-input-row';
+  row.innerHTML = `
+    <input type="text" name="${tipo}_${dia}_${cantidadActual}" class="form-control" placeholder="Nuevo plato...">
+    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+  `;
+  contenedor.appendChild(row);
+  row.querySelector('input').focus();
+}
+
+// Antes de enviar el formulario, renumerar los inputs para evitar huecos
+document.getElementById('form-menu-semanal').addEventListener('submit', function() {
+  {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
+  ['entrada', 'segundo'].forEach(tipo => {
+    const contenedor = document.getElementById(`${tipo}s-{{ dia }}`);
+    if (contenedor) {
+      const inputs = contenedor.querySelectorAll('input');
+      inputs.forEach((inp, idx) => {
+        inp.name = `${tipo}_{{ dia }}_${idx}`;
+      });
+    }
+  });
+  {% endfor %}
+});
+</script>
 {% endblock %}
