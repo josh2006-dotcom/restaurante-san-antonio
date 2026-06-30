@@ -102,6 +102,15 @@
   }
   .chart-full-header h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 1.2rem; font-weight: 700; }
   .chart-full-header p { color: rgba(255,255,255,.7); font-size: .78rem; }
+  .rango-filtros { display: flex; gap: .6rem; flex-wrap: wrap; margin: 0 0 1.2rem; }
+  .rango-btn {
+    padding: .4rem 1rem; border-radius: 20px;
+    border: 1.5px solid rgba(255,255,255,.5); background: transparent; color: #fff;
+    font-size: .8rem; cursor: pointer; text-decoration: none;
+    font-family: 'Jost', sans-serif; font-weight: 600;
+    transition: all .2s; display: inline-block;
+  }
+  .rango-btn:hover, .rango-btn.activo { background: #fff; color: var(--rojo); border-color: #fff; }
   .chart-full-body { padding: 1.4rem; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
@@ -114,7 +123,7 @@
   <div class="reportes-topbar">
     <div>
       <h1>📊 Reportes y Estadísticas</h1>
-      <p>Ganancias, cancelados y análisis de ventas — Últimos 30 días</p>
+      <p>Ganancias, cancelados y análisis de ventas — historial configurable</p>
     </div>
     <a href="/admin" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">← Volver al Admin</a>
   </div>
@@ -141,9 +150,16 @@
 
   <!-- Gráfica combinada -->
   <div class="chart-full-card">
-    <div class="chart-full-header">
-      <h3>📈 Ganancias vs Cancelados por día</h3>
-      <p>Comparativa de los últimos 30 días</p>
+    <div class="chart-full-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem">
+      <div>
+        <h3>📈 Ganancias vs Cancelados por día</h3>
+        <p>Historial — {{ {'semana':'última semana','mes':'último mes','3meses':'últimos 3 meses'}[rango_actual] }}</p>
+      </div>
+      <div class="rango-filtros" style="margin:0">
+        <a href="?rango=semana" class="rango-btn {% if rango_actual=='semana' %}activo{% endif %}">1 Semana</a>
+        <a href="?rango=mes" class="rango-btn {% if rango_actual=='mes' %}activo{% endif %}">1 Mes</a>
+        <a href="?rango=3meses" class="rango-btn {% if rango_actual=='3meses' %}activo{% endif %}">3 Meses</a>
+      </div>
     </div>
     <div class="chart-full-body">
       <canvas id="chartCombinado" height="100"></canvas>
@@ -258,12 +274,14 @@ new Chart(document.getElementById('chartCombinado').getContext('2d'), {
         data: todosDias.map(d => { const i = diasG.indexOf(d); return i >= 0 ? montosG[i] : 0; }),
         backgroundColor: 'rgba(44,74,30,0.7)',
         borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 4,
+        barPercentage: 0.6, categoryPercentage: 0.55,
       },
       {
         label: 'Cancelados S/',
         data: todosDias.map(d => { const i = diasC.indexOf(d); return i >= 0 ? montoC[i] : 0; }),
         backgroundColor: 'rgba(139,26,26,0.6)',
         borderColor: '#8B1A1A', borderWidth: 2, borderRadius: 4,
+        barPercentage: 0.6, categoryPercentage: 0.55,
       }
     ]
   },
@@ -279,7 +297,7 @@ new Chart(document.getElementById('chartGanancias').getContext('2d'), {
   type: 'bar',
   data: {
     labels: diasG.length ? diasG : ['Sin datos'],
-    datasets: [{ label: 'S/', data: diasG.length ? montosG : [0], backgroundColor: 'rgba(44,74,30,0.7)', borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 6 }]
+    datasets: [{ label: 'S/', data: diasG.length ? montosG : [0], backgroundColor: 'rgba(44,74,30,0.7)', borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.5 }]
   },
   options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } } } }
 });
