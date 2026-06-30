@@ -1,1 +1,151 @@
+{% extends "base.html" %}
 
+{% block extra_head %}
+<style>
+  .admin-platos { padding: 2.5rem 0 4rem; }
+  .admin-platos h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; color: var(--rojo); margin-bottom: .3rem;
+  }
+  .admin-platos > .container > p { color: var(--gris); margin-bottom: 2rem; }
+
+  .plato-form { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra); overflow: hidden; margin-bottom: 2.5rem; }
+  .plato-form-header {
+    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
+    padding: 1.2rem 1.8rem;
+    display: flex; align-items: center; gap: .8rem;
+  }
+  .plato-form-header h2 { color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; }
+  .plato-form-body { padding: 1.8rem; }
+
+  .form-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+  @media (max-width: 700px) { .form-row { grid-template-columns: 1fr; } }
+
+  .form-row-img { display: grid; grid-template-columns: 1fr; gap: .5rem; margin-bottom: 1.3rem; }
+  .form-hint { font-size: .78rem; color: var(--gris); }
+
+  .platos-tabla-wrap { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra); overflow: hidden; }
+  .platos-tabla-header {
+    padding: 1.2rem 1.8rem; background: var(--crema);
+    font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; color: var(--marron); font-weight: 700;
+  }
+  .platos-grid-admin {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem; padding: 1.4rem 1.8rem;
+  }
+  .plato-card-admin {
+    border: 1px solid #F0E4CC; border-radius: 12px; overflow: hidden;
+    background: var(--crema);
+  }
+  .plato-card-admin img { width: 100%; height: 120px; object-fit: cover; display: block; }
+  .plato-card-admin .cuerpo { padding: .8rem .9rem; }
+  .plato-card-admin .nombre { font-weight: 700; color: var(--marron); font-size: .95rem; margin-bottom: .15rem; }
+  .plato-card-admin .precio { color: var(--verde); font-weight: 700; font-size: .9rem; margin-bottom: .5rem; }
+  .plato-card-admin .acciones { display: flex; gap: .4rem; }
+  .plato-card-admin .acciones button {
+    flex: 1; border: none; border-radius: 6px; padding: .35rem .4rem;
+    font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif;
+  }
+  .btn-toggle { background: #FFF0CC; color: #8B6500; }
+  .btn-eliminar-plato { background: #FCE8E8; color: var(--rojo); }
+  .badge-no-disponible {
+    position: absolute; background: rgba(0,0,0,.65); color: #fff;
+    font-size: .68rem; padding: .15rem .5rem; border-radius: 10px; margin: .5rem;
+  }
+  .plato-card-admin { position: relative; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-platos">
+  <div class="container">
+    <a href="/admin" class="btn btn-outline btn-sm" style="margin-bottom:1.5rem">← Volver al Admin</a>
+    <h1>🍽️ Platos del Catálogo</h1>
+    <p>Agrega nuevos platos (entradas o segundos) con su imagen. Aparecerán automáticamente en la página principal.</p>
+
+    <div class="plato-form">
+      <div class="plato-form-header">
+        <span style="font-size:1.5rem">➕</span>
+        <h2>Agregar nuevo plato</h2>
+      </div>
+      <div class="plato-form-body">
+        <form method="POST" action="/admin/platos" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Nombre del plato</label>
+              <input type="text" name="nombre" class="form-control" placeholder="Ej: Cau Cau" required>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Precio (S/)</label>
+              <input type="number" step="0.01" min="0" name="precio" class="form-control" placeholder="10.00" required>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Tipo</label>
+              <select name="tipo" class="form-control">
+                <option value="entrada">Entrada</option>
+                <option value="segundo" selected>Segundo</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row-img">
+            <label class="form-label">Imagen del plato</label>
+            <input type="file" name="imagen" accept=".png,.jpg,.jpeg,.webp" class="form-control">
+            <span class="form-hint">Formatos permitidos: PNG, JPG, JPEG o WEBP. Si no subes imagen, se usará una imagen genérica.</span>
+          </div>
+          <button type="submit" class="btn btn-dorado">💾 Agregar Plato</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="platos-tabla-wrap">
+      <div class="platos-tabla-header">📋 Catálogo Actual ({{ platos|length }})</div>
+      <div class="platos-grid-admin">
+        {% for p in platos %}
+        <div class="plato-card-admin" id="plato-{{ p[0] }}">
+          {% if not p[4] %}<span class="badge-no-disponible">Oculto</span>{% endif %}
+          <img src="{{ url_for('static', filename=p[5] if p[5] else ('imagenes_entrada/ceviche.jpg' if p[3]=='entrada' else 'imagenes_plato/lomo_saltado.jpg')) }}"
+               alt="{{ p[1] }}"
+               onerror="this.src='{{ url_for('static', filename='imagenes_plato/lomo_saltado.jpg') }}'">
+          <div class="cuerpo">
+            <div class="nombre">{{ p[1] }}</div>
+            <div class="precio">S/ {{ "%.2f"|format(p[2]) }} · {{ 'Entrada' if p[3]=='entrada' else 'Segundo' }}</div>
+            <div class="acciones">
+              <button class="btn-toggle" onclick="togglePlato({{ p[0] }})">{{ '🙈 Ocultar' if p[4] else '👁️ Mostrar' }}</button>
+              <button class="btn-eliminar-plato" onclick="eliminarPlato({{ p[0] }}, '{{ p[1] }}')">🗑️ Eliminar</button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+function togglePlato(id) {
+  const formData = new FormData();
+  formData.append('id_plato', id);
+  fetch('/admin/platos/toggle', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(() => location.reload())
+    .catch(() => alert('Error al actualizar el plato.'));
+}
+
+function eliminarPlato(id, nombre) {
+  if (!confirm('¿Eliminar "' + nombre + '" del catálogo?\nEsta acción no se puede deshacer.')) return;
+  const formData = new FormData();
+  formData.append('id_plato', id);
+  fetch('/admin/platos/eliminar', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        document.getElementById('plato-' + id).remove();
+      } else {
+        alert(data.error || 'No se pudo eliminar el plato.');
+      }
+    })
+    .catch(() => alert('Error al eliminar el plato.'));
+}
+</script>
+{% endblock %}
