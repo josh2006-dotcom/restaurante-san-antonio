@@ -559,6 +559,71 @@ def eliminar_pedido():
     conn.close()
     return jsonify({'ok': True})
 
+# ╔══════════════════════════════════════════════════════╗
+# ║  CLIENTES — Admin: ver y eliminar registros          ║
+# ╚══════════════════════════════════════════════════════╝
+def _eliminar_cliente_en_cascada(cur, id_cliente):
+    """Borra un cliente y todo lo que depende de él (pedidos, detalles, personalizaciones)."""
+    cur.execute("""
+        DELETE FROM Detalle_Personalizacion
+        WHERE id_detalle IN (
+            SELECT dp.id_detalle FROM Detalle_Pedido dp
+            JOIN Pedido p ON p.id_pedido = dp.id_pedido
+            WHERE p.id_cliente = %s
+        )
+    """, (id_cliente,))
+    cur.execute("""
+        DELETE FROM Detalle_Pedido
+        WHERE id_pedido IN (SELECT id_pedido FROM Pedido WHERE id_cliente = %s)
+    """, (id_cliente,))
+    cur.execute("DELETE FROM Pedido WHERE id_cliente = %s", (id_cliente,))
+    cur.execute("DELETE FROM Cliente WHERE id_cliente = %s", (id_cliente,))
+
+
+@app.route('/admin/clientes')
+def admin_clientes():
+    if not session.get('es_admin'):
+        return redirect(url_for('admin_login'))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        SELECT c.id_cliente, c.nombre, c.telefono, c.direccion_referencia,
+               COUNT(p.id_pedido) AS cantidad_pedidos
+        FROM Cliente c
+        LEFT JOIN Pedido p ON p.id_cliente = c.id_cliente
+        GROUP BY c.id_cliente, c.nombre, c.telefono, c.direccion_referencia
+        ORDER BY c.nombre, c.id_cliente
+    """)
+    clientes = cur.fetchall()
+    conn.close()
+    return render_template('admin_clientes.html', clientes=clientes)
+
+
+@app.route('/admin/clientes/eliminar_lote', methods=['POST'])
+def admin_clientes_eliminar_lote():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    ids = request.form.getlist('ids[]') or request.form.getlist('ids')
+    if not ids:
+        return jsonify({'error': 'No se seleccionó ningún cliente.'}), 400
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        for id_cliente in ids:
+            _eliminar_cliente_en_cascada(cur, id_cliente)
+        conn.commit()
+        eliminados = len(ids)
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return jsonify({'error': f'Error al eliminar: {str(e)[:150]}'}), 500
+
+    conn.close()
+    return jsonify({'ok': True, 'eliminados': eliminados})
+
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
