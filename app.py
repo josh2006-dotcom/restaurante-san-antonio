@@ -1,9 +1,13 @@
+import os
 from flask import (Flask, render_template, request,
                    redirect, url_for, session, flash, jsonify)
+from werkzeug.utils import secure_filename
 from database import get_connection
 
 app = Flask(__name__)
 app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
+
+EXTENSIONES_IMG_PERMITIDAS = {'png', 'jpg', 'jpeg', 'webp'}
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  INICIO — Menú público                               ║
@@ -12,7 +16,7 @@ app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
 def index():
     conn = get_connection()
     cur  = conn.cursor()
-    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
+    cur.execute("SELECT id_plato, nombre, precio, tipo, imagen FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
     conn.close()
     return render_template('index.html', platos=platos)
@@ -128,6 +132,96 @@ def admin_menu_semanal():
             menu[dia]['segundos'].append(plato)
 
     return render_template('admin_menu_semanal.html', menu=menu, semana_actual=semana_actual)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  PLATOS — Admin: agregar nuevos platos al catálogo   ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/platos', methods=['GET', 'POST'])
+def admin_platos():
+    if not session.get('es_admin'):
+        return redirect(url_for('admin_login'))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    if request.method == 'POST':
+        nombre  = request.form.get('nombre', '').strip()
+        precio  = request.form.get('precio', '').strip()
+        tipo    = request.form.get('tipo', 'segundo')
+        archivo = request.files.get('imagen')
+
+        if not nombre or not precio:
+            flash('El nombre y el precio son obligatorios.', 'danger')
+            conn.close()
+            return redirect(url_for('admin_platos'))
+
+        try:
+            precio_val = float(precio)
+        except ValueError:
+            flash('El precio no es válido.', 'danger')
+            conn.close()
+            return redirect(url_for('admin_platos'))
+
+        ruta_imagen = None
+        if archivo and archivo.filename:
+            extension = archivo.filename.rsplit('.', 1)[-1].lower()
+            if extension in EXTENSIONES_IMG_PERMITIDAS:
+                carpeta = 'imagenes_entrada' if tipo == 'entrada' else 'imagenes_plato'
+                nombre_archivo = secure_filename(nombre.lower().replace(' ', '_')) + '.' + extension
+                ruta_disco = os.path.join(app.root_path, 'static', carpeta, nombre_archivo)
+                archivo.save(ruta_disco)
+                ruta_imagen = f'{carpeta}/{nombre_archivo}'
+            else:
+                flash('Formato de imagen no permitido (usa png, jpg, jpeg o webp).', 'danger')
+                conn.close()
+                return redirect(url_for('admin_platos'))
+
+        cur.execute("""
+            INSERT INTO Plato (nombre, precio, tipo, disponible, imagen)
+            VALUES (%s, %s, %s, TRUE, %s)
+        """, (nombre, precio_val, tipo, ruta_imagen))
+        conn.commit()
+        conn.close()
+        flash(f'¡Plato "{nombre}" agregado al catálogo! 🍽️', 'success')
+        return redirect(url_for('admin_platos'))
+
+    cur.execute("SELECT id_plato, nombre, precio, tipo, disponible, imagen FROM Plato ORDER BY tipo, nombre")
+    platos = cur.fetchall()
+    conn.close()
+    return render_template('admin_platos.html', platos=platos)
+
+
+@app.route('/admin/platos/toggle', methods=['POST'])
+def admin_platos_toggle():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+    id_plato = request.form.get('id_plato')
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("UPDATE Plato SET disponible = NOT disponible WHERE id_plato = %s", (id_plato,))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/platos/eliminar', methods=['POST'])
+def admin_platos_eliminar():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+    id_plato = request.form.get('id_plato')
+    conn = get_connection()
+    cur  = conn.cursor()
+    try:
+        cur.execute("DELETE FROM Plato WHERE id_plato = %s", (id_plato,))
+        conn.commit()
+        ok = True
+    except Exception:
+        conn.rollback()
+        ok = False
+    conn.close()
+    if not ok:
+        return jsonify({'ok': False, 'error': 'No se puede eliminar: el plato ya tiene pedidos asociados. Puedes desactivarlo en su lugar.'}), 400
+    return jsonify({'ok': True})
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
@@ -500,6 +594,13 @@ def admin_reportes():
     if not session.get('es_admin'):
         return redirect(url_for('admin_login'))
 
+    # Rango de historial seleccionable: 1 semana, 1 mes (por defecto) o 3 meses
+    rangos_dias = {'semana': 7, 'mes': 30, '3meses': 90}
+    rango = request.args.get('rango', 'mes')
+    if rango not in rangos_dias:
+        rango = 'mes'
+    dias = rangos_dias[rango]
+
     conn = get_connection()
     cur  = conn.cursor()
 
@@ -515,17 +616,17 @@ def admin_reportes():
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COALESCE(SUM(total), 0) as ganancia
         FROM Pedido WHERE estado = 'entregado'
-        AND fecha_pedido >= NOW() - INTERVAL '30 days'
+        AND fecha_pedido >= NOW() - (%s || ' days')::interval
         GROUP BY DATE(fecha_pedido) ORDER BY dia
-    """)
+    """, (dias,))
     ganancias_por_dia = cur.fetchall()
 
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
         FROM Pedido WHERE estado = 'cancelado'
-        AND fecha_pedido >= NOW() - INTERVAL '30 days'
+        AND fecha_pedido >= NOW() - (%s || ' days')::interval
         GROUP BY DATE(fecha_pedido) ORDER BY dia
-    """)
+    """, (dias,))
     cancelados_por_dia = cur.fetchall()
 
     cur.execute("""
@@ -554,7 +655,8 @@ def admin_reportes():
         ganancias_por_dia=ganancias_por_dia,
         cancelados_por_dia=cancelados_por_dia,
         platos_top=platos_top,
-        cancelados_recientes=cancelados_recientes)
+        cancelados_recientes=cancelados_recientes,
+        rango_actual=rango)
 
 # ╔══════════════════════════════════════════════════════════╗
 # ║  DIAGNÓSTICO                                            ║
