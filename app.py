@@ -25,7 +25,7 @@ def menu_semanal():
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
-        SELECT dia, entrada, segundo, semana
+        SELECT dia, tipo, plato, semana, orden
         FROM Menu_Semanal
         ORDER BY
           CASE dia
@@ -35,11 +35,21 @@ def menu_semanal():
             WHEN 'Jueves'    THEN 4
             WHEN 'Viernes'   THEN 5
             WHEN 'Sábado'    THEN 6
-            WHEN 'Domingo'   THEN 7
-          END
+          END, tipo, orden
     """)
-    menu = cur.fetchall()
+    filas = cur.fetchall()
     conn.close()
+
+    # Agrupar por dia: { dia: { entradas: [...], segundos: [...], semana: '' } }
+    menu = {}
+    for dia, tipo, plato, semana, orden in filas:
+        if dia not in menu:
+            menu[dia] = {'entradas': [], 'segundos': [], 'semana': semana}
+        if tipo == 'entrada':
+            menu[dia]['entradas'].append(plato)
+        else:
+            menu[dia]['segundos'].append(plato)
+
     return render_template('menu_semanal.html', menu=menu)
 
 # ╔══════════════════════════════════════════════════════╗
@@ -54,25 +64,43 @@ def admin_menu_semanal():
     cur  = conn.cursor()
 
     if request.method == 'POST':
-        dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo']
+        dias = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado']
         semana = request.form.get('semana', '')
-        # Borrar menú actual y reemplazar
         cur.execute("DELETE FROM Menu_Semanal")
         for dia in dias:
-            entrada = request.form.get(f'entrada_{dia}', '').strip()
-            segundo = request.form.get(f'segundo_{dia}', '').strip()
-            if entrada or segundo:
-                cur.execute("""
-                    INSERT INTO Menu_Semanal (dia, entrada, segundo, semana)
-                    VALUES (%s, %s, %s, %s)
-                """, (dia, entrada, segundo, semana))
+            # Entradas (pueden venir varias: entrada_Lunes_0, entrada_Lunes_1, ...)
+            i = 0
+            while True:
+                key = f'entrada_{dia}_{i}'
+                if key not in request.form:
+                    break
+                valor = request.form.get(key, '').strip()
+                if valor:
+                    cur.execute("""
+                        INSERT INTO Menu_Semanal (dia, tipo, plato, semana, orden)
+                        VALUES (%s, 'entrada', %s, %s, %s)
+                    """, (dia, valor, semana, i))
+                i += 1
+            # Segundos
+            i = 0
+            while True:
+                key = f'segundo_{dia}_{i}'
+                if key not in request.form:
+                    break
+                valor = request.form.get(key, '').strip()
+                if valor:
+                    cur.execute("""
+                        INSERT INTO Menu_Semanal (dia, tipo, plato, semana, orden)
+                        VALUES (%s, 'segundo', %s, %s, %s)
+                    """, (dia, valor, semana, i))
+                i += 1
         conn.commit()
         conn.close()
         flash('¡Menú semanal actualizado! ✅', 'success')
         return redirect(url_for('admin_menu_semanal'))
 
     cur.execute("""
-        SELECT dia, entrada, segundo, semana
+        SELECT dia, tipo, plato, semana, orden
         FROM Menu_Semanal
         ORDER BY
           CASE dia
@@ -82,12 +110,24 @@ def admin_menu_semanal():
             WHEN 'Jueves'    THEN 4
             WHEN 'Viernes'   THEN 5
             WHEN 'Sábado'    THEN 6
-            WHEN 'Domingo'   THEN 7
-          END
+          END, tipo, orden
     """)
-    menu = cur.fetchall()
+    filas = cur.fetchall()
     conn.close()
-    return render_template('admin_menu_semanal.html', menu=menu)
+
+    menu = {}
+    semana_actual = ''
+    for dia, tipo, plato, semana, orden in filas:
+        if dia not in menu:
+            menu[dia] = {'entradas': [], 'segundos': []}
+        if semana:
+            semana_actual = semana
+        if tipo == 'entrada':
+            menu[dia]['entradas'].append(plato)
+        else:
+            menu[dia]['segundos'].append(plato)
+
+    return render_template('admin_menu_semanal.html', menu=menu, semana_actual=semana_actual)
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
