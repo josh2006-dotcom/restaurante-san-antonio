@@ -444,6 +444,27 @@ def actualizar_estado():
     conn.close()
     return jsonify({'ok': True, 'nuevo_estado': nuevo_estado})
 
+
+@app.route('/admin/eliminar_pedido', methods=['POST'])
+def eliminar_pedido():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+    id_pedido = request.form.get('id_pedido')
+    conn = get_connection()
+    cur  = conn.cursor()
+    # Eliminar en orden por dependencias
+    cur.execute("""
+        DELETE FROM Detalle_Personalizacion
+        WHERE id_detalle IN (
+            SELECT id_detalle FROM Detalle_Pedido WHERE id_pedido = %s
+        )
+    """, (id_pedido,))
+    cur.execute("DELETE FROM Detalle_Pedido WHERE id_pedido = %s", (id_pedido,))
+    cur.execute("DELETE FROM Pedido WHERE id_pedido = %s", (id_pedido,))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
