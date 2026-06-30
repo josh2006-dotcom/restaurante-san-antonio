@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .admin-clientes { padding: 2.5rem 0 4rem; }
+  .admin-clientes h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; color: var(--rojo); margin-bottom: .3rem;
+  }
+  .admin-clientes > .container > p { color: var(--gris); margin-bottom: 1.5rem; }
+
+  .clientes-toolbar {
+    display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+    margin-bottom: 1.2rem;
+  }
+  .clientes-toolbar input[type="text"] {
+    flex: 1; min-width: 220px;
+  }
+  .btn-eliminar-lote {
+    background: var(--rojo); color: #fff; border: none; border-radius: 6px;
+    padding: .6rem 1.2rem; font-weight: 700; font-size: .85rem; cursor: pointer;
+    font-family: 'Jost', sans-serif; opacity: .5; pointer-events: none;
+    transition: opacity .2s;
+  }
+  .btn-eliminar-lote.activo { opacity: 1; pointer-events: auto; }
+
+  .clientes-tabla-wrap { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra); overflow: hidden; }
+  table.tabla-clientes { width: 100%; border-collapse: collapse; }
+  table.tabla-clientes th {
+    text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--gris); padding: .9rem 1rem; border-bottom: 2px solid #F0E4CC;
+  }
+  table.tabla-clientes td {
+    padding: .8rem 1rem; border-bottom: 1px solid #F4ECDD; font-size: .88rem; color: var(--marron);
+  }
+  table.tabla-clientes tr:last-child td { border-bottom: none; }
+  table.tabla-clientes tr.oculta-fila { display: none; }
+  .pedidos-chip {
+    display: inline-block; background: #FFF0CC; color: #8B6500;
+    border-radius: 12px; padding: .15rem .6rem; font-size: .75rem; font-weight: 700;
+  }
+  .pedidos-chip.cero { background: #F0E4CC; color: var(--gris); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-clientes">
+  <div class="container">
+    <a href="/admin" class="btn btn-outline btn-sm" style="margin-bottom:1.5rem">← Volver al Admin</a>
+    <h1>👥 Clientes Registrados</h1>
+    <p>
+      Aquí puedes ver todos los clientes y eliminar registros duplicados o de prueba.
+      ⚠️ Eliminar un cliente también elimina todos sus pedidos asociados — esta acción no se puede deshacer.
+    </p>
+
+    <div class="clientes-toolbar">
+      <input type="text" id="buscador" class="form-control" placeholder="🔎 Buscar por nombre (ej: Luis Clemente)...">
+      <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--gris);cursor:pointer">
+        <input type="checkbox" id="check-todos" style="width:16px;height:16px"> Seleccionar todos los visibles
+      </label>
+      <button class="btn-eliminar-lote" id="btn-eliminar-lote" onclick="eliminarSeleccionados()">
+        🗑️ Eliminar seleccionados (<span id="contador-sel">0</span>)
+      </button>
+    </div>
+
+    <div class="clientes-tabla-wrap">
+      <table class="tabla-clientes" id="tabla-clientes">
+        <thead>
+          <tr>
+            <th style="width:30px"></th>
+            <th>#</th><th>Nombre</th><th>Teléfono</th><th>Dirección</th><th>Pedidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in clientes %}
+          <tr data-nombre="{{ c[1]|lower }}" id="fila-cliente-{{ c[0] }}">
+            <td><input type="checkbox" class="chk-cliente" value="{{ c[0] }}" onchange="actualizarContador()"></td>
+            <td>#{{ c[0] }}</td>
+            <td>{{ c[1] }}</td>
+            <td>{{ c[2] or '—' }}</td>
+            <td>{{ c[3] or '—' }}</td>
+            <td>
+              <span class="pedidos-chip {% if c[4] == 0 %}cero{% endif %}">{{ c[4] }} pedido{{ 's' if c[4] != 1 else '' }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--gris)">No hay clientes registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+const buscador = document.getElementById('buscador');
+buscador.addEventListener('input', () => {
+  const q = buscador.value.trim().toLowerCase();
+  document.querySelectorAll('#tabla-clientes tbody tr[data-nombre]').forEach(fila => {
+    const coincide = fila.dataset.nombre.includes(q);
+    fila.classList.toggle('oculta-fila', !coincide);
+    if (!coincide) {
+      const chk = fila.querySelector('.chk-cliente');
+      if (chk) chk.checked = false;
+    }
+  });
+  document.getElementById('check-todos').checked = false;
+  actualizarContador();
+});
+
+document.getElementById('check-todos').addEventListener('change', function() {
+  document.querySelectorAll('#tabla-clientes tbody tr:not(.oculta-fila) .chk-cliente').forEach(chk => {
+    chk.checked = this.checked;
+  });
+  actualizarContador();
+});
+
+function actualizarContador() {
+  const seleccionados = document.querySelectorAll('.chk-cliente:checked').length;
+  document.getElementById('contador-sel').textContent = seleccionados;
+  document.getElementById('btn-eliminar-lote').classList.toggle('activo', seleccionados > 0);
+}
+
+function eliminarSeleccionados() {
+  const seleccionados = Array.from(document.querySelectorAll('.chk-cliente:checked')).map(chk => chk.value);
+  if (seleccionados.length === 0) return;
+  if (!confirm(`¿Eliminar ${seleccionados.length} cliente(s) y TODOS sus pedidos asociados?\nEsta acción no se puede deshacer.`)) return;
+
+  const formData = new FormData();
+  seleccionados.forEach(id => formData.append('ids[]', id));
+
+  fetch('/admin/clientes/eliminar_lote', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        seleccionados.forEach(id => {
+          const fila = document.getElementById('fila-cliente-' + id);
+          if (fila) fila.remove();
+        });
+        actualizarContador();
+      } else {
+        alert(data.error || 'No se pudo eliminar.');
+      }
+    })
+    .catch(() => alert('Error al eliminar los clientes seleccionados.'));
+}
+</script>
+{% endblock %}
