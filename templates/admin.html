@@ -19,14 +19,11 @@
   .kpis {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: 1rem; margin-bottom: 2rem;
   }
   .kpi-card {
-    background: var(--blanco);
-    border-radius: 12px;
-    padding: 1.3rem 1.5rem;
-    box-shadow: var(--sombra);
+    background: var(--blanco); border-radius: 12px;
+    padding: 1.3rem 1.5rem; box-shadow: var(--sombra);
     display: flex; align-items: center; gap: 1rem;
   }
   .kpi-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
@@ -34,16 +31,13 @@
   .kpi-icon.dorado { background: #FFF0CC; }
   .kpi-icon.verde  { background: #D4EDDA; }
   .kpi-icon.azul   { background: #CCE5FF; }
-  .kpi-icon.naranja { background: #FFE8CC; }
-  .kpi-icon.morado { background: #EDE0FF; }
   .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1; }
   .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
 
   .accesos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2.5rem;
+    gap: 1rem; margin-bottom: 2.5rem;
   }
   .acceso-card {
     background: var(--blanco); border-radius: 12px; padding: 1.3rem 1.5rem;
@@ -57,72 +51,26 @@
   .acceso-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
   .acceso-card p { font-size: .78rem; color: var(--gris); }
 
-  .admin-section-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem;
-  }
+  .admin-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem; }
 
-  /* REPORTES */
-  .reportes-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-  }
-  @media (max-width: 768px) { .reportes-grid { grid-template-columns: 1fr; } }
-
-  .reporte-card {
-    background: var(--blanco);
-    border-radius: 16px;
-    box-shadow: var(--sombra);
-    overflow: hidden;
-  }
-  .reporte-header {
-    padding: 1rem 1.4rem;
-    display: flex; align-items: center; gap: .7rem;
-  }
-  .reporte-header.verde { background: linear-gradient(135deg, #1a5c2a, #2C4A1E); }
-  .reporte-header.rojo  { background: linear-gradient(135deg, #8B1A1A, #5A0F0F); }
-  .reporte-header h3 { font-family: 'Cormorant Garamond', serif; color: #fff; font-size: 1.2rem; font-weight: 700; }
-  .reporte-header p { color: rgba(255,255,255,.7); font-size: .78rem; margin-top: .1rem; }
-  .reporte-kpis {
-    display: flex; gap: 1rem;
-    padding: 1rem 1.4rem;
-    border-bottom: 1px solid #F0E4CC;
-  }
-  .reporte-kpi { flex: 1; text-align: center; }
-  .reporte-kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
-  .reporte-kpi-val.verde { color: var(--verde); }
-  .reporte-kpi-val.rojo  { color: var(--rojo); }
-  .reporte-kpi-lbl { font-size: .72rem; color: var(--gris); text-transform: uppercase; letter-spacing: .5px; }
-  .reporte-chart { padding: 1rem 1.4rem 1.4rem; }
-  .reporte-chart canvas { width: 100% !important; }
-
-  /* TOP PLATOS */
-  .top-platos { padding: 1rem 1.4rem 1.4rem; }
-  .top-plato-item {
-    display: flex; align-items: center; gap: .8rem;
-    padding: .5rem 0; border-bottom: 1px dashed #F0E4CC;
-    font-size: .88rem;
-  }
-  .top-plato-item:last-child { border-bottom: none; }
-  .top-plato-num {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--dorado); color: #fff;
-    font-size: .72rem; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .top-plato-nombre { flex: 1; font-weight: 600; color: var(--marron); }
-  .top-plato-cant { font-weight: 700; color: var(--verde); }
-
-  /* TABLA */
   .estado-select {
     border: 1.5px solid #D0B896; border-radius: 6px;
     padding: .35rem .6rem; font-family: 'Jost', sans-serif;
     font-size: .82rem; background: var(--blanco);
     cursor: pointer; color: var(--marron);
   }
+
+  .btn-eliminar {
+    background: #FCE8E8; color: var(--rojo);
+    border: none; border-radius: 6px;
+    width: 30px; height: 30px;
+    font-size: .9rem; font-weight: 700;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .btn-eliminar:hover { background: var(--rojo); color: #fff; }
+
   .toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     background: #2C4A1E; color: #fff;
@@ -132,6 +80,7 @@
     animation: slideUp .3s ease;
   }
   @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
+
   .filtros { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
   .filtro-btn {
     padding: .35rem .9rem; border-radius: 20px;
@@ -141,25 +90,6 @@
     transition: all .2s; color: var(--gris);
   }
   .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
-
-  .btn-eliminar {
-    background: #FCE8E8; color: var(--rojo);
-    border: none; border-radius: 6px;
-    width: 30px; height: 30px;
-    font-size: .85rem; font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all .2s;
-    flex-shrink: 0;
-  }
-  .btn-eliminar:hover { background: var(--rojo); color: #fff; }
-  .toast-error {
-    position: fixed; bottom: 1.5rem; right: 1.5rem;
-    background: #8B1A1A; color: #fff;
-    padding: .8rem 1.3rem; border-radius: 8px;
-    font-size: .88rem; display: none; z-index: 999;
-    box-shadow: 0 4px 16px rgba(0,0,0,.2);
-  }
 </style>
 {% endblock %}
 
@@ -193,7 +123,6 @@
       <div class="kpi-icon azul">👥</div>
       <div><div class="kpi-valor">{{ total_clientes }}</div><div class="kpi-label">Clientes Registrados</div></div>
     </div>
-
   </div>
 
   <!-- Herramientas -->
@@ -208,6 +137,7 @@
       <div><h3>Reportes</h3><p>Ganancias, cancelados y estadísticas de ventas</p></div>
     </a>
   </div>
+
   <!-- Tabla pedidos -->
   <h2 class="admin-section-title">📋 Todos los Pedidos</h2>
   <div class="filtros">
@@ -221,7 +151,10 @@
   <div class="tabla-wrapper">
     <table id="tabla-pedidos">
       <thead>
-        <tr><th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th><th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th></th></tr>
+        <tr>
+          <th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th>
+          <th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th></th>
+        </tr>
       </thead>
       <tbody>
         {% for p in pedidos %}
@@ -232,7 +165,9 @@
           <td>{% if p[3] == 'delivery' %}🚚 Delivery{% else %}🏪 Local{% endif %}</td>
           <td>{{ p[4] or '—' }}</td>
           <td><strong style="color:var(--verde)">S/ {{ "%.2f"|format(p[6]) }}</strong></td>
-          <td id="estado-badge-{{ p[0] }}"><span class="badge badge-{{ p[5] }}">{{ p[5]|capitalize }}</span></td>
+          <td id="estado-badge-{{ p[0] }}">
+            <span class="badge badge-{{ p[5] }}">{{ p[5]|capitalize }}</span>
+          </td>
           <td>
             <select class="estado-select" onchange="cambiarEstado({{ p[0] }}, this.value)">
               <option value="pendiente"  {% if p[5]=='pendiente'  %}selected{% endif %}>Pendiente</option>
@@ -241,6 +176,9 @@
               <option value="entregado"  {% if p[5]=='entregado'  %}selected{% endif %}>Entregado</option>
               <option value="cancelado"  {% if p[5]=='cancelado'  %}selected{% endif %}>Cancelado</option>
             </select>
+          </td>
+          <td>
+            <button class="btn-eliminar" onclick="eliminarPedido({{ p[0] }})" title="Eliminar pedido">✕</button>
           </td>
         </tr>
         {% endfor %}
@@ -274,7 +212,7 @@ function cambiarEstado(idPedido, nuevoEstado) {
 }
 
 function eliminarPedido(idPedido) {
-  if (!confirm('¿Seguro que deseas eliminar el pedido #' + idPedido + '? Esta acción no se puede deshacer.')) return;
+  if (!confirm('¿Seguro que deseas eliminar el pedido #' + idPedido + '?\nEsta acción no se puede deshacer.')) return;
   const formData = new FormData();
   formData.append('id_pedido', idPedido);
   fetch('/admin/eliminar_pedido', { method: 'POST', body: formData })
