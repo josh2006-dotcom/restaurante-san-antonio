@@ -1,214 +1,22 @@
-
-{% extends "base.html" %}
-
-{% block extra_head %}
-<style>
-  .admin-semanal { padding: 2.5rem 0; }
-  .admin-semanal h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem; color: var(--rojo); margin-bottom: .3rem;
-  }
-  .admin-semanal p { color: var(--gris); margin-bottom: 2rem; }
-
-  .semana-form { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra); overflow: hidden; }
-  .semana-form-header {
-    background: linear-gradient(135deg, var(--rojo), #5A0F0F);
-    padding: 1.2rem 1.8rem;
-    display: flex; align-items: center; gap: .8rem;
-  }
-  .semana-form-header h2 { color: #fff; font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; }
-  .semana-form-body { padding: 1.8rem; }
-
-  .dia-box {
-    background: var(--crema);
-    border-radius: 12px;
-    padding: 1.2rem 1.4rem;
-    margin-bottom: 1rem;
-  }
-  .dia-box-header {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.25rem; font-weight: 700;
-    color: var(--rojo); margin-bottom: 1rem;
-    display: flex; align-items: center; gap: .5rem;
-  }
-
-  .tipo-grupo { margin-bottom: 1rem; }
-  .tipo-grupo:last-child { margin-bottom: 0; }
-  .tipo-label {
-    font-size: .72rem; font-weight: 700;
-    letter-spacing: 1px; text-transform: uppercase;
-    color: var(--gris); margin-bottom: .5rem;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .btn-agregar {
-    background: var(--dorado); color: #fff;
-    border: none; border-radius: 6px;
-    width: 24px; height: 24px;
-    font-size: 1rem; font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .2s;
-  }
-  .btn-agregar:hover { background: #a86f08; }
-  .btn-agregar.azul { background: #3A6EA5; }
-  .btn-agregar.azul:hover { background: #2a5080; }
-
-  .plato-input-row {
-    display: flex; gap: .5rem;
-    margin-bottom: .5rem; align-items: center;
-  }
-  .plato-input-row input { flex: 1; }
-  .btn-quitar {
-    background: #FCE8E8; color: var(--rojo);
-    border: none; border-radius: 6px;
-    width: 32px; height: 32px;
-    font-size: .9rem; font-weight: 700;
-    cursor: pointer; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .2s;
-  }
-  .btn-quitar:hover { background: var(--rojo); color: #fff; }
-
-  /* Selector de bebidas */
-  .bebida-select-row {
-    display: flex; gap: .5rem;
-    margin-bottom: .5rem; align-items: center;
-  }
-  .bebida-select-row select { flex: 1; }
-</style>
-{% endblock %}
-
-{% block content %}
-<section class="admin-semanal">
-  <div class="container">
-    <a href="/admin" class="btn btn-outline btn-sm" style="margin-bottom:1.5rem">← Volver al Admin</a>
-    <h1>📅 Editar Menú Semanal</h1>
-    <p>Agrega entradas, segundos y bebidas por día. Los cambios se reflejan inmediatamente en la página pública.</p>
-
-    <div class="semana-form">
-      <div class="semana-form-header">
-        <span style="font-size:1.5rem">🍽️</span>
-        <h2>Programación Semanal</h2>
-      </div>
-      <div class="semana-form-body">
-        <form method="POST" action="/admin/menu_semanal" id="form-menu-semanal">
-
-          <div class="form-group">
-            <label class="form-label">Semana (ej: "Del 23 al 27 de Junio")</label>
-            <input type="text" name="semana" class="form-control"
-                   value="{{ semana_actual }}"
-                   placeholder="Del 23 al 27 de Junio 2026">
-          </div>
-
-          {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
-          {% set entradas = menu.get(dia, {}).get('entradas', []) %}
-          {% set segundos = menu.get(dia, {}).get('segundos', []) %}
-          {% set bebidas  = menu.get(dia, {}).get('bebidas',  []) %}
-          <div class="dia-box">
-            <div class="dia-box-header">📌 {{ dia }}</div>
-
-            <!-- ENTRADAS -->
-            <div class="tipo-grupo">
-              <div class="tipo-label">
-                <span>🥗 Entradas</span>
-                <button type="button" class="btn-agregar" onclick="agregarPlato('{{ dia }}', 'entrada')">+</button>
-              </div>
-              <div id="entradas-{{ dia }}">
-                {% if entradas %}
-                  {% for e in entradas %}
-                  <div class="plato-input-row">
-                    <input type="text" name="entrada_{{ dia }}_{{ loop.index0 }}" class="form-control" value="{{ e }}" placeholder="Ej: Ceviche">
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="plato-input-row">
-                    <input type="text" name="entrada_{{ dia }}_0" class="form-control" placeholder="Ej: Ceviche">
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-
-            <!-- SEGUNDOS -->
-            <div class="tipo-grupo">
-              <div class="tipo-label">
-                <span>🍽️ Segundos</span>
-                <button type="button" class="btn-agregar" onclick="agregarPlato('{{ dia }}', 'segundo')">+</button>
-              </div>
-              <div id="segundos-{{ dia }}">
-                {% if segundos %}
-                  {% for s in segundos %}
-                  <div class="plato-input-row">
-                    <input type="text" name="segundo_{{ dia }}_{{ loop.index0 }}" class="form-control" value="{{ s }}" placeholder="Ej: Lomo saltado">
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="plato-input-row">
-                    <input type="text" name="segundo_{{ dia }}_0" class="form-control" placeholder="Ej: Lomo saltado">
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-
-            <!-- BEBIDAS -->
-            <div class="tipo-grupo">
-              <div class="tipo-label">
-                <span>🥤 Bebidas</span>
-                <button type="button" class="btn-agregar azul" onclick="agregarBebida('{{ dia }}')">+</button>
-              </div>
-              <div id="bebidas-{{ dia }}">
-                {% if bebidas %}
-                  {% for b in bebidas %}
-                  <div class="bebida-select-row">
-                    <select name="bebida_{{ dia }}_{{ loop.index0 }}" class="form-control">
-                      {% for nb in nombres_bebidas %}
-                      <option value="{{ nb }}" {% if nb == b %}selected{% endif %}>{{ nb }}</option>
-                      {% endfor %}
-                    </select>
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="bebida-select-row">
-                    <select name="bebida_{{ dia }}_0" class="form-control">
-                      {% for nb in nombres_bebidas %}
-                      <option value="{{ nb }}">{{ nb }}</option>
-                      {% endfor %}
-                    </select>
-                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-                  </div>
-                {% endif %}
-              </div>
-            </div>
-
-          </div>
-          {% endfor %}
-
-          <div style="margin-top:1.5rem; display:flex; gap:1rem; flex-wrap:wrap">
-            <button type="submit" class="btn btn-dorado">💾 Guardar Menú Semanal</button>
-            <a href="/menu_semanal" class="btn btn-outline" target="_blank">👁️ Ver página pública</a>
-          </div>
-
-        </form>
-      </div>
-    </div>
-
-  </div>
-</section>
-
 <script>
 const nombresBebidas = {{ nombres_bebidas | tojson }};
 
+// Contadores independientes por contenedor — nunca se repiten aunque se eliminen filas
+const contadores = {};
+
+function getContador(key) {
+  if (!contadores[key]) contadores[key] = 0;
+  return ++contadores[key];
+}
+
 function agregarPlato(dia, tipo) {
-  const contenedor = document.getElementById(`${tipo}s-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('input').length;
+  const key = `${tipo}s-${dia}`;
+  const contenedor = document.getElementById(key);
+  const idx = Date.now(); // timestamp como índice único, nunca colisiona
   const row = document.createElement('div');
   row.className = 'plato-input-row';
   row.innerHTML = `
-    <input type="text" name="${tipo}_${dia}_${cantidadActual}" class="form-control" placeholder="Nuevo plato...">
+    <input type="text" name="${tipo}_${dia}_${idx}" class="form-control" placeholder="Nuevo plato...">
     <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
   `;
   contenedor.appendChild(row);
@@ -217,34 +25,14 @@ function agregarPlato(dia, tipo) {
 
 function agregarBebida(dia) {
   const contenedor = document.getElementById(`bebidas-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('select').length;
+  const idx = Date.now();
   const opts = nombresBebidas.map(n => `<option value="${n}">${n}</option>`).join('');
   const row = document.createElement('div');
   row.className = 'bebida-select-row';
   row.innerHTML = `
-    <select name="bebida_${dia}_${cantidadActual}" class="form-control">${opts}</select>
+    <select name="bebida_${dia}_${idx}" class="form-control">${opts}</select>
     <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
   `;
   contenedor.appendChild(row);
 }
-
-document.getElementById('form-menu-semanal').addEventListener('submit', function() {
-  {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
-  ['entrada', 'segundo'].forEach(tipo => {
-    const contenedor = document.getElementById(`${tipo}s-{{ dia }}`);
-    if (contenedor) {
-      contenedor.querySelectorAll('input').forEach((inp, idx) => {
-        inp.name = `${tipo}_{{ dia }}_${idx}`;
-      });
-    }
-  });
-  const bebContenedor = document.getElementById(`bebidas-{{ dia }}`);
-  if (bebContenedor) {
-    bebContenedor.querySelectorAll('select').forEach((sel, idx) => {
-      sel.name = `bebida_{{ dia }}_${idx}`;
-    });
-  }
-  {% endfor %}
-});
 </script>
-{% endblock %}
