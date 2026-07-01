@@ -67,6 +67,7 @@
   }
   .grupo-titulo.entrada { color: var(--dorado); }
   .grupo-titulo.segundo { color: var(--rojo); }
+  .grupo-titulo.bebida  { color: #3A6EA5; }
 
   .plato-item {
     display: flex; align-items: center; gap: 1rem;
@@ -144,7 +145,7 @@
     <div class="acordeon">
       {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
       {% set datos = menu.get(dia) %}
-      {% if datos and (datos.entradas or datos.segundos) %}
+      {% if datos and (datos.entradas or datos.segundos or datos.bebidas) %}
       <div class="dia-acordeon" id="dia-{{ loop.index }}">
         <div class="dia-trigger" onclick="toggleDia('dia-{{ loop.index }}')">
           <div class="dia-icon">{{ dia_icons.get(dia, '📅') }}</div>
@@ -154,6 +155,8 @@
               {{ datos.entradas|length }} entrada{{ 's' if datos.entradas|length != 1 else '' }}
               &nbsp;·&nbsp;
               {{ datos.segundos|length }} segundo{{ 's' if datos.segundos|length != 1 else '' }}
+              &nbsp;·&nbsp;
+              {{ datos.bebidas|length }} bebida{{ 's' if datos.bebidas|length != 1 else '' }}
             </div>
           </div>
           <span class="dia-chevron">▼</span>
@@ -197,6 +200,18 @@
                 <div class="plato-item-img-placeholder">🍽️</div>
               {% endif %}
               <div class="plato-item-nombre">{{ plato }}</div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          {% if datos.bebidas %}
+          <div class="grupo-tipo">
+            <div class="grupo-titulo bebida">🥤 Bebidas</div>
+            {% for bebida in datos.bebidas %}
+            <div class="plato-item">
+              <div class="plato-item-img-placeholder">🥤</div>
+              <div class="plato-item-nombre">{{ bebida }}</div>
             </div>
             {% endfor %}
           </div>
