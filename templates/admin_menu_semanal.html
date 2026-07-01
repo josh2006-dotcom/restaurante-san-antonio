@@ -28,8 +28,7 @@
   .dia-box-header {
     font-family: 'Cormorant Garamond', serif;
     font-size: 1.25rem; font-weight: 700;
-    color: var(--rojo);
-    margin-bottom: 1rem;
+    color: var(--rojo); margin-bottom: 1rem;
     display: flex; align-items: center; gap: .5rem;
   }
 
@@ -51,26 +50,30 @@
     transition: background .2s;
   }
   .btn-agregar:hover { background: #a86f08; }
+  .btn-agregar.azul { background: #3A6EA5; }
+  .btn-agregar.azul:hover { background: #2a5080; }
 
   .plato-input-row {
     display: flex; gap: .5rem;
-    margin-bottom: .5rem;
-    align-items: center;
+    margin-bottom: .5rem; align-items: center;
   }
-  .plato-input-row input {
-    flex: 1;
-  }
+  .plato-input-row input { flex: 1; }
   .btn-quitar {
     background: #FCE8E8; color: var(--rojo);
     border: none; border-radius: 6px;
     width: 32px; height: 32px;
     font-size: .9rem; font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
+    cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     transition: background .2s;
   }
   .btn-quitar:hover { background: var(--rojo); color: #fff; }
+
+  .bebida-select-row {
+    display: flex; gap: .5rem;
+    margin-bottom: .5rem; align-items: center;
+  }
+  .bebida-select-row select { flex: 1; }
 </style>
 {% endblock %}
 
@@ -79,7 +82,7 @@
   <div class="container">
     <a href="/admin" class="btn btn-outline btn-sm" style="margin-bottom:1.5rem">← Volver al Admin</a>
     <h1>📅 Editar Menú Semanal</h1>
-    <p>Agrega tantas entradas y segundos como quieras por día. Los cambios se reflejan inmediatamente en la página pública.</p>
+    <p>Agrega entradas, segundos y bebidas por día. Los cambios se reflejan inmediatamente en la página pública.</p>
 
     <div class="semana-form">
       <div class="semana-form-header">
@@ -99,6 +102,7 @@
           {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
           {% set entradas = menu.get(dia, {}).get('entradas', []) %}
           {% set segundos = menu.get(dia, {}).get('segundos', []) %}
+          {% set bebidas  = menu.get(dia, {}).get('bebidas',  []) %}
           <div class="dia-box">
             <div class="dia-box-header">📌 {{ dia }}</div>
 
@@ -148,6 +152,37 @@
               </div>
             </div>
 
+            <!-- BEBIDAS -->
+            <div class="tipo-grupo">
+              <div class="tipo-label">
+                <span>🥤 Bebidas</span>
+                <button type="button" class="btn-agregar azul" onclick="agregarBebida('{{ dia }}')">+</button>
+              </div>
+              <div id="bebidas-{{ dia }}">
+                {% if bebidas %}
+                  {% for b in bebidas %}
+                  <div class="bebida-select-row">
+                    <select name="bebida_{{ dia }}_{{ loop.index0 }}" class="form-control">
+                      {% for nb in nombres_bebidas %}
+                      <option value="{{ nb }}" {% if nb == b %}selected{% endif %}>{{ nb }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="bebida-select-row">
+                    <select name="bebida_{{ dia }}_0" class="form-control">
+                      {% for nb in nombres_bebidas %}
+                      <option value="{{ nb }}">{{ nb }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
           </div>
           {% endfor %}
 
@@ -164,32 +199,33 @@
 </section>
 
 <script>
+const nombresBebidas = {{ nombres_bebidas | tojson }};
+
+// Usamos timestamp como índice único — nunca colisiona aunque se eliminen filas
 function agregarPlato(dia, tipo) {
-  const contenedor = document.getElementById(`${tipo}s-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('input').length;
+  const contenedor = document.getElementById(tipo + 's-' + dia);
+  const idx = Date.now();
   const row = document.createElement('div');
   row.className = 'plato-input-row';
-  row.innerHTML = `
-    <input type="text" name="${tipo}_${dia}_${cantidadActual}" class="form-control" placeholder="Nuevo plato...">
-    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-  `;
+  row.innerHTML =
+    '<input type="text" name="' + tipo + '_' + dia + '_' + idx + '" class="form-control" placeholder="Nuevo plato...">' +
+    '<button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>';
   contenedor.appendChild(row);
   row.querySelector('input').focus();
 }
 
-// Antes de enviar el formulario, renumerar los inputs para evitar huecos
-document.getElementById('form-menu-semanal').addEventListener('submit', function() {
-  {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
-  ['entrada', 'segundo'].forEach(tipo => {
-    const contenedor = document.getElementById(`${tipo}s-{{ dia }}`);
-    if (contenedor) {
-      const inputs = contenedor.querySelectorAll('input');
-      inputs.forEach((inp, idx) => {
-        inp.name = `${tipo}_{{ dia }}_${idx}`;
-      });
-    }
-  });
-  {% endfor %}
-});
+function agregarBebida(dia) {
+  const contenedor = document.getElementById('bebidas-' + dia);
+  const idx = Date.now();
+  const opts = nombresBebidas.map(function(n) {
+    return '<option value="' + n + '">' + n + '</option>';
+  }).join('');
+  const row = document.createElement('div');
+  row.className = 'bebida-select-row';
+  row.innerHTML =
+    '<select name="bebida_' + dia + '_' + idx + '" class="form-control">' + opts + '</select>' +
+    '<button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>';
+  contenedor.appendChild(row);
+}
 </script>
 {% endblock %}
