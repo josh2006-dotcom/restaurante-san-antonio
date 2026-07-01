@@ -203,46 +203,42 @@
 const nombresBebidas = {{ nombres_bebidas | tojson }};
 
 function agregarPlato(dia, tipo) {
-  const contenedor = document.getElementById(`${tipo}s-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('.plato-input-row').length;
-  const row = document.createElement('div');
+  var contenedor = document.getElementById(tipo + 's-' + dia);
+  var cantidadActual = contenedor.querySelectorAll('.plato-input-row').length;
+  var row = document.createElement('div');
   row.className = 'plato-input-row';
-  row.innerHTML = `
-    <input type="text" name="${tipo}_${dia}_${cantidadActual}" class="form-control" placeholder="Nuevo plato...">
-    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-  `;
+  row.innerHTML =
+    '<input type="text" name="' + tipo + '_' + dia + '_' + cantidadActual + '" class="form-control" placeholder="Nuevo plato...">' +
+    '<button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>';
   contenedor.appendChild(row);
   row.querySelector('input').focus();
 }
 
 function agregarBebida(dia) {
-  const contenedor = document.getElementById(`bebidas-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('select').length;
-  const opts = nombresBebidas.map(n => `<option value="${n}">${n}</option>`).join('');
-  const row = document.createElement('div');
+  var contenedor = document.getElementById('bebidas-' + dia);
+  var cantidadActual = contenedor.querySelectorAll('select').length;
+  var opts = nombresBebidas.map(function(n) { return '<option value="' + n + '">' + n + '</option>'; }).join('');
+  var row = document.createElement('div');
   row.className = 'bebida-select-row';
-  row.innerHTML = `
-    <select name="bebida_${dia}_${cantidadActual}" class="form-control">${opts}</select>
-    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>
-  `;
+  row.innerHTML =
+    '<select name="bebida_' + dia + '_' + cantidadActual + '" class="form-control">' + opts + '</select>' +
+    '<button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>';
   contenedor.appendChild(row);
 }
 
 document.getElementById('form-menu-semanal').addEventListener('submit', function() {
   {% for dia in ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] %}
-  ['entrada', 'segundo'].forEach(tipo => {
-    const contenedor = document.getElementById(`${tipo}s-{{ dia }}`);
+  ['entrada', 'segundo'].forEach(function(tipo) {
+    var contenedor = document.getElementById(tipo + 's-{{ dia }}');
     if (contenedor) {
-      contenedor.querySelectorAll('input').forEach((inp, idx) => {
-        inp.name = `${tipo}_{{ dia }}_${idx}`;
-      });
+      var inputs = contenedor.querySelectorAll('input');
+      inputs.forEach(function(inp, idx) { inp.name = tipo + '_{{ dia }}_' + idx; });
     }
   });
-  const bebContenedor = document.getElementById(`bebidas-{{ dia }}`);
+  var bebContenedor = document.getElementById('bebidas-{{ dia }}');
   if (bebContenedor) {
-    bebContenedor.querySelectorAll('select').forEach((sel, idx) => {
-      sel.name = `bebida_{{ dia }}_${idx}`;
-    });
+    var selects = bebContenedor.querySelectorAll('select');
+    selects.forEach(function(sel, idx) { sel.name = 'bebida_{{ dia }}_' + idx; });
   }
   {% endfor %}
 });
