@@ -393,11 +393,25 @@ def pedido():
 
     cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
-    cur.execute("SELECT id_opcion, accion, ingrediente, costo_extra FROM Opcion_Personalizacion ORDER BY accion")
-    opciones = cur.fetchall()
+
+    # Opciones filtradas por plato segun tabla Plato_Opcion
+    cur.execute("""
+        SELECT po.id_plato, op.id_opcion, op.accion, op.ingrediente, op.costo_extra
+        FROM Plato_Opcion po
+        JOIN Opcion_Personalizacion op ON op.id_opcion = po.id_opcion
+        ORDER BY po.id_plato, op.accion, op.ingrediente
+    """)
+    filas_opciones = cur.fetchall()
     conn.close()
 
-    return render_template('pedido.html', platos=platos, opciones=opciones)
+    # Agrupar opciones por plato: { id_plato: [ (id_opcion, accion, ingrediente, costo_extra), ... ] }
+    opciones_por_plato = {}
+    for id_plato, id_opcion, accion, ingrediente, costo_extra in filas_opciones:
+        if id_plato not in opciones_por_plato:
+            opciones_por_plato[id_plato] = []
+        opciones_por_plato[id_plato].append((id_opcion, accion, ingrediente, costo_extra))
+
+    return render_template('pedido.html', platos=platos, opciones_por_plato=opciones_por_plato)
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  MIS PEDIDOS                                         ║
