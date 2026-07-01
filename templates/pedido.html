@@ -238,7 +238,7 @@
         <div class="pers-panel">
           <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
           <div class="pers-grid">
-            {% for op in opciones %}
+            {% for op in opciones_por_plato.get(p[0], []) %}
             <label class="pers-opcion"
                    data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
                    data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
@@ -281,7 +281,7 @@
         <div class="pers-panel">
           <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
           <div class="pers-grid">
-            {% for op in opciones %}
+            {% for op in opciones_por_plato.get(p[0], []) %}
             <label class="pers-opcion"
                    data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
                    data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
