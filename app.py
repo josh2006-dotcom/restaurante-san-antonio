@@ -1,14 +1,9 @@
-
-import os
 from flask import (Flask, render_template, request,
                    redirect, url_for, session, flash, jsonify)
-from werkzeug.utils import secure_filename
 from database import get_connection
 
 app = Flask(__name__)
 app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
-
-EXTENSIONES_IMG_PERMITIDAS = {'png', 'jpg', 'jpeg', 'webp'}
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  INICIO — Menú público                               ║
@@ -17,7 +12,7 @@ EXTENSIONES_IMG_PERMITIDAS = {'png', 'jpg', 'jpeg', 'webp'}
 def index():
     conn = get_connection()
     cur  = conn.cursor()
-    cur.execute("SELECT id_plato, nombre, precio, tipo, imagen FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
+    cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
     conn.close()
     return render_template('index.html', platos=platos)
@@ -45,16 +40,15 @@ def menu_semanal():
     filas = cur.fetchall()
     conn.close()
 
+    # Agrupar por dia: { dia: { entradas: [...], segundos: [...], semana: '' } }
     menu = {}
     for dia, tipo, plato, semana, orden in filas:
         if dia not in menu:
-            menu[dia] = {'entradas': [], 'segundos': [], 'bebidas': [], 'semana': semana}
+            menu[dia] = {'entradas': [], 'segundos': [], 'semana': semana}
         if tipo == 'entrada':
             menu[dia]['entradas'].append(plato)
-        elif tipo == 'segundo':
+        else:
             menu[dia]['segundos'].append(plato)
-        elif tipo == 'bebida':
-            menu[dia]['bebidas'].append(plato)
 
     return render_template('menu_semanal.html', menu=menu)
 
@@ -74,7 +68,7 @@ def admin_menu_semanal():
         semana = request.form.get('semana', '')
         cur.execute("DELETE FROM Menu_Semanal")
         for dia in dias:
-            # Entradas
+            # Entradas (pueden venir varias: entrada_Lunes_0, entrada_Lunes_1, ...)
             i = 0
             while True:
                 key = f'entrada_{dia}_{i}'
@@ -100,19 +94,6 @@ def admin_menu_semanal():
                         VALUES (%s, 'segundo', %s, %s, %s)
                     """, (dia, valor, semana, i))
                 i += 1
-            # Bebidas
-            i = 0
-            while True:
-                key = f'bebida_{dia}_{i}'
-                if key not in request.form:
-                    break
-                valor = request.form.get(key, '').strip()
-                if valor:
-                    cur.execute("""
-                        INSERT INTO Menu_Semanal (dia, tipo, plato, semana, orden)
-                        VALUES (%s, 'bebida', %s, %s, %s)
-                    """, (dia, valor, semana, i))
-                i += 1
         conn.commit()
         conn.close()
         flash('¡Menú semanal actualizado! ✅', 'success')
@@ -132,116 +113,21 @@ def admin_menu_semanal():
           END, tipo, orden
     """)
     filas = cur.fetchall()
+    conn.close()
 
     menu = {}
     semana_actual = ''
     for dia, tipo, plato, semana, orden in filas:
         if dia not in menu:
-            menu[dia] = {'entradas': [], 'segundos': [], 'bebidas': []}
+            menu[dia] = {'entradas': [], 'segundos': []}
         if semana:
             semana_actual = semana
         if tipo == 'entrada':
             menu[dia]['entradas'].append(plato)
-        elif tipo == 'segundo':
+        else:
             menu[dia]['segundos'].append(plato)
-        elif tipo == 'bebida':
-            menu[dia]['bebidas'].append(plato)
 
-    cur.execute("SELECT nombre FROM Bebida WHERE disponible = TRUE ORDER BY nombre")
-    nombres_bebidas = [r[0] for r in cur.fetchall()]
-    conn.close()
-
-    return render_template('admin_menu_semanal.html', menu=menu, semana_actual=semana_actual, nombres_bebidas=nombres_bebidas)
-
-# ╔══════════════════════════════════════════════════════╗
-# ║  PLATOS — Admin: agregar nuevos platos al catálogo   ║
-# ╚══════════════════════════════════════════════════════╝
-@app.route('/admin/platos', methods=['GET', 'POST'])
-def admin_platos():
-    if not session.get('es_admin'):
-        return redirect(url_for('admin_login'))
-
-    conn = get_connection()
-    cur  = conn.cursor()
-
-    if request.method == 'POST':
-        nombre  = request.form.get('nombre', '').strip()
-        precio  = request.form.get('precio', '').strip()
-        tipo    = request.form.get('tipo', 'segundo')
-        archivo = request.files.get('imagen')
-
-        if not nombre or not precio:
-            flash('El nombre y el precio son obligatorios.', 'danger')
-            conn.close()
-            return redirect(url_for('admin_platos'))
-
-        try:
-            precio_val = float(precio)
-        except ValueError:
-            flash('El precio no es válido.', 'danger')
-            conn.close()
-            return redirect(url_for('admin_platos'))
-
-        ruta_imagen = None
-        if archivo and archivo.filename:
-            extension = archivo.filename.rsplit('.', 1)[-1].lower()
-            if extension in EXTENSIONES_IMG_PERMITIDAS:
-                carpeta = 'imagenes_entrada' if tipo == 'entrada' else 'imagenes_plato'
-                nombre_archivo = secure_filename(nombre.lower().replace(' ', '_')) + '.' + extension
-                ruta_disco = os.path.join(app.root_path, 'static', carpeta, nombre_archivo)
-                archivo.save(ruta_disco)
-                ruta_imagen = f'{carpeta}/{nombre_archivo}'
-            else:
-                flash('Formato de imagen no permitido (usa png, jpg, jpeg o webp).', 'danger')
-                conn.close()
-                return redirect(url_for('admin_platos'))
-
-        cur.execute("""
-            INSERT INTO Plato (nombre, precio, tipo, disponible, imagen)
-            VALUES (%s, %s, %s, TRUE, %s)
-        """, (nombre, precio_val, tipo, ruta_imagen))
-        conn.commit()
-        conn.close()
-        flash(f'¡Plato "{nombre}" agregado al catálogo! 🍽️', 'success')
-        return redirect(url_for('admin_platos'))
-
-    cur.execute("SELECT id_plato, nombre, precio, tipo, disponible, imagen FROM Plato ORDER BY tipo, nombre")
-    platos = cur.fetchall()
-    conn.close()
-    return render_template('admin_platos.html', platos=platos)
-
-
-@app.route('/admin/platos/toggle', methods=['POST'])
-def admin_platos_toggle():
-    if not session.get('es_admin'):
-        return jsonify({'error': 'No autorizado'}), 403
-    id_plato = request.form.get('id_plato')
-    conn = get_connection()
-    cur  = conn.cursor()
-    cur.execute("UPDATE Plato SET disponible = NOT disponible WHERE id_plato = %s", (id_plato,))
-    conn.commit()
-    conn.close()
-    return jsonify({'ok': True})
-
-
-@app.route('/admin/platos/eliminar', methods=['POST'])
-def admin_platos_eliminar():
-    if not session.get('es_admin'):
-        return jsonify({'error': 'No autorizado'}), 403
-    id_plato = request.form.get('id_plato')
-    conn = get_connection()
-    cur  = conn.cursor()
-    try:
-        cur.execute("DELETE FROM Plato WHERE id_plato = %s", (id_plato,))
-        conn.commit()
-        ok = True
-    except Exception:
-        conn.rollback()
-        ok = False
-    conn.close()
-    if not ok:
-        return jsonify({'ok': False, 'error': 'No se puede eliminar: el plato ya tiene pedidos asociados. Puedes desactivarlo en su lugar.'}), 400
-    return jsonify({'ok': True})
+    return render_template('admin_menu_semanal.html', menu=menu, semana_actual=semana_actual)
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
@@ -493,29 +379,36 @@ def admin():
     cur.execute("SELECT COALESCE(SUM(total), 0) FROM Pedido WHERE estado = 'cancelado'")
     monto_cancelados = cur.fetchone()[0]
 
+    # Ganancias por dia (ultimos 7 dias)
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COALESCE(SUM(total), 0) as ganancia
         FROM Pedido WHERE estado = 'entregado'
         AND fecha_pedido >= NOW() - INTERVAL '7 days'
-        GROUP BY DATE(fecha_pedido) ORDER BY dia
+        GROUP BY DATE(fecha_pedido)
+        ORDER BY dia
     """)
     ganancias_por_dia = cur.fetchall()
 
+    # Cancelados por dia (ultimos 7 dias)
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
         FROM Pedido WHERE estado = 'cancelado'
         AND fecha_pedido >= NOW() - INTERVAL '7 days'
-        GROUP BY DATE(fecha_pedido) ORDER BY dia
+        GROUP BY DATE(fecha_pedido)
+        ORDER BY dia
     """)
     cancelados_por_dia = cur.fetchall()
 
+    # Platos mas vendidos
     cur.execute("""
         SELECT pl.nombre, SUM(dp.cantidad) as total_vendido
         FROM Detalle_Pedido dp
         JOIN Plato pl ON pl.id_plato = dp.id_plato
         JOIN Pedido p ON p.id_pedido = dp.id_pedido
         WHERE p.estado = 'entregado'
-        GROUP BY pl.nombre ORDER BY total_vendido DESC LIMIT 5
+        GROUP BY pl.nombre
+        ORDER BY total_vendido DESC
+        LIMIT 5
     """)
     platos_top = cur.fetchall()
 
@@ -559,6 +452,7 @@ def eliminar_pedido():
     id_pedido = request.form.get('id_pedido')
     conn = get_connection()
     cur  = conn.cursor()
+    # Eliminar en orden por dependencias
     cur.execute("""
         DELETE FROM Detalle_Personalizacion
         WHERE id_detalle IN (
@@ -570,70 +464,6 @@ def eliminar_pedido():
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
-
-# ╔══════════════════════════════════════════════════════╗
-# ║  CLIENTES — Admin: ver y eliminar registros          ║
-# ╚══════════════════════════════════════════════════════╝
-def _eliminar_cliente_en_cascada(cur, id_cliente):
-    cur.execute("""
-        DELETE FROM Detalle_Personalizacion
-        WHERE id_detalle IN (
-            SELECT dp.id_detalle FROM Detalle_Pedido dp
-            JOIN Pedido p ON p.id_pedido = dp.id_pedido
-            WHERE p.id_cliente = %s
-        )
-    """, (id_cliente,))
-    cur.execute("""
-        DELETE FROM Detalle_Pedido
-        WHERE id_pedido IN (SELECT id_pedido FROM Pedido WHERE id_cliente = %s)
-    """, (id_cliente,))
-    cur.execute("DELETE FROM Pedido WHERE id_cliente = %s", (id_cliente,))
-    cur.execute("DELETE FROM Cliente WHERE id_cliente = %s", (id_cliente,))
-
-
-@app.route('/admin/clientes')
-def admin_clientes():
-    if not session.get('es_admin'):
-        return redirect(url_for('admin_login'))
-
-    conn = get_connection()
-    cur  = conn.cursor()
-    cur.execute("""
-        SELECT c.id_cliente, c.nombre, c.telefono, c.direccion_referencia,
-               COUNT(p.id_pedido) AS cantidad_pedidos
-        FROM Cliente c
-        LEFT JOIN Pedido p ON p.id_cliente = c.id_cliente
-        GROUP BY c.id_cliente, c.nombre, c.telefono, c.direccion_referencia
-        ORDER BY c.nombre, c.id_cliente
-    """)
-    clientes = cur.fetchall()
-    conn.close()
-    return render_template('admin_clientes.html', clientes=clientes)
-
-
-@app.route('/admin/clientes/eliminar_lote', methods=['POST'])
-def admin_clientes_eliminar_lote():
-    if not session.get('es_admin'):
-        return jsonify({'error': 'No autorizado'}), 403
-
-    ids = request.form.getlist('ids[]') or request.form.getlist('ids')
-    if not ids:
-        return jsonify({'error': 'No se seleccionó ningún cliente.'}), 400
-
-    conn = get_connection()
-    cur  = conn.cursor()
-    try:
-        for id_cliente in ids:
-            _eliminar_cliente_en_cascada(cur, id_cliente)
-        conn.commit()
-        eliminados = len(ids)
-    except Exception as e:
-        conn.rollback()
-        conn.close()
-        return jsonify({'error': f'Error al eliminar: {str(e)[:150]}'}), 500
-
-    conn.close()
-    return jsonify({'ok': True, 'eliminados': eliminados})
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -661,6 +491,7 @@ def salir():
     flash(f'Hasta pronto, {nombre}. 👋', 'info')
     return redirect(url_for('index'))
 
+
 # ╔══════════════════════════════════════════════════════╗
 # ║  REPORTES ADMIN                                      ║
 # ╚══════════════════════════════════════════════════════╝
@@ -668,12 +499,6 @@ def salir():
 def admin_reportes():
     if not session.get('es_admin'):
         return redirect(url_for('admin_login'))
-
-    rangos_dias = {'semana': 7, 'mes': 30, '3meses': 90}
-    rango = request.args.get('rango', 'mes')
-    if rango not in rangos_dias:
-        rango = 'mes'
-    dias = rangos_dias[rango]
 
     conn = get_connection()
     cur  = conn.cursor()
@@ -690,17 +515,17 @@ def admin_reportes():
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COALESCE(SUM(total), 0) as ganancia
         FROM Pedido WHERE estado = 'entregado'
-        AND fecha_pedido >= NOW() - (%s || ' days')::interval
+        AND fecha_pedido >= NOW() - INTERVAL '30 days'
         GROUP BY DATE(fecha_pedido) ORDER BY dia
-    """, (dias,))
+    """)
     ganancias_por_dia = cur.fetchall()
 
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
         FROM Pedido WHERE estado = 'cancelado'
-        AND fecha_pedido >= NOW() - (%s || ' days')::interval
+        AND fecha_pedido >= NOW() - INTERVAL '30 days'
         GROUP BY DATE(fecha_pedido) ORDER BY dia
-    """, (dias,))
+    """)
     cancelados_por_dia = cur.fetchall()
 
     cur.execute("""
@@ -729,8 +554,7 @@ def admin_reportes():
         ganancias_por_dia=ganancias_por_dia,
         cancelados_por_dia=cancelados_por_dia,
         platos_top=platos_top,
-        cancelados_recientes=cancelados_recientes,
-        rango_actual=rango)
+        cancelados_recientes=cancelados_recientes)
 
 # ╔══════════════════════════════════════════════════════════╗
 # ║  DIAGNÓSTICO                                            ║
@@ -753,7 +577,7 @@ def diagnostico():
             conn = get_connection()
             cur = conn.cursor()
             for tabla in ['Cliente','Plato','Opcion_Personalizacion',
-                          'Pedido','Detalle_Pedido','Detalle_Personalizacion','Menu_Semanal','Bebida']:
+                          'Pedido','Detalle_Pedido','Detalle_Personalizacion','Menu_Semanal']:
                 cur.execute(f"SELECT COUNT(*) FROM {tabla}")
                 n = cur.fetchone()[0]
                 tabla_resultados.append((tabla, n, n > 0))
