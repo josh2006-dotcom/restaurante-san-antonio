@@ -204,7 +204,7 @@ const nombresBebidas = {{ nombres_bebidas | tojson }};
 
 function agregarPlato(dia, tipo) {
   const contenedor = document.getElementById(`${tipo}s-${dia}`);
-  const cantidadActual = contenedor.querySelectorAll('input').length;
+  const cantidadActual = contenedor.querySelectorAll('.plato-input-row').length;
   const row = document.createElement('div');
   row.className = 'plato-input-row';
   row.innerHTML = `
