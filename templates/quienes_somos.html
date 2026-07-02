@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  /* HERO */
+  .qs-hero {
+    background: linear-gradient(135deg, var(--rojo) 0%, #5A0F0F 100%);
+    padding: 4rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .qs-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 10% 50%, rgba(200,134,10,.2) 0%, transparent 40%),
+      radial-gradient(circle at 90% 30%, rgba(255,200,100,.1) 0%, transparent 35%);
+  }
+  .qs-hero-content { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; }
+  .qs-hero-eyebrow {
+    font-size: .8rem; font-weight: 600; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--dorado); margin-bottom: .8rem;
+  }
+  .qs-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 1rem;
+  }
+  .qs-hero p {
+    color: rgba(255,255,255,.78); font-size: 1.05rem;
+    font-weight: 300; line-height: 1.7;
+  }
+
+  /* SECCIONES */
+  .qs-section { padding: 4rem 0; }
+  .qs-section.gris { background: #F9F0E3; }
+
+  .qs-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  @media (max-width: 768px) { .qs-grid-2 { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .qs-section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 700;
+    color: var(--rojo); margin-bottom: .5rem;
+  }
+  .qs-section-line {
+    width: 50px; height: 3px;
+    background: var(--dorado);
+    border-radius: 2px; margin-bottom: 1.5rem;
+  }
+  .qs-text {
+    color: var(--gris); font-size: .98rem;
+    line-height: 1.85; margin-bottom: 1rem;
+  }
+  .qs-text strong { color: var(--marron); }
+
+  /* IMAGEN PLACEHOLDER */
+  .qs-img-box {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--sombra-lg);
+    background: var(--crema2);
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: .8rem;
+    border: 2px dashed #D0B896;
+  }
+  .qs-img-box img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .qs-img-placeholder {
+    font-size: 3rem; color: #D0B896;
+  }
+  .qs-img-label {
+    font-size: .8rem; color: #D0B896; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* VALORES */
+  .valores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-top: 2rem;
+  }
+  .valor-card {
+    background: var(--blanco);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: var(--sombra);
+    text-align: center;
+    border-top: 4px solid var(--dorado);
+    transition: transform .25s, box-shadow .25s;
+  }
+  .valor-card:hover { transform: translateY(-4px); box-shadow: var(--sombra-lg); }
+  .valor-icon { font-size: 2.2rem; margin-bottom: .8rem; }
+  .valor-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: var(--marron); margin-bottom: .5rem;
+  }
+  .valor-text { font-size: .88rem; color: var(--gris); line-height: 1.6; }
+
+  /* MAPA */
+  .mapa-section {
+    padding: 4rem 0;
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    text-align: center;
+  }
+  .mapa-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    color: #fff; font-size: 2rem; margin-bottom: .5rem;
+  }
+  .mapa-section p { color: rgba(255,255,255,.7); margin-bottom: 1.5rem; font-size: .95rem; }
+  .mapa-info {
+    display: inline-flex; align-items: center; gap: .6rem;
+    background: rgba(255,255,255,.1);
+    border-radius: 20px; padding: .6rem 1.2rem;
+    color: var(--dorado); font-size: .9rem;
+    margin-bottom: 1.5rem;
+  }
+  .mapa-btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: var(--dorado); color: #fff;
+    padding: .8rem 2rem; border-radius: 8px;
+    font-weight: 700; text-decoration: none; font-size: 1rem;
+    transition: background .2s, transform .2s;
+  }
+  .mapa-btn:hover { background: #a86f08; transform: translateY(-2px); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="qs-hero">
+  <div class="qs-hero-content">
+    <p class="qs-hero-eyebrow">🍽️ Nuestra Historia</p>
+    <h1>Quiénes Somos</h1>
+    <p>Más de una década llevando el sabor de la cocina criolla peruana a cada mesa, con amor, tradición y los mejores ingredientes del mercado.</p>
+  </div>
+</section>
+
+<!-- NUESTRA HISTORIA -->
+<section class="qs-section">
+  <div class="container">
+    <div class="qs-grid-2">
+      <div>
+        <h2 class="qs-section-title">Nuestra Historia</h2>
+        <div class="qs-section-line"></div>
+        <p class="qs-text">
+          Somos el <strong>Restaurante San Antonio</strong>, un negocio familiar ubicado en el corazón del distrito de
+          <strong>San Juan de Lurigancho</strong>, Lima — Perú. Nacimos con una sola misión: llevar a tu mesa
+          los sabores más auténticos de la cocina criolla peruana, preparados con ingredientes frescos
+          seleccionados cada mañana.
+        </p>
+        <p class="qs-text">
+          Desde nuestros inicios, hemos trabajado con dedicación para que cada visita sea una experiencia
+          memorable. Nuestras recetas son el resultado de años de tradición familiar, pasadas de generación
+          en generación, y adaptadas con cariño para el paladar moderno sin perder su esencia criolla.
+        </p>
+        <p class="qs-text">
+          Hoy contamos con un equipo comprometido con la <strong>calidad, la higiene y el buen servicio</strong>,
+          porque sabemos que lo más importante no es solo el sabor del plato, sino la experiencia completa
+          que te llevás al salir.
+        </p>
+      </div>
+      <!-- IMAGEN 1 -->
+      <div class="qs-img-box" id="img-restaurante">
+        <div class="qs-img-placeholder">🏠</div>
+        <span class="qs-img-label">Foto del restaurante</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NUESTRA COCINA -->
+<section class="qs-section gris">
+  <div class="container">
+    <div class="qs-grid-2">
+      <!-- IMAGEN 2 -->
+      <div class="qs-img-box" id="img-cocina">
+        <div class="qs-img-placeholder">👨‍🍳</div>
+        <span class="qs-img-label">Foto de nuestros platos</span>
+      </div>
+      <div>
+        <h2 class="qs-section-title">Nuestra Cocina</h2>
+        <div class="qs-section-line"></div>
+        <p class="qs-text">
+          En San Antonio, la cocina es el corazón del negocio. Preparamos diariamente platos como
+          <strong>ceviche, lomo saltado, ají de gallina, arroz con pollo</strong> y muchos más,
+          todos elaborados al momento para garantizar su frescura y sabor.
+        </p>
+        <p class="qs-text">
+          Trabajamos con proveedores locales de confianza para asegurar que cada ingrediente llegue
+          fresco a tu plato. Nuestro equipo de cocina llega temprano cada día para preparar los
+          ingredientes con esmero, porque creemos que un buen plato comienza desde la selección
+          de los mejores insumos.
+        </p>
+        <p class="qs-text">
+          Ofrecemos tanto <strong>servicio en local</strong> como <strong>delivery</strong>,
+          para que puedas disfrutar de nuestra cocina criolla donde estés.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VALORES -->
+<section class="qs-section">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:1rem">
+      <h2 class="qs-section-title" style="display:inline-block">Nuestros Valores</h2>
+      <div class="qs-section-line" style="margin:0.5rem auto 0"></div>
+    </div>
+    <div class="valores-grid">
+      <div class="valor-card">
+        <div class="valor-icon">🥘</div>
+        <div class="valor-title">Sabor Auténtico</div>
+        <p class="valor-text">Recetas criollas tradicionales preparadas con técnicas que respetan la esencia de la cocina peruana.</p>
+      </div>
+      <div class="valor-card">
+        <div class="valor-icon">🌿</div>
+        <div class="valor-title">Ingredientes Frescos</div>
+        <p class="valor-text">Seleccionamos cada día los mejores ingredientes del mercado para garantizar la calidad en cada plato.</p>
+      </div>
+      <div class="valor-card">
+        <div class="valor-icon">❤️</div>
+        <div class="valor-title">Atención con Cariño</div>
+        <p class="valor-text">Tratamos a cada cliente como si fuera parte de nuestra familia, con calidez y respeto en todo momento.</p>
+      </div>
+      <div class="valor-card">
+        <div class="valor-icon">🏆</div>
+        <div class="valor-title">Calidad Constante</div>
+        <p class="valor-text">Mantenemos altos estándares de higiene y preparación para que cada visita supere tus expectativas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAPA / UBICACIÓN -->
+<section class="mapa-section">
+  <div class="container">
+    <h2>📍 Encuéntranos</h2>
+    <p>Visítanos en nuestro local en San Juan de Lurigancho, Lima — Perú</p>
+    <div class="mapa-info">
+      📌 San Juan de Lurigancho, Lima, Perú
+    </div>
+    <br>
+    <a href="TU_LINK_DE_GOOGLE_MAPS_AQUI" target="_blank" class="mapa-btn">
+      🗺️ Ver en Google Maps
+    </a>
+  </div>
+</section>
+
+{% endblock %}
