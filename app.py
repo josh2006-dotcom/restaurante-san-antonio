@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from database import get_connection
 
 app = Flask(__name__)
-app.secret_key = 'restaurante_san_antonio_clave_2024'
+app.secret_key = 'restaurante_san_antonio_clave_secreta_2024'
 
 EXTENSIONES_IMG_PERMITIDAS = {'png', 'jpg', 'jpeg', 'webp'}
 
