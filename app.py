@@ -249,12 +249,6 @@ def admin_platos_eliminar():
         return jsonify({'ok': False, 'error': 'No se puede eliminar: el plato ya tiene pedidos asociados. Puedes desactivarlo en su lugar.'}), 400
     return jsonify({'ok': True})
 
-# ╔══════════════════════════════════════════════════════╗
-# ║  QUIÉNES SOMOS                                       ║
-# ╚══════════════════════════════════════════════════════╝
-@app.route('/quienes_somos')
-def quienes_somos():
-    return render_template('quienes_somos.html')
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
