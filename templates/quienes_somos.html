@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -60,27 +61,16 @@
   }
   .qs-text strong { color: var(--marron); }
 
-  /* IMAGEN PLACEHOLDER */
+  /* IMAGEN */
   .qs-img-box {
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--sombra-lg);
     background: var(--crema2);
     aspect-ratio: 4/3;
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column;
-    gap: .8rem;
-    border: 2px dashed #D0B896;
   }
   .qs-img-box img {
     width: 100%; height: 100%; object-fit: cover; display: block;
-  }
-  .qs-img-placeholder {
-    font-size: 3rem; color: #D0B896;
-  }
-  .qs-img-label {
-    font-size: .8rem; color: #D0B896; font-weight: 600;
-    letter-spacing: 1px; text-transform: uppercase;
   }
 
   /* VALORES */
@@ -134,6 +124,22 @@
     transition: background .2s, transform .2s;
   }
   .mapa-btn:hover { background: #a86f08; transform: translateY(-2px); }
+
+  .mapa-embed-box {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--sombra-lg);
+    border: 2px solid rgba(200,134,10,.35);
+    aspect-ratio: 16/8;
+  }
+  .mapa-embed-box iframe {
+    width: 100%; height: 100%; border: 0; display: block;
+  }
+  @media (max-width: 600px) {
+    .mapa-embed-box { aspect-ratio: 4/5; }
+  }
 </style>
 {% endblock %}
 
@@ -142,9 +148,9 @@
 <!-- HERO -->
 <section class="qs-hero">
   <div class="qs-hero-content">
-    <p class="qs-hero-eyebrow">🍽️ Nuestra Historia</p>
+    <p class="qs-hero-eyebrow">🍽️ Comida casera, de barrio</p>
     <h1>Quiénes Somos</h1>
-    <p>Más de una década llevando el sabor de la cocina criolla peruana a cada mesa, con amor, tradición y los mejores ingredientes del mercado.</p>
+    <p>Un menú del día hecho con cariño, precio justo y la sazón de siempre. Así es San Antonio.</p>
   </div>
 </section>
 
@@ -156,90 +162,112 @@
         <h2 class="qs-section-title">Nuestra Historia</h2>
         <div class="qs-section-line"></div>
         <p class="qs-text">
-          Somos el <strong>Restaurante San Antonio</strong>, un negocio familiar ubicado en el corazón del distrito de
-          <strong>San Juan de Lurigancho</strong>, Lima — Perú. Nacimos con una sola misión: llevar a tu mesa
-          los sabores más auténticos de la cocina criolla peruana, preparados con ingredientes frescos
-          seleccionados cada mañana.
+          Somos el <strong>Restaurante San Antonio</strong>, un negocio familiar ubicado en
+          <strong>Av. José María Seguín 893, San Juan de Miraflores</strong>, Lima. Un local pequeño y
+          sencillo, de esos de puerta abierta y pizarra a la entrada, donde el barrio entero sabe
+          que va a encontrar un plato de fondo a buen precio.
         </p>
         <p class="qs-text">
-          Desde nuestros inicios, hemos trabajado con dedicación para que cada visita sea una experiencia
-          memorable. Nuestras recetas son el resultado de años de tradición familiar, pasadas de generación
-          en generación, y adaptadas con cariño para el paladar moderno sin perder su esencia criolla.
+          Nuestra pizarra cambia todos los días, pero la idea de siempre se mantiene:
+          <strong>entrada + fondo</strong> a un precio justo, comida recién hecha, sin vueltas ni
+          complicaciones. Así trabajamos desde que abrimos las puertas.
         </p>
         <p class="qs-text">
-          Hoy contamos con un equipo comprometido con la <strong>calidad, la higiene y el buen servicio</strong>,
-          porque sabemos que lo más importante no es solo el sabor del plato, sino la experiencia completa
-          que te llevás al salir.
+          Hoy seguimos siendo lo mismo de siempre: un lugar de confianza para almorzar rico,
+          rápido y sin gastar de más.
         </p>
       </div>
-      <!-- IMAGEN 1 -->
-      <div class="qs-img-box" id="img-restaurante">
-        <div class="qs-img-placeholder">🏠</div>
-        <span class="qs-img-label">Foto del restaurante</span>
+      <!-- IMAGEN 1: Fachada -->
+      <div class="qs-img-box">
+        <img src="{{ url_for('static', filename='nosotros/fuera.webp') }}" alt="Entrada del Restaurante San Antonio" loading="lazy">
       </div>
     </div>
   </div>
 </section>
 
-<!-- NUESTRA COCINA -->
+<!-- MENÚ DEL DÍA -->
 <section class="qs-section gris">
   <div class="container">
     <div class="qs-grid-2">
-      <!-- IMAGEN 2 -->
-      <div class="qs-img-box" id="img-cocina">
-        <div class="qs-img-placeholder">👨‍🍳</div>
-        <span class="qs-img-label">Foto de nuestros platos</span>
+      <!-- IMAGEN 2: Pizarra del menú -->
+      <div class="qs-img-box">
+        <img src="{{ url_for('static', filename='nosotros/cerca.webp') }}" alt="Pizarra con el menú del día" loading="lazy">
       </div>
       <div>
-        <h2 class="qs-section-title">Nuestra Cocina</h2>
+        <h2 class="qs-section-title">Nuestro Menú del Día</h2>
         <div class="qs-section-line"></div>
         <p class="qs-text">
-          En San Antonio, la cocina es el corazón del negocio. Preparamos diariamente platos como
-          <strong>ceviche, lomo saltado, ají de gallina, arroz con pollo</strong> y muchos más,
-          todos elaborados al momento para garantizar su frescura y sabor.
+          Cada mañana escribimos en la pizarra las opciones del día: entradas como
+          <strong>sopa de pollo, palta rellena o ensalada de palta</strong>, y fondos como
+          <strong>pollo a la norteña con frejol, pachamanca de pollo, pescado frito con frejol,
+          pollo a la parrilla</strong> y más — siempre con arroz o papa sancochada.
         </p>
         <p class="qs-text">
-          Trabajamos con proveedores locales de confianza para asegurar que cada ingrediente llegue
-          fresco a tu plato. Nuestro equipo de cocina llega temprano cada día para preparar los
-          ingredientes con esmero, porque creemos que un buen plato comienza desde la selección
-          de los mejores insumos.
+          El menú completo (entrada + fondo) cuesta <strong>S/ 11.00</strong>, y si prefieres
+          llevártelo, el precio para llevar es <strong>S/ 12.00</strong>.
         </p>
         <p class="qs-text">
-          Ofrecemos tanto <strong>servicio en local</strong> como <strong>delivery</strong>,
-          para que puedas disfrutar de nuestra cocina criolla donde estés.
+          También puedes pedir a través de nuestra web y elegir entre
+          <strong>recojo en local</strong> o <strong>delivery</strong>.
         </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NUESTRO AMBIENTE -->
+<section class="qs-section">
+  <div class="container">
+    <div class="qs-grid-2">
+      <div>
+        <h2 class="qs-section-title">Nuestro Ambiente</h2>
+        <div class="qs-section-line"></div>
+        <p class="qs-text">
+          Adentro nos vas a encontrar con mesas sencillas, mantel rojo y el infaltable
+          televisor con la novela o el programa de la tarde de fondo — el clásico comedor de barrio
+          donde te sientes como en casa.
+        </p>
+        <p class="qs-text">
+          No somos un restaurante grande ni lujoso, y no pretendemos serlo. Somos el lugar donde
+          vecinos y trabajadores de la zona vienen a almorzar todos los días, porque saben que
+          van a salir satisfechos sin que el bolsillo sufra.
+        </p>
+      </div>
+      <!-- IMAGEN 3: Comedor -->
+      <div class="qs-img-box">
+        <img src="{{ url_for('static', filename='nosotros/dentro.webp') }}" alt="Comedor del Restaurante San Antonio" loading="lazy">
       </div>
     </div>
   </div>
 </section>
 
 <!-- VALORES -->
-<section class="qs-section">
+<section class="qs-section gris">
   <div class="container">
     <div style="text-align:center; margin-bottom:1rem">
-      <h2 class="qs-section-title" style="display:inline-block">Nuestros Valores</h2>
+      <h2 class="qs-section-title" style="display:inline-block">Lo que nos representa</h2>
       <div class="qs-section-line" style="margin:0.5rem auto 0"></div>
     </div>
     <div class="valores-grid">
       <div class="valor-card">
         <div class="valor-icon">🥘</div>
-        <div class="valor-title">Sabor Auténtico</div>
-        <p class="valor-text">Recetas criollas tradicionales preparadas con técnicas que respetan la esencia de la cocina peruana.</p>
+        <div class="valor-title">Sazón Casera</div>
+        <p class="valor-text">Comida hecha como en casa, con recetas de siempre y sin atajos.</p>
       </div>
       <div class="valor-card">
-        <div class="valor-icon">🌿</div>
-        <div class="valor-title">Ingredientes Frescos</div>
-        <p class="valor-text">Seleccionamos cada día los mejores ingredientes del mercado para garantizar la calidad en cada plato.</p>
+        <div class="valor-icon">💰</div>
+        <div class="valor-title">Precio Justo</div>
+        <p class="valor-text">Menú completo a S/ 11.00, pensado para el bolsillo de cada día.</p>
       </div>
       <div class="valor-card">
         <div class="valor-icon">❤️</div>
-        <div class="valor-title">Atención con Cariño</div>
-        <p class="valor-text">Tratamos a cada cliente como si fuera parte de nuestra familia, con calidez y respeto en todo momento.</p>
+        <div class="valor-title">Atención Cercana</div>
+        <p class="valor-text">Trato de barrio, directo y cálido, como con cualquier vecino.</p>
       </div>
       <div class="valor-card">
-        <div class="valor-icon">🏆</div>
-        <div class="valor-title">Calidad Constante</div>
-        <p class="valor-text">Mantenemos altos estándares de higiene y preparación para que cada visita supere tus expectativas.</p>
+        <div class="valor-icon">⏱️</div>
+        <div class="valor-title">Rapidez</div>
+        <p class="valor-text">Sabemos que tienes poco tiempo para almorzar, y lo respetamos.</p>
       </div>
     </div>
   </div>
@@ -249,12 +277,22 @@
 <section class="mapa-section">
   <div class="container">
     <h2>📍 Encuéntranos</h2>
-    <p>Visítanos en nuestro local en San Juan de Lurigancho, Lima — Perú</p>
+    <p>Visítanos en nuestro local en San Juan de Miraflores, Lima — Perú</p>
     <div class="mapa-info">
-      📌 San Juan de Lurigancho, Lima, Perú
+      📌 Av. José María Seguín 893, San Juan de Miraflores, Lima
     </div>
-    <br>
-    <a href="TU_LINK_DE_GOOGLE_MAPS_AQUI" target="_blank" class="mapa-btn">
+    <br><br>
+
+    <div class="mapa-embed-box">
+      <iframe
+        src="https://www.google.com/maps?q=-12.1557395,-76.9702593&z=17&output=embed"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <a href="https://maps.app.goo.gl/B2urmK1R2ar7PFXK6" target="_blank" class="mapa-btn">
       🗺️ Ver en Google Maps
     </a>
   </div>
