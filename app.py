@@ -527,6 +527,68 @@ def mis_pedidos():
                            detalles=detalles_por_pedido)
 
 # ╔══════════════════════════════════════════════════════╗
+# ║  API: Datos del pedido para comprobante (ADMIN)      ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/pedido_comprobante/<int:id_pedido>')
+def admin_pedido_comprobante(id_pedido):
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    cur.execute("""
+        SELECT p.id_pedido, p.fecha_pedido, p.tipo_entrega, p.hora_estimada,
+               p.estado, p.total, c.nombre, c.telefono
+        FROM Pedido p
+        JOIN Cliente c ON c.id_cliente = p.id_cliente
+        WHERE p.id_pedido = %s
+    """, (id_pedido,))
+    ped = cur.fetchone()
+
+    if not ped:
+        conn.close()
+        return jsonify({'error': 'Pedido no encontrado'}), 404
+
+    cur.execute("""
+        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        WHERE dp.id_pedido = %s
+    """, (id_pedido,))
+    detalles_raw = cur.fetchall()
+
+    detalles = []
+    for det in detalles_raw:
+        cur.execute("""
+            SELECT op.accion, op.ingrediente, op.costo_extra
+            FROM Detalle_Personalizacion dp2
+            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
+            WHERE dp2.id_detalle = %s
+        """, (det[4],))
+        pers = cur.fetchall()
+        detalles.append({
+            'nombre':    det[0],
+            'cantidad':  det[1],
+            'precio':    float(det[2]),
+            'subtotal':  float(det[3]),
+            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
+        })
+
+    conn.close()
+    return jsonify({
+        'id_pedido':        ped[0],
+        'fecha':            ped[1].strftime('%d/%m/%Y'),
+        'hora':             ped[1].strftime('%H:%M'),
+        'tipo_entrega':     ped[2],
+        'estado':           ped[4],
+        'total':            float(ped[5]),
+        'cliente_nombre':   ped[6],
+        'cliente_telefono': ped[7],
+        'detalles':         detalles
+    })
+
+# ╔══════════════════════════════════════════════════════╗
 # ║  API: Datos del pedido para comprobante              ║
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/api/pedido_comprobante/<int:id_pedido>')
