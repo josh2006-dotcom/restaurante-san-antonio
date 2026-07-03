@@ -321,9 +321,10 @@
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-outline btn-sm" id="btn-atras"     onclick="irPaso1()" style="display:none">← Atrás</button>
-      <button class="btn btn-outline btn-sm"                    onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-dorado btn-sm"  id="btn-siguiente" onclick="irPaso2()">Continuar →</button>
+      <button class="btn btn-outline btn-sm" id="btn-atras"     onclick="volverPreview()" style="display:none">← Cancelar edición</button>
+      <button class="btn btn-outline btn-sm"                    onclick="cerrarModal()">Cerrar</button>
+      <button class="btn btn-outline btn-sm" id="btn-editar"    onclick="editarDatos()" style="display:none">✏️ Editar datos</button>
+      <button class="btn btn-dorado btn-sm"  id="btn-siguiente" onclick="irPaso2()" style="display:none">Continuar →</button>
       <button class="btn btn-rojo btn-sm"    id="btn-pdf"       onclick="verPDF()" style="display:none">📄 Ver PDF</button>
     </div>
   </div>
@@ -341,11 +342,39 @@ function abrirComprobante(btnEl) {
   const id = btnEl.dataset.id;
   const nombreCliente = btnEl.dataset.nombre;
   pedidoActual = id;
-  irPaso1();
-  document.getElementById('inp-nombre').value = nombreCliente || '';
-  document.getElementById('inp-doc').value = '';
+
   document.getElementById('modalComprobante').classList.add('activo');
+  document.getElementById('boletaTexto').textContent = 'Cargando comprobante…';
+  document.getElementById('paso1').classList.remove('activo');
+  document.getElementById('paso2').classList.add('activo');
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'none';
+  document.getElementById('btn-editar').style.display     = 'none';
+  document.getElementById('btn-pdf').style.display        = 'none';
+
+  cargarYMostrarComprobante(nombreCliente);
 }
+
+async function cargarYMostrarComprobante(nombreCliente) {
+  try {
+    const res  = await fetch(`/admin/pedido_comprobante/${pedidoActual}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    document.getElementById('inp-nombre').value = data.cliente_nombre || nombreCliente || '';
+    document.getElementById('inp-doc').value = '';
+    document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
+    document.querySelector('.tipo-doc-btn').classList.add('activo');
+    tipoDoc = 'DNI';
+    document.getElementById('lbl-doc').textContent = 'Número de DNI';
+
+    generarBoleta(data, data.cliente_nombre || nombreCliente || '—', '—');
+    volverPreview();
+  } catch(e) {
+    document.getElementById('boletaTexto').textContent = 'Error al cargar el comprobante: ' + e.message;
+  }
+}
+
 function cerrarModal() {
   document.getElementById('modalComprobante').classList.remove('activo');
 }
@@ -361,6 +390,27 @@ function selTipo(tipo, btn) {
   document.getElementById('lbl-doc').textContent = labels[tipo] || 'Número de documento';
   const maxLen = { DNI:'8', RUC:'11', CE:'12', Pasaporte:'20' };
   document.getElementById('inp-doc').maxLength = maxLen[tipo] || 20;
+}
+
+/* ── Vista previa (paso 2): boleta ya cargada, botones Editar + Ver PDF ── */
+function volverPreview() {
+  document.getElementById('paso1').classList.remove('activo');
+  document.getElementById('paso2').classList.add('activo');
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'none';
+  document.getElementById('btn-editar').style.display     = 'inline-flex';
+  document.getElementById('btn-pdf').style.display        = 'inline-flex';
+  document.getElementById('error-paso1').style.display    = 'none';
+}
+
+/* ── Edición manual de datos (para emitir boleta con DNI real) ── */
+function editarDatos() {
+  document.getElementById('paso2').classList.remove('activo');
+  document.getElementById('paso1').classList.add('activo');
+  document.getElementById('btn-editar').style.display     = 'none';
+  document.getElementById('btn-pdf').style.display        = 'none';
+  document.getElementById('btn-atras').style.display      = 'inline-flex';
+  document.getElementById('btn-siguiente').style.display  = 'inline-flex';
 }
 
 async function irPaso2() {
@@ -381,26 +431,13 @@ async function irPaso2() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     generarBoleta(data, nombre, doc);
-    document.getElementById('paso1').classList.remove('activo');
-    document.getElementById('paso2').classList.add('activo');
-    document.getElementById('btn-atras').style.display    = 'inline-flex';
-    document.getElementById('btn-siguiente').style.display = 'none';
-    document.getElementById('btn-pdf').style.display       = 'inline-flex';
+    volverPreview();
   } catch(e) {
     errEl.textContent='Error al obtener el pedido: '+e.message;
     errEl.style.display='block';
   } finally {
     btn.textContent='Continuar →'; btn.disabled=false;
   }
-}
-
-function irPaso1() {
-  document.getElementById('paso1').classList.add('activo');
-  document.getElementById('paso2').classList.remove('activo');
-  document.getElementById('btn-atras').style.display     = 'none';
-  document.getElementById('btn-siguiente').style.display  = 'inline-flex';
-  document.getElementById('btn-pdf').style.display        = 'none';
-  document.getElementById('error-paso1').style.display    = 'none';
 }
 
 function generarBoleta(data, nombre, doc) {
