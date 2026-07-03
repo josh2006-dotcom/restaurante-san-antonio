@@ -332,11 +332,40 @@ def pedido():
         tipo_entrega  = request.form.get('tipo_entrega', 'delivery')
         hora_estimada = request.form.get('hora_estimada', '').strip()
         platos_ids    = request.form.getlist('platos')
+        modo_pedido   = request.form.get('modo_pedido', 'entrada')  # entrada | segundo | menu
+
+        # Precios fijos por modo
+        PRECIO_ENTRADA = 5.0
+        PRECIO_SEGUNDO = 10.0
+        PRECIO_MENU    = 11.0
 
         if not platos_ids:
             flash('Debes seleccionar al menos un plato.', 'danger')
             conn.close()
             return redirect(url_for('pedido'))
+
+        # Obtener tipo de cada plato seleccionado
+        tipos_plato = {}
+        for id_plato in platos_ids:
+            cur.execute("SELECT tipo FROM Plato WHERE id_plato = %s", (id_plato,))
+            row = cur.fetchone()
+            if row:
+                tipos_plato[id_plato] = row[0]
+
+        # Validar modo menú: cantidades iguales de entradas y segundos
+        if modo_pedido == 'menu':
+            cant_entradas = sum(
+                int(request.form.get(f'cantidad_{pid}', 1))
+                for pid in platos_ids if tipos_plato.get(pid) == 'entrada'
+            )
+            cant_segundos = sum(
+                int(request.form.get(f'cantidad_{pid}', 1))
+                for pid in platos_ids if tipos_plato.get(pid) == 'segundo'
+            )
+            if cant_entradas == 0 or cant_segundos == 0 or cant_entradas != cant_segundos:
+                flash(f'Menú Completo: debes tener igual cantidad de entradas y segundos ({cant_entradas} entradas / {cant_segundos} segundos).', 'danger')
+                conn.close()
+                return redirect(url_for('pedido'))
 
         cur.execute("""
             INSERT INTO Pedido (fecha_pedido, id_cliente, tipo_entrega, hora_estimada, estado, total)
@@ -347,11 +376,15 @@ def pedido():
         conn.commit()
 
         for id_plato in platos_ids:
-            cur.execute("SELECT precio FROM Plato WHERE id_plato = %s", (id_plato,))
-            row = cur.fetchone()
-            if not row:
-                continue
-            precio_base = float(row[0])
+            tipo_plato = tipos_plato.get(id_plato, 'segundo')
+
+            # Precio base según modo
+            if modo_pedido == 'entrada':
+                precio_base = PRECIO_ENTRADA
+            elif modo_pedido == 'segundo':
+                precio_base = PRECIO_SEGUNDO
+            else:  # menu
+                precio_base = PRECIO_ENTRADA if tipo_plato == 'entrada' else PRECIO_SEGUNDO
 
             opciones_ids = request.form.getlist(f'opciones_{id_plato}')
             costo_extra  = 0.0
@@ -380,15 +413,38 @@ def pedido():
 
         conn.commit()
 
-        cur.execute("""
-            UPDATE Pedido
-            SET total = (
-                SELECT COALESCE(SUM(subtotal), 0)
-                FROM Detalle_Pedido
-                WHERE id_pedido = %s
-            )
-            WHERE id_pedido = %s
-        """, (id_pedido, id_pedido))
+        # Para menú completo, recalcular total = pares × 11 + extras
+        if modo_pedido == 'menu':
+            cur.execute("""
+                SELECT COALESCE(SUM(dp.subtotal), 0)
+                FROM Detalle_Pedido dp
+                JOIN Plato pl ON pl.id_plato = dp.id_plato
+                WHERE dp.id_pedido = %s AND pl.tipo = 'entrada'
+            """, (id_pedido,))
+            total_extras_entrada = float(cur.fetchone()[0])
+
+            cur.execute("""
+                SELECT COALESCE(SUM(dp.subtotal), 0)
+                FROM Detalle_Pedido dp
+                JOIN Plato pl ON pl.id_plato = dp.id_plato
+                WHERE dp.id_pedido = %s AND pl.tipo = 'segundo'
+            """, (id_pedido,))
+            total_extras_segundo = float(cur.fetchone()[0])
+
+            pares = cant_entradas  # ya validado que son iguales
+            # subtotal real = precio_base * cantidad (sin extras), extras = subtotal - precio_base*cantidad
+            extras_totales = (total_extras_entrada - PRECIO_ENTRADA * cant_entradas) + \
+                             (total_extras_segundo - PRECIO_SEGUNDO * cant_segundos)
+            total_final = pares * PRECIO_MENU + extras_totales
+            cur.execute("UPDATE Pedido SET total = %s WHERE id_pedido = %s", (total_final, id_pedido))
+        else:
+            cur.execute("""
+                UPDATE Pedido SET total = (
+                    SELECT COALESCE(SUM(subtotal), 0)
+                    FROM Detalle_Pedido WHERE id_pedido = %s
+                ) WHERE id_pedido = %s
+            """, (id_pedido, id_pedido))
+
         conn.commit()
         conn.close()
 
