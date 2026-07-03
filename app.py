@@ -338,6 +338,7 @@ def pedido():
         PRECIO_ENTRADA = 5.0
         PRECIO_SEGUNDO = 10.0
         PRECIO_MENU    = 11.0
+        RECARGO_DELIVERY = 1.0
 
         if not platos_ids:
             flash('Debes seleccionar al menos un plato.', 'danger')
@@ -436,14 +437,17 @@ def pedido():
             extras_totales = (total_extras_entrada - PRECIO_ENTRADA * cant_entradas) + \
                              (total_extras_segundo - PRECIO_SEGUNDO * cant_segundos)
             total_final = pares * PRECIO_MENU + extras_totales
+            if tipo_entrega == 'delivery':
+                total_final += RECARGO_DELIVERY
             cur.execute("UPDATE Pedido SET total = %s WHERE id_pedido = %s", (total_final, id_pedido))
         else:
+            recargo = RECARGO_DELIVERY if tipo_entrega == 'delivery' else 0.0
             cur.execute("""
                 UPDATE Pedido SET total = (
                     SELECT COALESCE(SUM(subtotal), 0)
                     FROM Detalle_Pedido WHERE id_pedido = %s
-                ) WHERE id_pedido = %s
-            """, (id_pedido, id_pedido))
+                ) + %s WHERE id_pedido = %s
+            """, (id_pedido, recargo, id_pedido))
 
         conn.commit()
         conn.close()
