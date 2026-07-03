@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -90,6 +91,26 @@
   .toggle-icon { transition: transform .2s; display: inline-block; }
   .abierto-header .toggle-icon { transform: rotate(180deg); }
 
+  /* Botón comprobante */
+  .btn-comprobante {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: 1rem;
+    padding: .5rem 1.2rem;
+    border-radius: 6px;
+    background: transparent;
+    border: 1.5px solid var(--dorado);
+    color: var(--dorado);
+    font-family: 'Jost', sans-serif;
+    font-size: .82rem;
+    font-weight: 600;
+    letter-spacing: .4px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-comprobante:hover { background: var(--dorado); color: #fff; }
+
   /* Vacío */
   .vacio-msg {
     text-align: center;
@@ -104,6 +125,158 @@
     font-size: 1.6rem; color: var(--rojo); margin-bottom: .5rem;
   }
   .vacio-msg p { color: var(--gris); margin-bottom: 1.5rem; }
+
+  /* ── MODAL COMPROBANTE ─────────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(45,27,0,.55);
+    backdrop-filter: blur(3px);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.activo { display: flex; }
+
+  .modal-box {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra-lg);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalIn .25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .modal-header {
+    background: var(--rojo);
+    color: #fff;
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+  .modal-close {
+    background: none; border: none;
+    color: rgba(255,255,255,.75);
+    font-size: 1.4rem; cursor: pointer; line-height: 1;
+    transition: color .15s;
+  }
+  .modal-close:hover { color: #fff; }
+
+  .modal-body { padding: 1.5rem; }
+
+  /* Paso 1: formulario datos */
+  .paso { display: none; }
+  .paso.activo { display: block; }
+
+  .modal-body .form-group { margin-bottom: 1rem; }
+  .modal-body .form-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--gris);
+    margin-bottom: .35rem;
+  }
+  .modal-body .form-control {
+    width: 100%;
+    padding: .6rem .9rem;
+    border: 1.5px solid #E8D5B7;
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: .92rem;
+    background: var(--blanco);
+    color: var(--marron);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .modal-body .form-control:focus {
+    border-color: var(--dorado);
+    box-shadow: 0 0 0 3px rgba(200,134,10,.15);
+  }
+
+  .tipo-doc-group { display: flex; gap: .6rem; margin-bottom: 1rem; }
+  .tipo-doc-btn {
+    flex: 1; padding: .5rem;
+    border: 1.5px solid #E8D5B7;
+    border-radius: 7px;
+    background: var(--blanco);
+    color: var(--gris);
+    font-family: 'Jost', sans-serif;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+  }
+  .tipo-doc-btn.activo {
+    border-color: var(--rojo);
+    background: #FCE8E8;
+    color: var(--rojo);
+  }
+
+  /* Paso 2: preview boleta */
+  .boleta-preview {
+    font-family: 'Courier New', monospace;
+    font-size: .8rem;
+    background: #fff;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    padding: 1.2rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: #1a1a1a;
+  }
+  .boleta-preview .bol-titulo {
+    text-align: center;
+    font-weight: bold;
+    font-size: .9rem;
+  }
+  .boleta-preview .bol-sep { border: none; border-top: 1px dashed #aaa; margin: .4rem 0; }
+
+  .modal-footer {
+    padding: 1rem 1.5rem 1.5rem;
+    display: flex;
+    gap: .7rem;
+    justify-content: flex-end;
+  }
+  .modal-footer .btn {
+    padding: .55rem 1.3rem;
+    font-size: .85rem;
+  }
+
+  /* ── IMPRESIÓN ─────────────────────────────────────── */
+  @media print {
+    body > *:not(#print-area) { display: none !important; }
+    #print-area {
+      display: block !important;
+      font-family: 'Courier New', monospace;
+      font-size: 11pt;
+      color: #000;
+      padding: 1cm;
+      line-height: 1.7;
+    }
+    #print-area .sep { border-top: 1px dashed #000; margin: .4rem 0; }
+    #print-area .centro { text-align: center; }
+    #print-area .derecha { text-align: right; }
+    #print-area table { width: 100%; border-collapse: collapse; }
+    #print-area td { padding: 2pt 0; vertical-align: top; }
+  }
 </style>
 {% endblock %}
 
@@ -180,7 +353,15 @@
               </tr>
             </tfoot>
           </table>
+
+          <!-- Botón comprobante -->
+          <div style="margin-top:.8rem">
+            <button class="btn-comprobante" onclick="abrirComprobante({{ ped[0] }})">
+              🧾 ¿Desea comprobante de pago?
+            </button>
+          </div>
         </div>
+
       </div>
       {% endfor %}
 
@@ -199,6 +380,231 @@
 
   </div>
 </div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL COMPROBANTE
+════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalComprobante">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h2>🧾 Comprobante de Pago</h2>
+      <button class="modal-close" onclick="cerrarModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+
+      <!-- PASO 1: Datos del cliente -->
+      <div class="paso activo" id="paso1">
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem">
+          Ingresa tus datos para generar la boleta electrónica.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Tipo de documento</label>
+          <div class="tipo-doc-group">
+            <button class="tipo-doc-btn activo" onclick="selTipo('DNI', this)">DNI</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('RUC', this)">RUC</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('CE', this)">Carné Ext.</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('Pasaporte', this)">Pasaporte</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="lbl-doc">Número de DNI</label>
+          <input class="form-control" id="inp-doc" type="text" placeholder="Ej: 12345678" maxlength="20">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input class="form-control" id="inp-nombre" type="text" placeholder="Como aparece en tu documento">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Correo electrónico <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+          <input class="form-control" id="inp-email" type="email" placeholder="para enviar copia digital">
+        </div>
+
+        <p id="error-paso1" style="color:var(--rojo);font-size:.82rem;display:none;margin-top:.5rem"></p>
+      </div>
+
+      <!-- PASO 2: Preview boleta -->
+      <div class="paso" id="paso2">
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">
+          Revisa tu comprobante antes de imprimir o descargar.
+        </p>
+        <div class="boleta-preview" id="boletaTexto"></div>
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="btn-atras" onclick="irPaso1()" style="display:none">← Atrás</button>
+      <button class="btn btn-outline btn-sm" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-dorado btn-sm" id="btn-siguiente" onclick="irPaso2()">Continuar →</button>
+      <button class="btn btn-rojo btn-sm"   id="btn-imprimir" onclick="imprimir()" style="display:none">🖨️ Imprimir</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Área oculta solo para impresión -->
+<div id="print-area" style="display:none"></div>
+
+<script>
+/* ─── Estado ─────────────────────────────────────── */
+let pedidoActual = null;
+let tipoDoc      = 'DNI';
+
+/* ─── Abrir / cerrar modal ───────────────────────── */
+function abrirComprobante(idPedido) {
+  pedidoActual = idPedido;
+  irPaso1();
+  document.getElementById('modalComprobante').classList.add('activo');
+}
+function cerrarModal() {
+  document.getElementById('modalComprobante').classList.remove('activo');
+}
+document.getElementById('modalComprobante').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+/* ─── Selector tipo documento ────────────────────── */
+function selTipo(tipo, btn) {
+  tipoDoc = tipo;
+  document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  const labels = { DNI: 'Número de DNI', RUC: 'Número de RUC', CE: 'Número de Carné', Pasaporte: 'Número de Pasaporte' };
+  document.getElementById('lbl-doc').textContent = labels[tipo] || 'Número de documento';
+  const maxLen = { DNI: '8', RUC: '11', CE: '12', Pasaporte: '20' };
+  document.getElementById('inp-doc').maxLength = maxLen[tipo] || 20;
+}
+
+/* ─── Paso 1 → 2 ─────────────────────────────────── */
+async function irPaso2() {
+  const doc    = document.getElementById('inp-doc').value.trim();
+  const nombre = document.getElementById('inp-nombre').value.trim();
+  const errEl  = document.getElementById('error-paso1');
+
+  if (!doc) {
+    errEl.textContent = 'El número de documento es obligatorio.';
+    errEl.style.display = 'block'; return;
+  }
+  if (tipoDoc === 'DNI' && (doc.length !== 8 || !/^\d+$/.test(doc))) {
+    errEl.textContent = 'El DNI debe tener exactamente 8 dígitos.';
+    errEl.style.display = 'block'; return;
+  }
+  if (tipoDoc === 'RUC' && (doc.length !== 11 || !/^\d+$/.test(doc))) {
+    errEl.textContent = 'El RUC debe tener exactamente 11 dígitos.';
+    errEl.style.display = 'block'; return;
+  }
+  if (!nombre) {
+    errEl.textContent = 'El nombre completo es obligatorio.';
+    errEl.style.display = 'block'; return;
+  }
+  errEl.style.display = 'none';
+
+  // Obtener datos del pedido vía API
+  const btn = document.getElementById('btn-siguiente');
+  btn.textContent = 'Generando…'; btn.disabled = true;
+  try {
+    const res  = await fetch(`/api/pedido_comprobante/${pedidoActual}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    generarBoleta(data, nombre, doc);
+    document.getElementById('paso1').classList.remove('activo');
+    document.getElementById('paso2').classList.add('activo');
+    document.getElementById('btn-atras').style.display    = 'inline-flex';
+    document.getElementById('btn-siguiente').style.display = 'none';
+    document.getElementById('btn-imprimir').style.display  = 'inline-flex';
+  } catch(e) {
+    errEl.textContent = 'Error al obtener el pedido: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Continuar →'; btn.disabled = false;
+  }
+}
+
+function irPaso1() {
+  document.getElementById('paso1').classList.add('activo');
+  document.getElementById('paso2').classList.remove('activo');
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'inline-flex';
+  document.getElementById('btn-imprimir').style.display   = 'none';
+  document.getElementById('error-paso1').style.display    = 'none';
+}
+
+/* ─── Generar texto de boleta ────────────────────── */
+function generarBoleta(data, nombre, doc) {
+  const W = 44; // ancho en chars
+
+  function centro(txt) {
+    const spaces = Math.max(0, Math.floor((W - txt.length) / 2));
+    return ' '.repeat(spaces) + txt;
+  }
+  function fila(izq, der) {
+    const espacios = Math.max(1, W - izq.length - der.length);
+    return izq + ' '.repeat(espacios) + der;
+  }
+  const sep = '-'.repeat(W);
+  const now = new Date();
+  const fechaImp = now.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit',year:'numeric'});
+  const horaImp  = now.toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit'});
+
+  // Número de serie formateado
+  const numSerie = 'B001-' + String(data.id_pedido).padStart(7, '0');
+
+  let lines = [];
+  lines.push(centro('RESTAURANTE SAN ANTONIO S.A.C.'));
+  lines.push(centro('RUC: 20765432101'));
+  lines.push(centro('Av. José María Seguín 893'));
+  lines.push(centro('Cel: 999907193'));
+  lines.push(sep);
+  lines.push(centro('BOLETA DE VENTA ELECTRÓNICA'));
+  lines.push(centro(numSerie));
+  lines.push(sep);
+  lines.push(fila('FECHA:', fechaImp + '  HORA: ' + horaImp));
+  lines.push(sep);
+  lines.push(fila('CLIENTE:', nombre));
+  lines.push(fila(tipoDoc + ':', doc));
+  lines.push(sep);
+  lines.push(fila('CANT  DESCRIPCIÓN', 'TOTAL'));
+  lines.push(sep);
+
+  for (const det of data.detalles) {
+    const desc = det.nombre;
+    const tot  = 'S/ ' + det.subtotal.toFixed(2);
+    lines.push(fila('  ' + det.cantidad + '   ' + desc, tot));
+    for (const p of det.pers) {
+      const pDesc = '      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/' + p.costo.toFixed(2) : '');
+      lines.push(pDesc);
+    }
+  }
+
+  lines.push(sep);
+  lines.push(fila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2)));
+  lines.push(fila('IGV (18%):', 'S/ ' + (data.total * 0.18 / 1.18).toFixed(2)));
+  lines.push(sep);
+  lines.push(fila('TOTAL (S/):', data.total.toFixed(2)));
+  lines.push(sep);
+  lines.push(centro('¡Gracias por su preferencia!'));
+  lines.push(centro('restaurante-san-antonio-q3gd.onrender.com'));
+
+  const texto = lines.join('\n');
+  document.getElementById('boletaTexto').textContent = texto;
+
+  // Guardar en print-area para impresión
+  window._boletaData = { texto, nombre, doc, data };
+}
+
+/* ─── Imprimir ───────────────────────────────────── */
+function imprimir() {
+  const { texto } = window._boletaData;
+  const pa = document.getElementById('print-area');
+  pa.innerHTML = `<pre style="font-family:'Courier New',monospace;font-size:10pt;line-height:1.7;color:#000">${texto}</pre>`;
+  window.print();
+}
+</script>
 
 <script>
 function toggleDetalle(id, headerEl) {
