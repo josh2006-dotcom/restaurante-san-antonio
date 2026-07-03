@@ -11,7 +11,6 @@
   }
   .page-header p { color: var(--gris); font-size: .9rem; margin-top: .3rem; }
 
-  /* Tarjeta de pedido */
   .pedido-card {
     background: var(--blanco);
     border-radius: 14px;
@@ -35,55 +34,33 @@
   }
   .pedido-num {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--rojo);
+    font-size: 1.1rem; font-weight: 700; color: var(--rojo);
   }
   .pedido-meta {
-    font-size: .82rem;
-    color: var(--gris);
+    font-size: .82rem; color: var(--gris);
     display: flex; gap: 1rem; flex-wrap: wrap;
   }
   .pedido-meta span { display: flex; align-items: center; gap: .3rem; }
-  .pedido-header-right {
-    display: flex; align-items: center; gap: 1rem; margin-left: auto;
-  }
+  .pedido-header-right { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
   .pedido-total-tag {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--verde);
-    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: var(--verde); font-family: 'Cormorant Garamond', serif;
   }
 
   .pedido-body { padding: 1.2rem 1.5rem; display: none; }
   .pedido-body.abierto { display: block; }
 
-  /* Detalle de platos */
   .detalle-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
   .detalle-table thead tr { background: #F7ECD8; }
   .detalle-table th {
-    padding: .6rem .9rem;
-    text-align: left;
-    font-weight: 700;
-    font-size: .78rem;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--gris);
+    padding: .6rem .9rem; text-align: left;
+    font-weight: 700; font-size: .78rem;
+    text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
   }
-  .detalle-table td {
-    padding: .65rem .9rem;
-    border-bottom: 1px solid #F0E4CC;
-    vertical-align: top;
-  }
+  .detalle-table td { padding: .65rem .9rem; border-bottom: 1px solid #F0E4CC; vertical-align: top; }
   .detalle-table tr:last-child td { border-bottom: none; }
 
-  .pers-tag {
-    display: inline-block;
-    font-size: .72rem;
-    padding: .15rem .45rem;
-    border-radius: 3px;
-    margin: .1rem;
-  }
+  .pers-tag { display: inline-block; font-size: .72rem; padding: .15rem .45rem; border-radius: 3px; margin: .1rem; }
   .pers-tag.quitar  { background: #FCE8E8; color: var(--rojo); }
   .pers-tag.agregar { background: #D4EDDA; color: var(--verde); }
   .pers-tag.cambiar { background: #CCE5FF; color: #004085; }
@@ -91,192 +68,82 @@
   .toggle-icon { transition: transform .2s; display: inline-block; }
   .abierto-header .toggle-icon { transform: rotate(180deg); }
 
-  /* Botón comprobante */
   .btn-comprobante {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    margin-top: 1rem;
-    padding: .5rem 1.2rem;
-    border-radius: 6px;
-    background: transparent;
-    border: 1.5px solid var(--dorado);
-    color: var(--dorado);
-    font-family: 'Jost', sans-serif;
-    font-size: .82rem;
-    font-weight: 600;
-    letter-spacing: .4px;
-    cursor: pointer;
-    transition: all .2s;
+    display: inline-flex; align-items: center; gap: .4rem;
+    margin-top: 1rem; padding: .5rem 1.2rem; border-radius: 6px;
+    background: transparent; border: 1.5px solid var(--dorado);
+    color: var(--dorado); font-family: 'Jost', sans-serif;
+    font-size: .82rem; font-weight: 600; letter-spacing: .4px;
+    cursor: pointer; transition: all .2s;
   }
   .btn-comprobante:hover { background: var(--dorado); color: #fff; }
 
-  /* Vacío */
-  .vacio-msg {
-    text-align: center;
-    padding: 4rem 2rem;
-    background: var(--blanco);
-    border-radius: 14px;
-    box-shadow: var(--sombra);
-  }
+  .vacio-msg { text-align: center; padding: 4rem 2rem; background: var(--blanco); border-radius: 14px; box-shadow: var(--sombra); }
   .vacio-msg .icon { font-size: 3rem; margin-bottom: 1rem; }
-  .vacio-msg h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem; color: var(--rojo); margin-bottom: .5rem;
-  }
+  .vacio-msg h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--rojo); margin-bottom: .5rem; }
   .vacio-msg p { color: var(--gris); margin-bottom: 1.5rem; }
 
-  /* ── MODAL COMPROBANTE ─────────────────────────────── */
+  /* ── MODAL ── */
   .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(45,27,0,.55);
-    backdrop-filter: blur(3px);
-    z-index: 500;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+    display: none; position: fixed; inset: 0;
+    background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
+    z-index: 500; align-items: center; justify-content: center; padding: 1rem;
   }
   .modal-overlay.activo { display: flex; }
-
   .modal-box {
-    background: var(--blanco);
-    border-radius: 16px;
-    box-shadow: var(--sombra-lg);
-    width: 100%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    animation: modalIn .25s ease;
+    background: var(--blanco); border-radius: 16px;
+    box-shadow: var(--sombra-lg); width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto; animation: modalIn .25s ease;
   }
-  @keyframes modalIn {
-    from { opacity: 0; transform: translateY(16px) scale(.97); }
-    to   { opacity: 1; transform: none; }
-  }
-
+  @keyframes modalIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
   .modal-header {
-    background: var(--rojo);
-    color: #fff;
-    padding: 1.2rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    background: var(--rojo); color: #fff;
+    padding: 1.2rem 1.5rem; display: flex;
+    align-items: center; justify-content: space-between;
     border-radius: 16px 16px 0 0;
   }
-  .modal-header h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    letter-spacing: .3px;
-  }
-  .modal-close {
-    background: none; border: none;
-    color: rgba(255,255,255,.75);
-    font-size: 1.4rem; cursor: pointer; line-height: 1;
-    transition: color .15s;
-  }
-  .modal-close:hover { color: #fff; }
-
+  .modal-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; letter-spacing:.3px; }
+  .modal-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; line-height:1; transition:color .15s; }
+  .modal-close:hover { color:#fff; }
   .modal-body { padding: 1.5rem; }
 
-  /* Paso 1: formulario datos */
   .paso { display: none; }
   .paso.activo { display: block; }
 
   .modal-body .form-group { margin-bottom: 1rem; }
   .modal-body .form-label {
-    display: block;
-    font-size: .78rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--gris);
-    margin-bottom: .35rem;
+    display: block; font-size:.78rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px; color:var(--gris); margin-bottom:.35rem;
   }
   .modal-body .form-control {
-    width: 100%;
-    padding: .6rem .9rem;
-    border: 1.5px solid #E8D5B7;
-    border-radius: 8px;
-    font-family: 'Jost', sans-serif;
-    font-size: .92rem;
-    background: var(--blanco);
-    color: var(--marron);
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
+    width:100%; padding:.6rem .9rem; border:1.5px solid #E8D5B7;
+    border-radius:8px; font-family:'Jost',sans-serif; font-size:.92rem;
+    background:var(--blanco); color:var(--marron); outline:none; transition:border-color .2s,box-shadow .2s;
   }
-  .modal-body .form-control:focus {
-    border-color: var(--dorado);
-    box-shadow: 0 0 0 3px rgba(200,134,10,.15);
-  }
+  .modal-body .form-control:focus { border-color:var(--dorado); box-shadow:0 0 0 3px rgba(200,134,10,.15); }
 
-  .tipo-doc-group { display: flex; gap: .6rem; margin-bottom: 1rem; }
+  .tipo-doc-group { display:flex; gap:.6rem; margin-bottom:1rem; }
   .tipo-doc-btn {
-    flex: 1; padding: .5rem;
-    border: 1.5px solid #E8D5B7;
-    border-radius: 7px;
-    background: var(--blanco);
-    color: var(--gris);
-    font-family: 'Jost', sans-serif;
-    font-size: .85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .2s;
-    text-align: center;
+    flex:1; padding:.5rem; border:1.5px solid #E8D5B7; border-radius:7px;
+    background:var(--blanco); color:var(--gris); font-family:'Jost',sans-serif;
+    font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:center;
   }
-  .tipo-doc-btn.activo {
-    border-color: var(--rojo);
-    background: #FCE8E8;
-    color: var(--rojo);
-  }
+  .tipo-doc-btn.activo { border-color:var(--rojo); background:#FCE8E8; color:var(--rojo); }
 
-  /* Paso 2: preview boleta */
   .boleta-preview {
-    font-family: 'Courier New', monospace;
-    font-size: .8rem;
-    background: #fff;
-    border: 1px dashed #ccc;
-    border-radius: 8px;
-    padding: 1.2rem;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    color: #1a1a1a;
+    font-family:'Courier New',monospace; font-size:.8rem; background:#fff;
+    border:1px dashed #ccc; border-radius:8px; padding:1.2rem;
+    line-height:1.6; white-space:pre-wrap; color:#1a1a1a;
   }
-  .boleta-preview .bol-titulo {
-    text-align: center;
-    font-weight: bold;
-    font-size: .9rem;
-  }
-  .boleta-preview .bol-sep { border: none; border-top: 1px dashed #aaa; margin: .4rem 0; }
 
   .modal-footer {
-    padding: 1rem 1.5rem 1.5rem;
-    display: flex;
-    gap: .7rem;
-    justify-content: flex-end;
+    padding:1rem 1.5rem 1.5rem; display:flex; gap:.7rem; justify-content:flex-end;
   }
-  .modal-footer .btn {
-    padding: .55rem 1.3rem;
-    font-size: .85rem;
-  }
+  .modal-footer .btn { padding:.55rem 1.3rem; font-size:.85rem; }
 
-  /* ── IMPRESIÓN ─────────────────────────────────────── */
-  @media print {
-    body > *:not(#print-area) { display: none !important; }
-    #print-area {
-      display: block !important;
-      font-family: 'Courier New', monospace;
-      font-size: 11pt;
-      color: #000;
-      padding: 1cm;
-      line-height: 1.7;
-    }
-    #print-area .sep { border-top: 1px dashed #000; margin: .4rem 0; }
-    #print-area .centro { text-align: center; }
-    #print-area .derecha { text-align: right; }
-    #print-area table { width: 100%; border-collapse: collapse; }
-    #print-area td { padding: 2pt 0; vertical-align: top; }
-  }
+  /* spinner en botón PDF */
+  .spin { display:inline-block; animation: girar .7s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
 </style>
 {% endblock %}
 
@@ -292,7 +159,6 @@
     {% if pedidos %}
       {% for ped in pedidos %}
       <div class="pedido-card">
-
         <div class="pedido-card-header" onclick="toggleDetalle({{ ped[0] }}, this)">
           <div>
             <div class="pedido-num">Pedido #{{ ped[0] }}</div>
@@ -314,11 +180,8 @@
           <table class="detalle-table">
             <thead>
               <tr>
-                <th>Plato</th>
-                <th>Cant.</th>
-                <th>Precio unit.</th>
-                <th>Personalizaciones</th>
-                <th style="text-align:right">Subtotal</th>
+                <th>Plato</th><th>Cant.</th><th>Precio unit.</th>
+                <th>Personalizaciones</th><th style="text-align:right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
@@ -344,24 +207,18 @@
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo);font-size:1rem;padding-top:.8rem">
-                  Total del pedido:
-                </td>
-                <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.1rem;padding-top:.8rem">
-                  S/ {{ "%.2f"|format(ped[5]) }}
-                </td>
+                <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo);font-size:1rem;padding-top:.8rem">Total del pedido:</td>
+                <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.1rem;padding-top:.8rem">S/ {{ "%.2f"|format(ped[5]) }}</td>
               </tr>
             </tfoot>
           </table>
 
-          <!-- Botón comprobante -->
           <div style="margin-top:.8rem">
             <button class="btn-comprobante" onclick="abrirComprobante({{ ped[0] }})">
               🧾 ¿Desea comprobante de pago?
             </button>
           </div>
         </div>
-
       </div>
       {% endfor %}
 
@@ -381,84 +238,69 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     MODAL COMPROBANTE
-════════════════════════════════════════════════════════ -->
+<!-- MODAL COMPROBANTE -->
 <div class="modal-overlay" id="modalComprobante">
   <div class="modal-box">
-
     <div class="modal-header">
       <h2>🧾 Comprobante de Pago</h2>
       <button class="modal-close" onclick="cerrarModal()">×</button>
     </div>
 
     <div class="modal-body">
-
-      <!-- PASO 1: Datos del cliente -->
+      <!-- PASO 1 -->
       <div class="paso activo" id="paso1">
         <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem">
           Ingresa tus datos para generar la boleta electrónica.
         </p>
-
         <div class="form-group">
           <label class="form-label">Tipo de documento</label>
           <div class="tipo-doc-group">
-            <button class="tipo-doc-btn activo" onclick="selTipo('DNI', this)">DNI</button>
-            <button class="tipo-doc-btn"        onclick="selTipo('RUC', this)">RUC</button>
-            <button class="tipo-doc-btn"        onclick="selTipo('CE', this)">Carné Ext.</button>
-            <button class="tipo-doc-btn"        onclick="selTipo('Pasaporte', this)">Pasaporte</button>
+            <button class="tipo-doc-btn activo" onclick="selTipo('DNI',this)">DNI</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('RUC',this)">RUC</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('CE',this)">Carné Ext.</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('Pasaporte',this)">Pasaporte</button>
           </div>
         </div>
-
         <div class="form-group">
           <label class="form-label" id="lbl-doc">Número de DNI</label>
           <input class="form-control" id="inp-doc" type="text" placeholder="Ej: 12345678" maxlength="20">
         </div>
-
         <div class="form-group">
           <label class="form-label">Nombre completo</label>
           <input class="form-control" id="inp-nombre" type="text" placeholder="Como aparece en tu documento">
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Correo electrónico <span style="font-weight:400;text-transform:none">(opcional)</span></label>
-          <input class="form-control" id="inp-email" type="email" placeholder="para enviar copia digital">
-        </div>
-
         <p id="error-paso1" style="color:var(--rojo);font-size:.82rem;display:none;margin-top:.5rem"></p>
       </div>
 
-      <!-- PASO 2: Preview boleta -->
+      <!-- PASO 2 -->
       <div class="paso" id="paso2">
         <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">
-          Revisa tu comprobante antes de imprimir o descargar.
+          Revisa tu comprobante antes de descargarlo como PDF.
         </p>
         <div class="boleta-preview" id="boletaTexto"></div>
       </div>
-
-    </div><!-- /modal-body -->
-
-    <div class="modal-footer">
-      <button class="btn btn-outline btn-sm" id="btn-atras" onclick="irPaso1()" style="display:none">← Atrás</button>
-      <button class="btn btn-outline btn-sm" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-dorado btn-sm" id="btn-siguiente" onclick="irPaso2()">Continuar →</button>
-      <button class="btn btn-rojo btn-sm"   id="btn-imprimir" onclick="imprimir()" style="display:none">🖨️ Imprimir</button>
     </div>
 
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="btn-atras"     onclick="irPaso1()" style="display:none">← Atrás</button>
+      <button class="btn btn-outline btn-sm"                    onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-dorado btn-sm"  id="btn-siguiente" onclick="irPaso2()">Continuar →</button>
+      <button class="btn btn-rojo btn-sm"    id="btn-pdf"       onclick="verPDF()" style="display:none">📄 Ver PDF</button>
+    </div>
   </div>
 </div>
 
-<!-- Área oculta solo para impresión -->
-<div id="print-area" style="display:none"></div>
+<!-- jsPDF desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-/* ─── Estado ─────────────────────────────────────── */
+/* ── Estado ── */
 let pedidoActual = null;
 let tipoDoc      = 'DNI';
 
-/* ─── Abrir / cerrar modal ───────────────────────── */
-function abrirComprobante(idPedido) {
-  pedidoActual = idPedido;
+/* ── Modal ── */
+function abrirComprobante(id) {
+  pedidoActual = id;
   irPaso1();
   document.getElementById('modalComprobante').classList.add('activo');
 }
@@ -469,44 +311,31 @@ document.getElementById('modalComprobante').addEventListener('click', function(e
   if (e.target === this) cerrarModal();
 });
 
-/* ─── Selector tipo documento ────────────────────── */
+/* ── Tipo documento ── */
 function selTipo(tipo, btn) {
   tipoDoc = tipo;
   document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
   btn.classList.add('activo');
-  const labels = { DNI: 'Número de DNI', RUC: 'Número de RUC', CE: 'Número de Carné', Pasaporte: 'Número de Pasaporte' };
+  const labels = { DNI:'Número de DNI', RUC:'Número de RUC', CE:'Número de Carné', Pasaporte:'Número de Pasaporte' };
   document.getElementById('lbl-doc').textContent = labels[tipo] || 'Número de documento';
-  const maxLen = { DNI: '8', RUC: '11', CE: '12', Pasaporte: '20' };
+  const maxLen = { DNI:'8', RUC:'11', CE:'12', Pasaporte:'20' };
   document.getElementById('inp-doc').maxLength = maxLen[tipo] || 20;
 }
 
-/* ─── Paso 1 → 2 ─────────────────────────────────── */
+/* ── Paso 1 → 2 ── */
 async function irPaso2() {
   const doc    = document.getElementById('inp-doc').value.trim();
   const nombre = document.getElementById('inp-nombre').value.trim();
   const errEl  = document.getElementById('error-paso1');
 
-  if (!doc) {
-    errEl.textContent = 'El número de documento es obligatorio.';
-    errEl.style.display = 'block'; return;
-  }
-  if (tipoDoc === 'DNI' && (doc.length !== 8 || !/^\d+$/.test(doc))) {
-    errEl.textContent = 'El DNI debe tener exactamente 8 dígitos.';
-    errEl.style.display = 'block'; return;
-  }
-  if (tipoDoc === 'RUC' && (doc.length !== 11 || !/^\d+$/.test(doc))) {
-    errEl.textContent = 'El RUC debe tener exactamente 11 dígitos.';
-    errEl.style.display = 'block'; return;
-  }
-  if (!nombre) {
-    errEl.textContent = 'El nombre completo es obligatorio.';
-    errEl.style.display = 'block'; return;
-  }
-  errEl.style.display = 'none';
+  if (!doc) { errEl.textContent='El número de documento es obligatorio.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='DNI' && (doc.length!==8||!/^\d+$/.test(doc))) { errEl.textContent='El DNI debe tener exactamente 8 dígitos.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='RUC' && (doc.length!==11||!/^\d+$/.test(doc))) { errEl.textContent='El RUC debe tener exactamente 11 dígitos.'; errEl.style.display='block'; return; }
+  if (!nombre) { errEl.textContent='El nombre completo es obligatorio.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
 
-  // Obtener datos del pedido vía API
   const btn = document.getElementById('btn-siguiente');
-  btn.textContent = 'Generando…'; btn.disabled = true;
+  btn.textContent='Generando…'; btn.disabled=true;
   try {
     const res  = await fetch(`/api/pedido_comprobante/${pedidoActual}`);
     const data = await res.json();
@@ -516,12 +345,12 @@ async function irPaso2() {
     document.getElementById('paso2').classList.add('activo');
     document.getElementById('btn-atras').style.display    = 'inline-flex';
     document.getElementById('btn-siguiente').style.display = 'none';
-    document.getElementById('btn-imprimir').style.display  = 'inline-flex';
+    document.getElementById('btn-pdf').style.display       = 'inline-flex';
   } catch(e) {
-    errEl.textContent = 'Error al obtener el pedido: ' + e.message;
-    errEl.style.display = 'block';
+    errEl.textContent='Error al obtener el pedido: '+e.message;
+    errEl.style.display='block';
   } finally {
-    btn.textContent = 'Continuar →'; btn.disabled = false;
+    btn.textContent='Continuar →'; btn.disabled=false;
   }
 }
 
@@ -530,79 +359,168 @@ function irPaso1() {
   document.getElementById('paso2').classList.remove('activo');
   document.getElementById('btn-atras').style.display     = 'none';
   document.getElementById('btn-siguiente').style.display  = 'inline-flex';
-  document.getElementById('btn-imprimir').style.display   = 'none';
+  document.getElementById('btn-pdf').style.display        = 'none';
   document.getElementById('error-paso1').style.display    = 'none';
 }
 
-/* ─── Generar texto de boleta ────────────────────── */
+/* ── Generar datos de boleta ── */
 function generarBoleta(data, nombre, doc) {
-  const W = 44; // ancho en chars
-
-  function centro(txt) {
-    const spaces = Math.max(0, Math.floor((W - txt.length) / 2));
-    return ' '.repeat(spaces) + txt;
-  }
-  function fila(izq, der) {
-    const espacios = Math.max(1, W - izq.length - der.length);
-    return izq + ' '.repeat(espacios) + der;
-  }
-  const sep = '-'.repeat(W);
-  const now = new Date();
+  const now      = new Date();
   const fechaImp = now.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit',year:'numeric'});
   const horaImp  = now.toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit'});
-
-  // Número de serie formateado
   const numSerie = 'B001-' + String(data.id_pedido).padStart(7, '0');
 
-  let lines = [];
-  lines.push(centro('RESTAURANTE SAN ANTONIO S.A.C.'));
-  lines.push(centro('RUC: 20765432101'));
-  lines.push(centro('Av. José María Seguín 893'));
-  lines.push(centro('Cel: 999907193'));
-  lines.push(sep);
-  lines.push(centro('BOLETA DE VENTA ELECTRÓNICA'));
-  lines.push(centro(numSerie));
-  lines.push(sep);
-  lines.push(fila('FECHA:', fechaImp + '  HORA: ' + horaImp));
-  lines.push(sep);
-  lines.push(fila('CLIENTE:', nombre));
-  lines.push(fila(tipoDoc + ':', doc));
-  lines.push(sep);
-  lines.push(fila('CANT  DESCRIPCIÓN', 'TOTAL'));
-  lines.push(sep);
+  // Preview en texto para el modal
+  const W = 44;
+  const centro = t => ' '.repeat(Math.max(0,Math.floor((W-t.length)/2))) + t;
+  const fila   = (i,d) => i + ' '.repeat(Math.max(1, W-i.length-d.length)) + d;
+  const sep    = '-'.repeat(W);
 
+  let lines = [
+    centro('RESTAURANTE SAN ANTONIO S.A.C.'),
+    centro('RUC: 20765432101'),
+    centro('Av. José María Seguín 893'),
+    centro('Cel: 999907193'),
+    sep,
+    centro('BOLETA DE VENTA ELECTRÓNICA'),
+    centro(numSerie),
+    sep,
+    fila('FECHA:', fechaImp + '  HORA: ' + horaImp),
+    sep,
+    fila('CLIENTE:', nombre),
+    fila(tipoDoc + ':', doc),
+    sep,
+    fila('CANT  DESCRIPCIÓN', 'TOTAL'),
+    sep,
+  ];
   for (const det of data.detalles) {
-    const desc = det.nombre;
-    const tot  = 'S/ ' + det.subtotal.toFixed(2);
-    lines.push(fila('  ' + det.cantidad + '   ' + desc, tot));
-    for (const p of det.pers) {
-      const pDesc = '      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/' + p.costo.toFixed(2) : '');
-      lines.push(pDesc);
-    }
+    lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    for (const p of det.pers)
+      lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
   }
-
+  const igv = data.total * 0.18 / 1.18;
   lines.push(sep);
   lines.push(fila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2)));
-  lines.push(fila('IGV (18%):', 'S/ ' + (data.total * 0.18 / 1.18).toFixed(2)));
+  lines.push(fila('IGV (18%):', 'S/ ' + igv.toFixed(2)));
   lines.push(sep);
   lines.push(fila('TOTAL (S/):', data.total.toFixed(2)));
   lines.push(sep);
   lines.push(centro('¡Gracias por su preferencia!'));
   lines.push(centro('restaurante-san-antonio-q3gd.onrender.com'));
 
-  const texto = lines.join('\n');
-  document.getElementById('boletaTexto').textContent = texto;
+  document.getElementById('boletaTexto').textContent = lines.join('\n');
 
-  // Guardar en print-area para impresión
-  window._boletaData = { texto, nombre, doc, data };
+  // Guardar datos estructurados para el PDF
+  window._boletaData = { data, nombre, doc, numSerie, fechaImp, horaImp };
 }
 
-/* ─── Imprimir ───────────────────────────────────── */
-function imprimir() {
-  const { texto } = window._boletaData;
-  const pa = document.getElementById('print-area');
-  pa.innerHTML = `<pre style="font-family:'Courier New',monospace;font-size:10pt;line-height:1.7;color:#000">${texto}</pre>`;
-  window.print();
+/* ── Generar y abrir PDF ── */
+function verPDF() {
+  const btn = document.getElementById('btn-pdf');
+  btn.innerHTML = '<span class="spin">⏳</span> Generando…';
+  btn.disabled  = true;
+
+  setTimeout(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const { data, nombre, doc, numSerie, fechaImp, horaImp } = window._boletaData;
+
+      const pdf   = new jsPDF({ unit: 'mm', format: [80, 200], orientation: 'portrait' });
+      const PW    = 72;   // ancho útil en mm
+      const LEFT  = 4;
+      let   y     = 8;
+      const LS    = 5;    // line spacing
+
+      // Helpers
+      const addCentro = (txt, size=8, bold=false) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', bold ? 'bold' : 'normal');
+        const w = pdf.getTextWidth(txt);
+        pdf.text(txt, LEFT + (PW - w) / 2, y);
+        y += LS;
+      };
+      const addFila = (izq, der, size=8) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', 'normal');
+        pdf.text(izq, LEFT, y);
+        pdf.text(der, LEFT + PW, y, { align: 'right' });
+        y += LS;
+      };
+      const addLinea = (txt, size=8) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', 'normal');
+        pdf.text(txt, LEFT, y);
+        y += LS;
+      };
+      const addSep = () => {
+        pdf.setDrawColor(160);
+        pdf.setLineDashPattern([1, 1], 0);
+        pdf.line(LEFT, y - 1, LEFT + PW, y - 1);
+        y += 2;
+      };
+
+      // ── Encabezado ──
+      addCentro('RESTAURANTE SAN ANTONIO S.A.C.', 8, true);
+      addCentro('RUC: 20765432101', 7);
+      addCentro('Av. José María Seguín 893', 7);
+      addCentro('Cel: 999907193', 7);
+      addSep();
+      addCentro('BOLETA DE VENTA ELECTRÓNICA', 8, true);
+      addCentro(numSerie, 8, true);
+      addSep();
+      addFila('FECHA:', fechaImp + '  ' + horaImp);
+      addSep();
+      addFila('CLIENTE:', nombre);
+      addFila(tipoDoc + ':', doc);
+      addSep();
+
+      // ── Cabecera tabla ──
+      pdf.setFont('courier', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.text('CANT  DESCRIPCIÓN', LEFT, y);
+      pdf.text('TOTAL', LEFT + PW, y, { align: 'right' });
+      y += LS;
+      addSep();
+
+      // ── Detalles ──
+      for (const det of data.detalles) {
+        addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        for (const p of det.pers) {
+          pdf.setFontSize(7); pdf.setFont('courier', 'normal');
+          pdf.text('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''), LEFT, y);
+          y += LS - 1;
+        }
+      }
+
+      // ── Totales ──
+      addSep();
+      const igv = data.total * 0.18 / 1.18;
+      addFila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2));
+      addFila('IGV (18%):', 'S/ ' + igv.toFixed(2));
+      addSep();
+      pdf.setFont('courier', 'bold'); pdf.setFontSize(9);
+      addFila('TOTAL (S/):', data.total.toFixed(2), 9);
+      addSep();
+
+      // ── Pie ──
+      addCentro('¡Gracias por su preferencia!', 7);
+      addCentro('restaurante-san-antonio-q3gd.onrender.com', 6.5);
+
+      // Ajustar altura real del documento
+      pdf.internal.pageSize.height = y + 8;
+
+      // Abrir en nueva pestaña
+      const pdfBlob = pdf.output('blob');
+      const url     = URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
+
+    } catch(err) {
+      alert('Error al generar el PDF: ' + err.message);
+    } finally {
+      btn.innerHTML = '📄 Ver PDF';
+      btn.disabled  = false;
+    }
+  }, 50);
 }
 </script>
 
