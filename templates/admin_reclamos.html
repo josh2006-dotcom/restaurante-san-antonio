@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .admin-page { padding: 2rem 0 4rem; }
+
+  .admin-topbar {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    padding: 1rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 12px; margin-bottom: 2rem; color: #fff;
+  }
+  .admin-topbar h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
+  .admin-topbar p { font-size: .82rem; opacity: .7; }
+
+  /* KPIs */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--blanco); border-radius: 12px;
+    padding: 1.2rem 1.4rem; box-shadow: var(--sombra);
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .kpi-icon { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+  .kpi-icon.rojo   { background: #FCE8E8; }
+  .kpi-icon.dorado { background: #FFF0CC; }
+  .kpi-icon.verde  { background: #D4EDDA; }
+  .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.7rem; font-weight: 700; color: var(--marron); line-height: 1; }
+  .kpi-label { font-size: .74rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* Filtros */
+  .filtros { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+  .filtro-btn {
+    padding: .35rem .9rem; border-radius: 20px;
+    border: 1.5px solid #D0B896; background: var(--blanco);
+    font-size: .8rem; cursor: pointer;
+    font-family: 'Jost', sans-serif; font-weight: 600;
+    transition: all .2s; color: var(--gris);
+  }
+  .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+  /* Tabla */
+  .admin-section-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--marron); margin-bottom: 1rem; }
+  .tabla-wrapper { overflow-x: auto; border-radius: 12px; box-shadow: var(--sombra); }
+
+  .estado-select {
+    border: 1.5px solid #D0B896; border-radius: 6px;
+    padding: .35rem .6rem; font-family: 'Jost', sans-serif;
+    font-size: .82rem; background: var(--blanco);
+    cursor: pointer; color: var(--marron);
+  }
+
+  .btn-eliminar {
+    background: #FCE8E8; color: var(--rojo);
+    border: none; border-radius: 6px;
+    width: 30px; height: 30px; font-size: .9rem;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .btn-eliminar:hover { background: var(--rojo); color: #fff; }
+
+  /* Badge estados reclamo */
+  .badge-nuevo       { background: #FFF3CD; color: #856404; }
+  .badge-en_revision { background: #CCE5FF; color: #004085; }
+  .badge-resuelto    { background: #D4EDDA; color: #155724; }
+
+  /* Celda mensaje */
+  .msg-corto {
+    max-width: 260px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    cursor: pointer; color: var(--marron);
+  }
+  .msg-corto:hover { color: var(--rojo); text-decoration: underline; }
+
+  /* Modal mensaje completo */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
+    z-index: 500; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.activo { display: flex; }
+  .modal-box {
+    background: var(--blanco); border-radius: 16px;
+    box-shadow: var(--sombra-lg); width: 100%; max-width: 500px;
+    animation: modalIn .22s ease;
+  }
+  @keyframes modalIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+  .modal-header {
+    background: var(--rojo); color: #fff;
+    padding: 1.1rem 1.5rem; border-radius: 16px 16px 0 0;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:700; }
+  .modal-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; }
+  .modal-close:hover { color:#fff; }
+  .modal-body { padding: 1.5rem; font-size: .9rem; line-height: 1.7; color: var(--marron); }
+  .modal-body .lbl { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gris); margin-top: 1rem; margin-bottom: .2rem; }
+  .modal-body .val { background: #F7ECD8; border-radius: 6px; padding: .5rem .8rem; }
+  .modal-body .val-msg { background: #F7ECD8; border-radius: 6px; padding: .7rem .8rem; white-space: pre-wrap; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #2C4A1E; color: #fff;
+    padding: .8rem 1.3rem; border-radius: 8px;
+    font-size: .88rem; display: none; z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+
+  /* Vacío */
+  .vacio-msg {
+    text-align: center; padding: 4rem 2rem;
+    background: var(--blanco); border-radius: 14px; box-shadow: var(--sombra);
+  }
+  .vacio-msg .icon { font-size: 3rem; margin-bottom: 1rem; }
+  .vacio-msg h3 { font-family:'Cormorant Garamond',serif; font-size:1.5rem; color:var(--rojo); margin-bottom:.5rem; }
+  .vacio-msg p { color: var(--gris); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="admin-page">
+
+  <div class="admin-topbar">
+    <div>
+      <h1>📋 Reclamos Recibidos</h1>
+      <p>Restaurante San Antonio — Gestión de Reclamos</p>
+    </div>
+    <a href="/admin" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4);font-size:.8rem">← Panel Admin</a>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi-card">
+      <div class="kpi-icon rojo">📋</div>
+      <div><div class="kpi-valor">{{ total }}</div><div class="kpi-label">Total Reclamos</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon dorado">🆕</div>
+      <div><div class="kpi-valor">{{ nuevos }}</div><div class="kpi-label">Nuevos</div></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon verde">✅</div>
+      <div><div class="kpi-valor">{{ resueltos }}</div><div class="kpi-label">Resueltos</div></div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <h2 class="admin-section-title">📬 Todos los Reclamos</h2>
+  <div class="filtros">
+    <button class="filtro-btn activo" onclick="filtrar('todos', this)">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('nuevo', this)">🆕 Nuevos</button>
+    <button class="filtro-btn" onclick="filtrar('en_revision', this)">🔍 En revisión</button>
+    <button class="filtro-btn" onclick="filtrar('resuelto', this)">✅ Resueltos</button>
+  </div>
+
+  {% if reclamos %}
+  <div class="tabla-wrapper">
+    <table id="tabla-reclamos">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Fecha</th>
+          <th>Nombre</th>
+          <th>Celular</th>
+          <th>Email</th>
+          <th>Asunto</th>
+          <th>Mensaje</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reclamos %}
+        <tr data-estado="{{ r[8] }}" id="fila-r-{{ r[0] }}">
+          <td><strong>#{{ r[0] }}</strong></td>
+          <td style="white-space:nowrap">{{ r[1].strftime('%d/%m/%Y %H:%M') }}</td>
+          <td><strong>{{ r[2] }}</strong></td>
+          <td>{{ r[3] or '—' }}</td>
+          <td style="font-size:.82rem">{{ r[4] or '—' }}</td>
+          <td>
+            <span style="background:#FFF0CC;color:#7A5200;padding:.2rem .5rem;border-radius:4px;font-size:.78rem;font-weight:600">
+              {{ r[5] }}
+            </span>
+          </td>
+          <td>
+            <span class="msg-corto" onclick="verMensaje({{ r[0] }}, '{{ r[2]|e }}', '{{ r[3] or '' }}', '{{ r[4] or '' }}', '{{ r[5]|e }}', `{{ r[6]|e }}`, '{{ r[1].strftime('%d/%m/%Y %H:%M') }}')">
+              {{ r[6] }}
+            </span>
+          </td>
+          <td id="badge-r-{{ r[0] }}">
+            <span class="badge badge-{{ r[8] }}">{{ r[8]|replace('_',' ')|capitalize }}</span>
+          </td>
+          <td style="display:flex;gap:.4rem;align-items:center">
+            <select class="estado-select" onchange="cambiarEstadoReclamo({{ r[0] }}, this.value)">
+              <option value="nuevo"       {% if r[8]=='nuevo'       %}selected{% endif %}>Nuevo</option>
+              <option value="en_revision" {% if r[8]=='en_revision' %}selected{% endif %}>En revisión</option>
+              <option value="resuelto"    {% if r[8]=='resuelto'    %}selected{% endif %}>Resuelto</option>
+            </select>
+            <button class="btn-eliminar" onclick="eliminarReclamo({{ r[0] }})" title="Eliminar">✕</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="vacio-msg">
+    <div class="icon">🎉</div>
+    <h3>Sin reclamos por ahora</h3>
+    <p>No se han recibido reclamos todavía.</p>
+  </div>
+  {% endif %}
+
+</div>
+</div>
+
+<!-- Modal mensaje completo -->
+<div class="modal-overlay" id="modalMensaje">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Reclamo</h3>
+      <button class="modal-close" onclick="cerrarModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="lbl">Fecha</div>      <div class="val" id="md-fecha"></div>
+      <div class="lbl">Cliente</div>    <div class="val" id="md-nombre"></div>
+      <div class="lbl">Celular</div>    <div class="val" id="md-celular"></div>
+      <div class="lbl">Email</div>      <div class="val" id="md-email"></div>
+      <div class="lbl">Asunto</div>     <div class="val" id="md-asunto"></div>
+      <div class="lbl">Mensaje</div>    <div class="val-msg" id="md-mensaje"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Actualizado</div>
+
+<script>
+/* ─── Filtro ─────────────────────────────────── */
+function filtrar(estado, btn) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  document.querySelectorAll('#tabla-reclamos tbody tr').forEach(fila => {
+    fila.style.display = (estado === 'todos' || fila.dataset.estado === estado) ? '' : 'none';
+  });
+}
+
+/* ─── Modal mensaje ──────────────────────────── */
+function verMensaje(id, nombre, celular, email, asunto, mensaje, fecha) {
+  document.getElementById('modal-titulo').textContent  = 'Reclamo #' + id;
+  document.getElementById('md-fecha').textContent      = fecha;
+  document.getElementById('md-nombre').textContent     = nombre;
+  document.getElementById('md-celular').textContent    = celular || '—';
+  document.getElementById('md-email').textContent      = email   || '—';
+  document.getElementById('md-asunto').textContent     = asunto;
+  document.getElementById('md-mensaje').textContent    = mensaje;
+  document.getElementById('modalMensaje').classList.add('activo');
+}
+function cerrarModal() {
+  document.getElementById('modalMensaje').classList.remove('activo');
+}
+document.getElementById('modalMensaje').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+/* ─── Cambiar estado ─────────────────────────── */
+function cambiarEstadoReclamo(id, estado) {
+  const fd = new FormData();
+  fd.append('id_reclamo', id);
+  fd.append('estado', estado);
+  fetch('/admin/reclamos/estado', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const badge = document.getElementById('badge-r-' + id);
+        const label = estado.replace('_',' ');
+        badge.innerHTML = `<span class="badge badge-${estado}">${label.charAt(0).toUpperCase()+label.slice(1)}</span>`;
+        document.getElementById('fila-r-' + id).dataset.estado = estado;
+        mostrarToast('✅ Estado actualizado');
+      }
+    }).catch(() => alert('Error al actualizar.'));
+}
+
+/* ─── Eliminar ───────────────────────────────── */
+function eliminarReclamo(id) {
+  if (!confirm('¿Eliminar el reclamo #' + id + '? Esta acción no se puede deshacer.')) return;
+  const fd = new FormData();
+  fd.append('id_reclamo', id);
+  fetch('/admin/reclamos/eliminar', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const fila = document.getElementById('fila-r-' + id);
+        fila.style.transition = 'opacity .3s';
+        fila.style.opacity = '0';
+        setTimeout(() => fila.remove(), 300);
+        mostrarToast('🗑️ Reclamo #' + id + ' eliminado');
+      }
+    }).catch(() => alert('Error al eliminar.'));
+}
+
+/* ─── Toast ──────────────────────────────────── */
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+</script>
+{% endblock %}
