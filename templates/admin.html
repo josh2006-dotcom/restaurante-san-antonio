@@ -261,7 +261,7 @@
             </select>
           </td>
           <td>
-            <button class="btn-comprobante-admin" onclick="abrirComprobante({{ p[0] }}, {{ p[1]|tojson }})">
+            <button class="btn-comprobante-admin" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" onclick="abrirComprobante(this)">
               🧾 Visualizar comprobante
             </button>
           </td>
@@ -337,7 +337,9 @@
 let pedidoActual = null;
 let tipoDoc      = 'DNI';
 
-function abrirComprobante(id, nombreCliente) {
+function abrirComprobante(btnEl) {
+  const id = btnEl.dataset.id;
+  const nombreCliente = btnEl.dataset.nombre;
   pedidoActual = id;
   irPaso1();
   document.getElementById('inp-nombre').value = nombreCliente || '';
