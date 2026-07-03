@@ -80,7 +80,6 @@ def admin_menu_semanal():
         semana = request.form.get('semana', '')
         cur.execute("DELETE FROM Menu_Semanal")
         for dia in dias:
-            # Entradas
             i = 0
             while True:
                 key = f'entrada_{dia}_{i}'
@@ -93,7 +92,6 @@ def admin_menu_semanal():
                         VALUES (%s, 'entrada', %s, %s, %s)
                     """, (dia, valor, semana, i))
                 i += 1
-            # Segundos
             i = 0
             while True:
                 key = f'segundo_{dia}_{i}'
@@ -106,7 +104,6 @@ def admin_menu_semanal():
                         VALUES (%s, 'segundo', %s, %s, %s)
                     """, (dia, valor, semana, i))
                 i += 1
-            # Bebidas
             i = 0
             while True:
                 key = f'bebida_{dia}_{i}'
@@ -248,7 +245,6 @@ def admin_platos_eliminar():
     if not ok:
         return jsonify({'ok': False, 'error': 'No se puede eliminar: el plato ya tiene pedidos asociados. Puedes desactivarlo en su lugar.'}), 400
     return jsonify({'ok': True})
-
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
@@ -402,7 +398,6 @@ def pedido():
     cur.execute("SELECT id_plato, nombre, precio, tipo FROM Plato WHERE disponible = TRUE ORDER BY tipo, nombre")
     platos = cur.fetchall()
 
-    # Opciones filtradas por plato segun tabla Plato_Opcion
     cur.execute("""
         SELECT po.id_plato, op.id_opcion, op.accion, op.ingrediente, op.costo_extra
         FROM Plato_Opcion po
@@ -412,7 +407,6 @@ def pedido():
     filas_opciones = cur.fetchall()
     conn.close()
 
-    # Agrupar opciones por plato: { id_plato: [ (id_opcion, accion, ingrediente, costo_extra), ... ] }
     opciones_por_plato = {}
     for id_plato, id_opcion, accion, ingrediente, costo_extra in filas_opciones:
         if id_plato not in opciones_por_plato:
@@ -475,6 +469,67 @@ def mis_pedidos():
     return render_template('mis_pedidos.html',
                            pedidos=pedidos,
                            detalles=detalles_por_pedido)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  API: Datos del pedido para comprobante              ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/api/pedido_comprobante/<int:id_pedido>')
+def api_pedido_comprobante(id_pedido):
+    if 'id_cliente' not in session:
+        return jsonify({'error': 'No autorizado'}), 403
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    # Verificar que el pedido pertenece al cliente en sesión
+    cur.execute("""
+        SELECT p.id_pedido, p.fecha_pedido, p.tipo_entrega, p.hora_estimada,
+               p.estado, p.total, c.nombre, c.telefono
+        FROM Pedido p
+        JOIN Cliente c ON c.id_cliente = p.id_cliente
+        WHERE p.id_pedido = %s AND p.id_cliente = %s
+    """, (id_pedido, session['id_cliente']))
+    ped = cur.fetchone()
+
+    if not ped:
+        conn.close()
+        return jsonify({'error': 'Pedido no encontrado'}), 404
+
+    cur.execute("""
+        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        WHERE dp.id_pedido = %s
+    """, (id_pedido,))
+    detalles_raw = cur.fetchall()
+
+    detalles = []
+    for det in detalles_raw:
+        cur.execute("""
+            SELECT op.accion, op.ingrediente, op.costo_extra
+            FROM Detalle_Personalizacion dp2
+            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
+            WHERE dp2.id_detalle = %s
+        """, (det[4],))
+        pers = cur.fetchall()
+        detalles.append({
+            'nombre':    det[0],
+            'cantidad':  det[1],
+            'precio':    float(det[2]),
+            'subtotal':  float(det[3]),
+            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
+        })
+
+    conn.close()
+    return jsonify({
+        'id_pedido':    ped[0],
+        'fecha':        ped[1].strftime('%d/%m/%Y'),
+        'hora':         ped[1].strftime('%H:%M'),
+        'tipo_entrega': ped[2],
+        'estado':       ped[4],
+        'total':        float(ped[5]),
+        'detalles':     detalles
+    })
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  PANEL DE ADMINISTRACIÓN                             ║
