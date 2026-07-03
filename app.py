@@ -808,6 +808,107 @@ def admin_reportes():
         cancelados_recientes=cancelados_recientes,
         rango_actual=rango)
 
+# ╔══════════════════════════════════════════════════════╗
+# ║  RECLAMOS — Página pública                           ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/reclamos')
+def reclamos():
+    return render_template('reclamos.html')
+
+
+@app.route('/reclamos/enviar', methods=['POST'])
+def reclamos_enviar():
+    nombre  = request.form.get('nombre', '').strip()
+    celular = request.form.get('celular', '').strip()
+    email   = request.form.get('email', '').strip()
+    asunto  = request.form.get('asunto', '').strip()
+    mensaje = request.form.get('mensaje', '').strip()
+
+    if not nombre or not asunto or not mensaje:
+        return jsonify({'ok': False, 'error': 'Faltan campos obligatorios.'}), 400
+    if not celular and not email:
+        return jsonify({'ok': False, 'error': 'Ingresa al menos un medio de contacto.'}), 400
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        INSERT INTO Reclamo (nombre, celular, email, asunto, mensaje)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (nombre, celular or None, email or None, asunto, mensaje))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+
+# ╔══════════════════════════════════════════════════╗
+# ║  RECLAMOS — Admin: ver, cambiar estado, eliminar ║
+# ╚══════════════════════════════════════════════════╝
+@app.route('/admin/reclamos')
+def admin_reclamos():
+    if not session.get('es_admin'):
+        return redirect(url_for('admin_login'))
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM Reclamo")
+    total = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM Reclamo WHERE estado = 'nuevo'")
+    nuevos = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM Reclamo WHERE estado = 'resuelto'")
+    resueltos = cur.fetchone()[0]
+
+    cur.execute("""
+        SELECT id_reclamo, fecha_reclamo, nombre, celular, email,
+               asunto, mensaje, estado, estado
+        FROM Reclamo
+        ORDER BY fecha_reclamo DESC
+    """)
+    reclamos = cur.fetchall()
+    conn.close()
+
+    return render_template('admin_reclamos.html',
+                           reclamos=reclamos,
+                           total=total,
+                           nuevos=nuevos,
+                           resueltos=resueltos)
+
+
+@app.route('/admin/reclamos/estado', methods=['POST'])
+def admin_reclamos_estado():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    id_reclamo = request.form.get('id_reclamo')
+    estado     = request.form.get('estado')
+
+    if estado not in ('nuevo', 'en_revision', 'resuelto'):
+        return jsonify({'error': 'Estado inválido'}), 400
+
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("UPDATE Reclamo SET estado = %s WHERE id_reclamo = %s", (estado, id_reclamo))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+
+@app.route('/admin/reclamos/eliminar', methods=['POST'])
+def admin_reclamos_eliminar():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    id_reclamo = request.form.get('id_reclamo')
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("DELETE FROM Reclamo WHERE id_reclamo = %s", (id_reclamo,))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+
 # ╔══════════════════════════════════════════════════════════╗
 # ║  DIAGNÓSTICO                                            ║
 # ╚══════════════════════════════════════════════════════════╝
