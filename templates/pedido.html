@@ -3,7 +3,7 @@
 
 {% block extra_head %}
 <style>
-  /* ── LAYOUT PEDIDO ──────────────────────────────────── */
+  /* ── LAYOUT ─────────────────────────────────────────── */
   .pedido-layout {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -18,64 +18,136 @@
 
   .page-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem;
-    color: var(--rojo);
-    margin-bottom: .3rem;
+    font-size: 2rem; color: var(--rojo); margin-bottom: .3rem;
   }
-  .page-sub { color: var(--gris); font-size: .9rem; margin-bottom: 1.8rem; }
+  .page-sub { color: var(--gris); font-size: .9rem; margin-bottom: 1.5rem; }
 
-  .entrega-box {
+  /* ── SELECTOR DE MODO ───────────────────────────────── */
+  .modo-selector {
     background: var(--blanco);
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 14px;
     box-shadow: var(--sombra);
+    padding: 1.4rem 1.5rem;
     margin-bottom: 1.8rem;
+  }
+  .modo-selector h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem; color: var(--marron);
+    margin-bottom: 1rem;
+  }
+  .modo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .8rem;
+  }
+  @media (max-width: 560px) { .modo-grid { grid-template-columns: 1fr; } }
+
+  .modo-btn {
+    border: 2px solid #E8D5B7;
+    border-radius: 12px;
+    padding: 1rem .8rem;
+    background: var(--blanco);
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+    font-family: 'Jost', sans-serif;
+  }
+  .modo-btn:hover { border-color: var(--dorado); background: #FFFBF4; }
+  .modo-btn.activo {
+    border-color: var(--rojo);
+    background: #FCE8E8;
+  }
+  .modo-btn .modo-icon { font-size: 1.8rem; margin-bottom: .4rem; }
+  .modo-btn .modo-nombre {
+    font-weight: 700; font-size: .9rem;
+    color: var(--marron); display: block; margin-bottom: .25rem;
+  }
+  .modo-btn .modo-precio {
+    font-size: .78rem; color: var(--gris);
+  }
+  .modo-btn.activo .modo-nombre { color: var(--rojo); }
+
+  /* ── ENTREGA ─────────────────────────────────────────── */
+  .entrega-box {
+    background: var(--blanco); border-radius: 12px;
+    padding: 1.5rem; box-shadow: var(--sombra); margin-bottom: 1.8rem;
   }
   .entrega-box h3 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.25rem;
-    color: var(--marron);
-    margin-bottom: 1rem;
+    font-size: 1.25rem; color: var(--marron); margin-bottom: 1rem;
   }
   .entrega-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
+  /* ── SECCIÓN PLATOS ─────────────────────────────────── */
+  .seccion-wrap { margin-bottom: 2rem; }
   .seccion-titulo {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.5rem;
-    color: var(--marron);
+    font-size: 1.5rem; color: var(--marron);
     margin-bottom: 1rem;
     display: flex; align-items: center; gap: .5rem;
   }
-  .platos-list { display: flex; flex-direction: column; gap: .8rem; margin-bottom: 2rem; }
 
+  /* Banner informativo del modo */
+  .modo-info-banner {
+    display: none;
+    background: #FFF3CD;
+    border: 1.5px solid #FFDDA0;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-size: .84rem;
+    color: #7A5200;
+    margin-bottom: 1.2rem;
+    align-items: center;
+    gap: .5rem;
+  }
+  .modo-info-banner.visible { display: flex; }
+
+  /* Error validación menú */
+  .error-menu {
+    display: none;
+    background: #FCE8E8;
+    border: 1.5px solid #F5C6CB;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-size: .84rem;
+    color: var(--rojo);
+    margin-bottom: 1rem;
+    align-items: center;
+    gap: .5rem;
+    font-weight: 600;
+  }
+  .error-menu.visible { display: flex; }
+
+  .platos-list { display: flex; flex-direction: column; gap: .8rem; }
+
+  /* Plato deshabilitado (modo que no lo incluye) */
   .plato-item {
-    background: var(--blanco);
-    border-radius: 12px;
-    box-shadow: var(--sombra);
-    overflow: hidden;
+    background: var(--blanco); border-radius: 12px;
+    box-shadow: var(--sombra); overflow: hidden;
     border: 2px solid transparent;
-    transition: border-color .2s, box-shadow .2s;
+    transition: border-color .2s, box-shadow .2s, opacity .2s;
   }
   .plato-item.seleccionado {
     border-color: var(--dorado);
     box-shadow: 0 4px 20px rgba(200,134,10,.2);
   }
+  .plato-item.bloqueado {
+    opacity: .38;
+    pointer-events: none;
+    box-shadow: none;
+  }
+
   .plato-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    display: flex; align-items: center; gap: 1rem;
     padding: 1rem 1.2rem;
-    cursor: pointer;
-    user-select: none;
+    cursor: pointer; user-select: none;
   }
   .plato-check {
     width: 22px; height: 22px;
-    border: 2px solid #D0B896;
-    border-radius: 5px;
+    border: 2px solid #D0B896; border-radius: 5px;
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: all .2s;
-    font-size: .85rem;
+    transition: all .2s; font-size: .85rem;
   }
   .plato-item.seleccionado .plato-check {
     background: var(--dorado); border-color: var(--dorado); color: #fff;
@@ -85,46 +157,29 @@
   .plato-info-tipo { font-size: .78rem; color: var(--gris); text-transform: uppercase; letter-spacing: .5px; }
   .plato-precio-tag { font-size: 1.1rem; font-weight: 700; color: var(--verde); }
 
-  /* ── CANTIDAD ── */
+  /* Contador */
   .cantidad-control {
-    display: none;
-    align-items: center;
-    gap: .5rem;
+    display: none; align-items: center; gap: .5rem;
     margin-left: auto;
-    background: var(--crema);
-    border-radius: 20px;
-    padding: .2rem .4rem;
+    background: var(--crema); border-radius: 20px; padding: .2rem .4rem;
   }
   .plato-item.seleccionado .cantidad-control { display: flex; }
   .cantidad-btn {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: none;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
+    width: 28px; height: 28px; border-radius: 50%; border: none;
+    font-size: 1.1rem; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all .2s;
-    line-height: 1;
+    transition: all .2s; line-height: 1;
   }
   .cantidad-btn.menos { background: #FCE8E8; color: var(--rojo); }
   .cantidad-btn.menos:hover { background: var(--rojo); color: #fff; }
   .cantidad-btn.mas { background: #D4EDDA; color: var(--verde); }
   .cantidad-btn.mas:hover { background: var(--verde); color: #fff; }
-  .cantidad-num {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--marron);
-    min-width: 20px;
-    text-align: center;
-  }
+  .cantidad-num { font-weight: 700; font-size: 1rem; color: var(--marron); min-width: 20px; text-align: center; }
 
   /* Personalizaciones */
   .pers-panel {
-    display: none;
-    border-top: 1px solid #F0E4CC;
-    padding: 1rem 1.2rem 1.2rem;
-    background: #FFFBF4;
+    display: none; border-top: 1px solid #F0E4CC;
+    padding: 1rem 1.2rem 1.2rem; background: #FFFBF4;
   }
   .plato-item.seleccionado .pers-panel { display: block; }
   .pers-titulo {
@@ -140,13 +195,9 @@
   }
   .pers-opcion {
     display: flex; align-items: center; gap: .5rem;
-    padding: .5rem .75rem;
-    border-radius: 8px;
-    border: 1.5px solid #EDD9B5;
-    background: var(--blanco);
-    cursor: pointer;
-    transition: all .18s;
-    font-size: .84rem;
+    padding: .5rem .75rem; border-radius: 8px;
+    border: 1.5px solid #EDD9B5; background: var(--blanco);
+    cursor: pointer; transition: all .18s; font-size: .84rem;
   }
   .pers-opcion:hover { border-color: var(--dorado); background: #FFF8EC; }
   .pers-opcion input[type="checkbox"] { accent-color: var(--dorado); cursor: pointer; }
@@ -160,12 +211,22 @@
   .pers-accion.cambiar { background: #CCE5FF; color: #004085; }
   .pers-costo { margin-left: auto; font-weight: 600; color: var(--dorado); font-size: .82rem; white-space: nowrap; }
 
-  /* ── RESUMEN ── */
+  /* ── RESUMEN ─────────────────────────────────────────── */
   .resumen-sticky { position: sticky; top: 80px; }
   .resumen-card { background: var(--blanco); border-radius: 16px; box-shadow: var(--sombra-lg); overflow: hidden; }
   .resumen-header { background: linear-gradient(135deg, var(--rojo), #5A0F0F); padding: 1.2rem 1.5rem; color: #fff; }
   .resumen-header h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 700; }
   .resumen-header p { font-size: .8rem; opacity: .7; margin-top: .2rem; }
+
+  /* Modo badge en resumen */
+  .resumen-modo-badge {
+    display: inline-block;
+    font-size: .72rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 20px;
+    background: rgba(255,255,255,.2); color: #fff;
+    margin-top: .4rem; letter-spacing: .4px;
+  }
+
   .resumen-body { padding: 1.2rem 1.5rem; }
   .resumen-vacio { text-align: center; padding: 2rem 1rem; color: var(--gris); }
   .resumen-vacio-icon { font-size: 2.5rem; margin-bottom: .5rem; }
@@ -185,20 +246,62 @@
   .resumen-total { display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 700; color: var(--rojo); font-family: 'Cormorant Garamond', serif; margin-top: .5rem; }
   .resumen-total-num { font-size: 1.4rem; }
   .resumen-footer { padding: 1rem 1.5rem 1.5rem; }
-  .btn-confirmar { width: 100%; justify-content: center; font-size: 1rem; padding: .85rem; opacity: .5; pointer-events: none; transition: all .2s; }
+  .btn-confirmar {
+    width: 100%; justify-content: center; font-size: 1rem; padding: .85rem;
+    opacity: .5; pointer-events: none; transition: all .2s;
+  }
   .btn-confirmar.activo { opacity: 1; pointer-events: auto; }
+
+  /* Contador pares menú completo */
+  .menu-pares-info {
+    display: none;
+    background: #D4EDDA;
+    border-radius: 8px;
+    padding: .6rem .9rem;
+    font-size: .82rem;
+    color: var(--verde);
+    font-weight: 600;
+    margin-bottom: .8rem;
+    text-align: center;
+  }
+  .menu-pares-info.visible { display: block; }
+  .menu-pares-info.advertencia { background: #FFF3CD; color: #7A5200; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container">
-<form method="POST" action="/pedido" id="form-pedido">
+<form method="POST" action="/pedido" id="form-pedido" onsubmit="return validarEnvio()">
 <div class="pedido-layout">
 
+  <!-- COLUMNA IZQUIERDA -->
   <div>
     <h1 class="page-title">🛒 Hacer Pedido</h1>
-    <p class="page-sub">Hola, <strong>{{ session.nombre }}</strong> — selecciona tus platos y personalízalos a tu gusto.</p>
+    <p class="page-sub">Hola, <strong>{{ session.nombre }}</strong> — elige el tipo de pedido y selecciona tus platos.</p>
 
+    <!-- SELECTOR DE MODO -->
+    <div class="modo-selector">
+      <h3>🍽️ ¿Qué deseas pedir?</h3>
+      <div class="modo-grid">
+        <button type="button" class="modo-btn" id="modo-entrada" onclick="setModo('entrada')">
+          <div class="modo-icon">🥗</div>
+          <span class="modo-nombre">Solo Entradas</span>
+          <span class="modo-precio">S/ 5.00 c/u</span>
+        </button>
+        <button type="button" class="modo-btn" id="modo-segundo" onclick="setModo('segundo')">
+          <div class="modo-icon">🍽️</div>
+          <span class="modo-nombre">Solo Segundos</span>
+          <span class="modo-precio">S/ 10.00 c/u</span>
+        </button>
+        <button type="button" class="modo-btn" id="modo-menu" onclick="setModo('menu')">
+          <div class="modo-icon">🍱</div>
+          <span class="modo-nombre">Menú Completo</span>
+          <span class="modo-precio">S/ 11.00 por menú</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ENTREGA -->
     <div class="entrega-box">
       <h3>📦 Datos de Entrega</h3>
       <div class="entrega-grid">
@@ -216,92 +319,106 @@
       </div>
     </div>
 
+    <!-- AVISO modo -->
+    <div class="modo-info-banner" id="banner-modo">
+      <span>ℹ️</span><span id="banner-texto"></span>
+    </div>
+
+    <!-- ERROR menú completo -->
+    <div class="error-menu" id="error-menu">
+      <span>⚠️</span>
+      <span id="error-menu-texto"></span>
+    </div>
+
     <!-- ENTRADAS -->
-    <h2 class="seccion-titulo">🥗 Entradas</h2>
-    <div class="platos-list">
-      {% for p in platos if p[3] == 'entrada' %}
-      <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}">
-        <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
-          <div class="plato-check" id="check-{{ p[0] }}"></div>
-          <div class="plato-info">
-            <div class="plato-info-nombre">{{ p[1] }}</div>
-            <div class="plato-info-tipo">Entrada</div>
+    <div class="seccion-wrap" id="seccion-entradas">
+      <h2 class="seccion-titulo">🥗 Entradas</h2>
+      <div class="platos-list">
+        {% for p in platos if p[3] == 'entrada' %}
+        <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}" data-tipo="entrada">
+          <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
+            <div class="plato-check" id="check-{{ p[0] }}"></div>
+            <div class="plato-info">
+              <div class="plato-info-nombre">{{ p[1] }}</div>
+              <div class="plato-info-tipo">Entrada</div>
+            </div>
+            <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
+            <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
+              <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
+              <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
+              <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+            </div>
           </div>
-          <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
-          <!-- Control de cantidad -->
-          <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
-            <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
-            <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
-            <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+          <div class="pers-panel">
+            <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
+            <div class="pers-grid">
+              {% for op in opciones_por_plato.get(p[0], []) %}
+              <label class="pers-opcion"
+                     data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}"
+                     data-costo="{{ op[3] }}" data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
+                <input type="checkbox"
+                       name="opciones_{{ p[0] }}"
+                       value="{{ op[0] }}"
+                       onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
+                <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
+                <span>{{ op[2] }}</span>
+                {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
+              </label>
+              {% endfor %}
+            </div>
           </div>
+          <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
+          <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
         </div>
-        <div class="pers-panel">
-          <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
-          <div class="pers-grid">
-            {% for op in opciones_por_plato.get(p[0], []) %}
-            <label class="pers-opcion"
-                   data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
-                   data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
-              <input type="checkbox"
-                     name="opciones_{{ p[0] }}"
-                     value="{{ op[0] }}"
-                     onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
-              <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
-              <span>{{ op[2] }}</span>
-              {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-        <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
-        <!-- Inputs ocultos para cantidad -->
-        <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
 
     <!-- SEGUNDOS -->
-    <h2 class="seccion-titulo">🍽️ Segundos</h2>
-    <div class="platos-list">
-      {% for p in platos if p[3] == 'segundo' %}
-      <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}">
-        <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
-          <div class="plato-check" id="check-{{ p[0] }}"></div>
-          <div class="plato-info">
-            <div class="plato-info-nombre">{{ p[1] }}</div>
-            <div class="plato-info-tipo">Segundo</div>
+    <div class="seccion-wrap" id="seccion-segundos">
+      <h2 class="seccion-titulo">🍽️ Segundos</h2>
+      <div class="platos-list">
+        {% for p in platos if p[3] == 'segundo' %}
+        <div class="plato-item" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" data-precio="{{ p[2] }}" data-tipo="segundo">
+          <div class="plato-header" onclick="togglePlato({{ p[0] }}, event)">
+            <div class="plato-check" id="check-{{ p[0] }}"></div>
+            <div class="plato-info">
+              <div class="plato-info-nombre">{{ p[1] }}</div>
+              <div class="plato-info-tipo">Segundo</div>
+            </div>
+            <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
+            <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
+              <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
+              <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
+              <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+            </div>
           </div>
-          <div class="plato-precio-tag">S/ {{ "%.2f"|format(p[2]) }}</div>
-          <div class="cantidad-control" id="cantidad-ctrl-{{ p[0] }}" onclick="event.stopPropagation()">
-            <button type="button" class="cantidad-btn menos" onclick="cambiarCantidad({{ p[0] }}, -1)">−</button>
-            <span class="cantidad-num" id="cantidad-num-{{ p[0] }}">1</span>
-            <button type="button" class="cantidad-btn mas" onclick="cambiarCantidad({{ p[0] }}, 1)">+</button>
+          <div class="pers-panel">
+            <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
+            <div class="pers-grid">
+              {% for op in opciones_por_plato.get(p[0], []) %}
+              <label class="pers-opcion"
+                     data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}"
+                     data-costo="{{ op[3] }}" data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
+                <input type="checkbox"
+                       name="opciones_{{ p[0] }}"
+                       value="{{ op[0] }}"
+                       onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
+                <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
+                <span>{{ op[2] }}</span>
+                {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
+              </label>
+              {% endfor %}
+            </div>
           </div>
+          <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
+          <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
         </div>
-        <div class="pers-panel">
-          <div class="pers-titulo">🎨 Personalizar este plato (opcional)</div>
-          <div class="pers-grid">
-            {% for op in opciones_por_plato.get(p[0], []) %}
-            <label class="pers-opcion"
-                   data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}" data-costo="{{ op[3] }}"
-                   data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
-              <input type="checkbox"
-                     name="opciones_{{ p[0] }}"
-                     value="{{ op[0] }}"
-                     onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
-              <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
-              <span>{{ op[2] }}</span>
-              {% if op[3] > 0 %}<span class="pers-costo">+S/{{ "%.2f"|format(op[3]) }}</span>{% endif %}
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-        <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
-        <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
-  </div>
+
+  </div><!-- /columna izq -->
 
   <!-- RESUMEN -->
   <div class="resumen-sticky">
@@ -309,18 +426,30 @@
       <div class="resumen-header">
         <h3>📋 Tu Pedido</h3>
         <p>Resumen en tiempo real</p>
+        <span class="resumen-modo-badge" id="resumen-modo-badge" style="display:none"></span>
       </div>
       <div class="resumen-body">
         <div class="resumen-vacio" id="resumen-vacio">
           <div class="resumen-vacio-icon">🍽️</div>
-          <p>Selecciona platos<br>para ver el resumen</p>
+          <p>Elige un tipo de pedido<br>y selecciona tus platos</p>
         </div>
+        <div class="menu-pares-info" id="menu-pares-info"></div>
         <ul class="resumen-items" id="resumen-items" style="display:none"></ul>
         <div id="resumen-totales" style="display:none">
           <div class="resumen-separador"></div>
-          <div class="resumen-subtotal"><span>Subtotal platos</span><span id="res-subtotal">S/ 0.00</span></div>
-          <div class="resumen-subtotal"><span>Extra personalizaciones</span><span id="res-extras">S/ 0.00</span></div>
-          <div class="resumen-total"><span>Total a pagar</span><span class="resumen-total-num" id="res-total">S/ 0.00</span></div>
+          <div class="resumen-subtotal" id="res-linea-subtotal" style="display:none">
+            <span>Subtotal platos</span><span id="res-subtotal">S/ 0.00</span>
+          </div>
+          <div class="resumen-subtotal" id="res-linea-extras" style="display:none">
+            <span>Personalizaciones</span><span id="res-extras">S/ 0.00</span>
+          </div>
+          <div class="resumen-subtotal" id="res-linea-menus" style="display:none">
+            <span id="res-menus-label">Menús completos</span><span id="res-menus-val"></span>
+          </div>
+          <div class="resumen-total">
+            <span>Total a pagar</span>
+            <span class="resumen-total-num" id="res-total">S/ 0.00</span>
+          </div>
         </div>
       </div>
       <div class="resumen-footer">
@@ -337,45 +466,136 @@
 </div>
 
 <script>
-const carrito = {};
+/* ══════════════════════════════════════════════════════
+   ESTADO GLOBAL
+══════════════════════════════════════════════════════ */
+const carrito = {};   // { id: { nombre, precioBase, tipo, cantidad, extras:{} } }
+let modoActual = null; // 'entrada' | 'segundo' | 'menu'
 
-function togglePlato(idPlato, event) {
-  const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
-  const inputCheck = document.getElementById(`plato-input-${idPlato}`);
-  const estaSeleccionado = item.classList.contains('seleccionado');
-  const checkDiv = document.getElementById(`check-${idPlato}`);
+const PRECIO_ENTRADA = 5;
+const PRECIO_SEGUNDO = 10;
+const PRECIO_MENU    = 11;
 
-  if (estaSeleccionado) {
-    item.classList.remove('seleccionado');
-    checkDiv.innerHTML = '';
-    inputCheck.checked = false;
-    delete carrito[idPlato];
-    document.getElementById(`cantidad-num-${idPlato}`).textContent = '1';
-    document.getElementById(`cantidad-input-${idPlato}`).value = '1';
-    item.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-      cb.checked = false;
-      cb.closest('.pers-opcion').classList.remove('marcada');
-    });
-  } else {
-    item.classList.add('seleccionado');
-    checkDiv.innerHTML = '✓';
-    inputCheck.checked = true;
-    const nombre = item.dataset.nombre;
-    const precio = parseFloat(item.dataset.precio);
-    carrito[idPlato] = { nombre, precioBase: precio, cantidad: 1, extras: {} };
-  }
+/* ══════════════════════════════════════════════════════
+   MODO DE PEDIDO
+══════════════════════════════════════════════════════ */
+function setModo(modo) {
+  if (modoActual === modo) return;
+
+  // Limpiar selecciones anteriores
+  Object.keys(carrito).forEach(id => deseleccionarPlato(parseInt(id)));
+
+  modoActual = modo;
+
+  // UI botones modo
+  document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('activo'));
+  document.getElementById('modo-' + modo).classList.add('activo');
+
+  // Badge resumen
+  const badge = document.getElementById('resumen-modo-badge');
+  const labels = { entrada: '🥗 Solo Entradas', segundo: '🍽️ Solo Segundos', menu: '🍱 Menú Completo' };
+  badge.textContent = labels[modo];
+  badge.style.display = 'inline-block';
+
+  // Bloquear / desbloquear secciones
+  aplicarBloqueos();
+
+  // Banner informativo
+  const banner = document.getElementById('banner-modo');
+  const bannerTxt = document.getElementById('banner-texto');
+  const msgs = {
+    entrada: 'Modo Solo Entradas — precio fijo S/ 5.00 por cada entrada.',
+    segundo: 'Modo Solo Segundos — precio fijo S/ 10.00 por cada segundo.',
+    menu:    'Modo Menú Completo — S/ 11.00 por par entrada + segundo. Las cantidades de entradas y segundos deben ser iguales.'
+  };
+  bannerTxt.textContent = msgs[modo];
+  banner.classList.add('visible');
+
+  ocultarErrorMenu();
   actualizarResumen();
 }
 
+function aplicarBloqueos() {
+  document.querySelectorAll('.plato-item').forEach(item => {
+    const tipo = item.dataset.tipo;
+    if (modoActual === 'entrada' && tipo === 'segundo') {
+      item.classList.add('bloqueado');
+    } else if (modoActual === 'segundo' && tipo === 'entrada') {
+      item.classList.add('bloqueado');
+    } else {
+      item.classList.remove('bloqueado');
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   TOGGLE PLATO
+══════════════════════════════════════════════════════ */
+function togglePlato(idPlato, event) {
+  if (!modoActual) {
+    mostrarErrorMenu('⚠️ Primero selecciona un tipo de pedido arriba.');
+    return;
+  }
+  const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
+  if (item.classList.contains('bloqueado')) return;
+
+  if (item.classList.contains('seleccionado')) {
+    deseleccionarPlato(idPlato);
+  } else {
+    seleccionarPlato(idPlato);
+  }
+  ocultarErrorMenu();
+  actualizarResumen();
+}
+
+function seleccionarPlato(idPlato) {
+  const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
+  item.classList.add('seleccionado');
+  document.getElementById(`check-${idPlato}`).innerHTML = '✓';
+  document.getElementById(`plato-input-${idPlato}`).checked = true;
+
+  const nombre = item.dataset.nombre;
+  const tipo   = item.dataset.tipo;
+  // precio base según modo
+  let precioBase;
+  if (modoActual === 'menu')    precioBase = tipo === 'entrada' ? PRECIO_ENTRADA : PRECIO_SEGUNDO;
+  else if (modoActual === 'entrada') precioBase = PRECIO_ENTRADA;
+  else                          precioBase = PRECIO_SEGUNDO;
+
+  carrito[idPlato] = { nombre, precioBase, tipo, cantidad: 1, extras: {} };
+}
+
+function deseleccionarPlato(idPlato) {
+  const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
+  if (!item) return;
+  item.classList.remove('seleccionado');
+  document.getElementById(`check-${idPlato}`).innerHTML = '';
+  document.getElementById(`plato-input-${idPlato}`).checked = false;
+  document.getElementById(`cantidad-num-${idPlato}`).textContent = '1';
+  document.getElementById(`cantidad-input-${idPlato}`).value = '1';
+  item.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+    cb.closest('.pers-opcion').classList.remove('marcada');
+  });
+  delete carrito[idPlato];
+}
+
+/* ══════════════════════════════════════════════════════
+   CANTIDAD
+══════════════════════════════════════════════════════ */
 function cambiarCantidad(idPlato, delta) {
   if (!carrito[idPlato]) return;
   const nueva = Math.max(1, (carrito[idPlato].cantidad || 1) + delta);
   carrito[idPlato].cantidad = nueva;
   document.getElementById(`cantidad-num-${idPlato}`).textContent = nueva;
   document.getElementById(`cantidad-input-${idPlato}`).value = nueva;
+  ocultarErrorMenu();
   actualizarResumen();
 }
 
+/* ══════════════════════════════════════════════════════
+   PERSONALIZACIÓN
+══════════════════════════════════════════════════════ */
 function toggleOpcion(idPlato, idOpcion, costo, accion, ingrediente, checkbox) {
   if (!carrito[idPlato]) return;
   const label = checkbox.closest('.pers-opcion');
@@ -389,59 +609,187 @@ function toggleOpcion(idPlato, idOpcion, costo, accion, ingrediente, checkbox) {
   actualizarResumen();
 }
 
+/* ══════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════ */
+function totalEntradas() {
+  return Object.values(carrito)
+    .filter(p => p.tipo === 'entrada')
+    .reduce((s, p) => s + p.cantidad, 0);
+}
+function totalSegundos() {
+  return Object.values(carrito)
+    .filter(p => p.tipo === 'segundo')
+    .reduce((s, p) => s + p.cantidad, 0);
+}
+
+function mostrarErrorMenu(msg) {
+  const el = document.getElementById('error-menu');
+  document.getElementById('error-menu-texto').textContent = msg;
+  el.classList.add('visible');
+}
+function ocultarErrorMenu() {
+  document.getElementById('error-menu').classList.remove('visible');
+}
+
+/* ══════════════════════════════════════════════════════
+   RESUMEN
+══════════════════════════════════════════════════════ */
 function actualizarResumen() {
   const ids = Object.keys(carrito);
-  const vacio = document.getElementById('resumen-vacio');
+  const vacio     = document.getElementById('resumen-vacio');
   const itemsList = document.getElementById('resumen-items');
   const totalesDiv = document.getElementById('resumen-totales');
   const btnConfirmar = document.getElementById('btn-confirmar');
+  const paresInfo = document.getElementById('menu-pares-info');
 
-  if (ids.length === 0) {
+  paresInfo.classList.remove('visible', 'advertencia');
+
+  if (ids.length === 0 || !modoActual) {
     vacio.style.display = 'block';
     itemsList.style.display = 'none';
     totalesDiv.style.display = 'none';
     btnConfirmar.classList.remove('activo');
+    paresInfo.classList.remove('visible');
     return;
   }
 
   vacio.style.display = 'none';
   itemsList.style.display = 'block';
   totalesDiv.style.display = 'block';
-  btnConfirmar.classList.add('activo');
 
+  let html = '';
+  let total = 0;
   let subtotalPlatos = 0;
   let subtotalExtras = 0;
-  let html = '';
 
-  for (const idPlato of ids) {
-    const p = carrito[idPlato];
-    const cantidad = p.cantidad || 1;
-    subtotalPlatos += p.precioBase * cantidad;
+  // Mostrar/ocultar líneas
+  document.getElementById('res-linea-subtotal').style.display = 'none';
+  document.getElementById('res-linea-extras').style.display   = 'none';
+  document.getElementById('res-linea-menus').style.display    = 'none';
 
-    let extrasTexto = '';
-    let costoExtras = 0;
-    for (const op of Object.values(p.extras)) {
-      costoExtras += op.costo;
-      extrasTexto += `<br>· ${op.nombre}${op.costo > 0 ? ' (+S/'+op.costo.toFixed(2)+')' : ''}`;
+  if (modoActual === 'entrada') {
+    /* ── CASO 1: SOLO ENTRADAS ── */
+    for (const id of ids) {
+      const p = carrito[id];
+      const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
+      const totalItem = (PRECIO_ENTRADA + costoExtras) * p.cantidad;
+      subtotalPlatos += PRECIO_ENTRADA * p.cantidad;
+      subtotalExtras += costoExtras * p.cantidad;
+      html += buildResumenItem(p, PRECIO_ENTRADA, totalItem);
     }
-    subtotalExtras += costoExtras * cantidad;
-    const totalItem = (p.precioBase + costoExtras) * cantidad;
+    total = subtotalPlatos + subtotalExtras;
+    document.getElementById('res-linea-subtotal').style.display = 'flex';
+    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
 
-    html += `
-      <li class="resumen-item">
-        <div>
-          <div class="resumen-item-nombre">${cantidad > 1 ? `x${cantidad} ` : ''}${p.nombre}</div>
-          ${extrasTexto ? `<div class="resumen-item-extras">${extrasTexto}</div>` : ''}
-        </div>
-        <span class="resumen-item-precio">S/ ${totalItem.toFixed(2)}</span>
-      </li>`;
+  } else if (modoActual === 'segundo') {
+    /* ── CASO 2: SOLO SEGUNDOS ── */
+    for (const id of ids) {
+      const p = carrito[id];
+      const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
+      const totalItem = (PRECIO_SEGUNDO + costoExtras) * p.cantidad;
+      subtotalPlatos += PRECIO_SEGUNDO * p.cantidad;
+      subtotalExtras += costoExtras * p.cantidad;
+      html += buildResumenItem(p, PRECIO_SEGUNDO, totalItem);
+    }
+    total = subtotalPlatos + subtotalExtras;
+    document.getElementById('res-linea-subtotal').style.display = 'flex';
+    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
+
+  } else if (modoActual === 'menu') {
+    /* ── CASO 3: MENÚ COMPLETO ── */
+    const cntE = totalEntradas();
+    const cntS = totalSegundos();
+    const pares = Math.min(cntE, cntS);
+
+    // Info de pares
+    paresInfo.classList.add('visible');
+    if (cntE === cntS && cntE > 0) {
+      paresInfo.textContent = `✅ ${pares} menú${pares > 1 ? 's' : ''} completo${pares > 1 ? 's' : ''} (${cntE} entrada${cntE>1?'s':''} + ${cntS} segundo${cntS>1?'s':''})`;
+      paresInfo.classList.remove('advertencia');
+    } else if (cntE > 0 || cntS > 0) {
+      paresInfo.textContent = `⚠️ ${cntE} entrada${cntE!==1?'s':''} / ${cntS} segundo${cntS!==1?'s':''} — deben ser iguales para confirmar.`;
+      paresInfo.classList.add('advertencia');
+    }
+
+    for (const id of ids) {
+      const p = carrito[id];
+      const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
+      const precioMostrado = p.tipo === 'entrada' ? PRECIO_ENTRADA : PRECIO_SEGUNDO;
+      const totalItem = (precioMostrado + costoExtras) * p.cantidad;
+      subtotalExtras += costoExtras * p.cantidad;
+      html += buildResumenItem(p, precioMostrado, totalItem);
+    }
+
+    total = pares * PRECIO_MENU + subtotalExtras;
+
+    document.getElementById('res-linea-menus').style.display = 'flex';
+    document.getElementById('res-menus-label').textContent = `${pares} menú${pares!==1?'s':''} × S/ ${PRECIO_MENU}`;
+    document.getElementById('res-menus-val').textContent   = `S/ ${(pares * PRECIO_MENU).toFixed(2)}`;
+    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
   }
 
   itemsList.innerHTML = html;
-  const total = subtotalPlatos + subtotalExtras;
   document.getElementById('res-subtotal').textContent = `S/ ${subtotalPlatos.toFixed(2)}`;
   document.getElementById('res-extras').textContent   = `S/ ${subtotalExtras.toFixed(2)}`;
   document.getElementById('res-total').textContent    = `S/ ${total.toFixed(2)}`;
+
+  // Habilitar botón confirmar
+  const puedeConfirmar = ids.length > 0 && (
+    modoActual !== 'menu' || totalEntradas() === totalSegundos()
+  );
+  btnConfirmar.classList.toggle('activo', puedeConfirmar);
+}
+
+function buildResumenItem(p, precioBase, totalItem) {
+  let extrasTexto = '';
+  for (const op of Object.values(p.extras)) {
+    extrasTexto += `<br>· ${op.nombre}${op.costo > 0 ? ' (+S/'+op.costo.toFixed(2)+')' : ''}`;
+  }
+  return `
+    <li class="resumen-item">
+      <div>
+        <div class="resumen-item-nombre">${p.cantidad > 1 ? `x${p.cantidad} ` : ''}${p.nombre}</div>
+        ${extrasTexto ? `<div class="resumen-item-extras">${extrasTexto}</div>` : ''}
+      </div>
+      <span class="resumen-item-precio">S/ ${totalItem.toFixed(2)}</span>
+    </li>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   VALIDACIÓN ANTES DE ENVIAR
+══════════════════════════════════════════════════════ */
+function validarEnvio() {
+  if (!modoActual) {
+    mostrarErrorMenu('Selecciona un tipo de pedido antes de confirmar.');
+    return false;
+  }
+  if (Object.keys(carrito).length === 0) {
+    mostrarErrorMenu('Selecciona al menos un plato.');
+    return false;
+  }
+  if (modoActual === 'menu') {
+    const cntE = totalEntradas();
+    const cntS = totalSegundos();
+    if (cntE === 0 || cntS === 0) {
+      mostrarErrorMenu(`El Menú Completo requiere al menos 1 entrada y 1 segundo.`);
+      return false;
+    }
+    if (cntE !== cntS) {
+      mostrarErrorMenu(`Las cantidades no coinciden: tienes ${cntE} entrada${cntE!==1?'s':''} y ${cntS} segundo${cntS!==1?'s':''}. Deben ser iguales.`);
+      window.scrollTo({ top: document.getElementById('error-menu').offsetTop - 80, behavior: 'smooth' });
+      return false;
+    }
+  }
+
+  // Agregar campo oculto con el modo
+  const modoInput = document.createElement('input');
+  modoInput.type  = 'hidden';
+  modoInput.name  = 'modo_pedido';
+  modoInput.value = modoActual;
+  document.getElementById('form-pedido').appendChild(modoInput);
+
+  return true;
 }
 </script>
 {% endblock %}
