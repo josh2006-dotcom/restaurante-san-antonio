@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -69,6 +70,77 @@
     transition: all .2s;
   }
   .btn-eliminar:hover { background: var(--rojo); color: #fff; }
+
+  .btn-comprobante-admin {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .4rem .8rem; border-radius: 6px;
+    background: transparent; border: 1.5px solid var(--dorado);
+    color: var(--dorado); font-family: 'Jost', sans-serif;
+    font-size: .78rem; font-weight: 600; letter-spacing: .3px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
+  }
+  .btn-comprobante-admin:hover { background: var(--dorado); color: #fff; }
+
+  /* ── MODAL COMPROBANTE (admin) ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
+    z-index: 500; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-overlay.activo { display: flex; }
+  .modal-box {
+    background: var(--blanco); border-radius: 16px;
+    box-shadow: var(--sombra-lg); width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto; animation: modalIn .25s ease;
+  }
+  @keyframes modalIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
+  .modal-header {
+    background: var(--rojo); color: #fff;
+    padding: 1.2rem 1.5rem; display: flex;
+    align-items: center; justify-content: space-between;
+    border-radius: 16px 16px 0 0;
+  }
+  .modal-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; letter-spacing:.3px; }
+  .modal-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; line-height:1; transition:color .15s; }
+  .modal-close:hover { color:#fff; }
+  .modal-body { padding: 1.5rem; }
+
+  .paso { display: none; }
+  .paso.activo { display: block; }
+
+  .modal-body .form-group { margin-bottom: 1rem; }
+  .modal-body .form-label {
+    display: block; font-size:.78rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px; color:var(--gris); margin-bottom:.35rem;
+  }
+  .modal-body .form-control {
+    width:100%; padding:.6rem .9rem; border:1.5px solid #E8D5B7;
+    border-radius:8px; font-family:'Jost',sans-serif; font-size:.92rem;
+    background:var(--blanco); color:var(--marron); outline:none; transition:border-color .2s,box-shadow .2s;
+  }
+  .modal-body .form-control:focus { border-color:var(--dorado); box-shadow:0 0 0 3px rgba(200,134,10,.15); }
+
+  .tipo-doc-group { display:flex; gap:.6rem; margin-bottom:1rem; }
+  .tipo-doc-btn {
+    flex:1; padding:.5rem; border:1.5px solid #E8D5B7; border-radius:7px;
+    background:var(--blanco); color:var(--gris); font-family:'Jost',sans-serif;
+    font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:center;
+  }
+  .tipo-doc-btn.activo { border-color:var(--rojo); background:#FCE8E8; color:var(--rojo); }
+
+  .boleta-preview {
+    font-family:'Courier New',monospace; font-size:.8rem; background:#fff;
+    border:1px dashed #ccc; border-radius:8px; padding:1.2rem;
+    line-height:1.6; white-space:pre-wrap; color:#1a1a1a;
+  }
+
+  .modal-footer {
+    padding:1rem 1.5rem 1.5rem; display:flex; gap:.7rem; justify-content:flex-end;
+  }
+  .modal-footer .btn { padding:.55rem 1.3rem; font-size:.85rem; }
+
+  .spin { display:inline-block; animation: girar .7s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
 
   .toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
@@ -164,7 +236,7 @@
       <thead>
         <tr>
           <th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th>
-          <th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th></th>
+          <th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th>Comprobante</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -189,6 +261,11 @@
             </select>
           </td>
           <td>
+            <button class="btn-comprobante-admin" onclick="abrirComprobante({{ p[0] }}, {{ p[1]|tojson }})">
+              🧾 Visualizar comprobante
+            </button>
+          </td>
+          <td>
             <button class="btn-eliminar" onclick="eliminarPedido({{ p[0] }})" title="Eliminar pedido">✕</button>
           </td>
         </tr>
@@ -199,6 +276,272 @@
 
 </div>
 </div>
+
+<!-- MODAL COMPROBANTE (admin) -->
+<div class="modal-overlay" id="modalComprobante">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🧾 Comprobante de Pago</h2>
+      <button class="modal-close" onclick="cerrarModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- PASO 1 -->
+      <div class="paso activo" id="paso1">
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem">
+          Verifica los datos del cliente para generar la boleta electrónica.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Tipo de documento</label>
+          <div class="tipo-doc-group">
+            <button class="tipo-doc-btn activo" onclick="selTipo('DNI',this)">DNI</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('RUC',this)">RUC</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('CE',this)">Carné Ext.</button>
+            <button class="tipo-doc-btn"        onclick="selTipo('Pasaporte',this)">Pasaporte</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="lbl-doc">Número de DNI</label>
+          <input class="form-control" id="inp-doc" type="text" placeholder="Ej: 12345678" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre completo</label>
+          <input class="form-control" id="inp-nombre" type="text" placeholder="Nombre del cliente">
+        </div>
+        <p id="error-paso1" style="color:var(--rojo);font-size:.82rem;display:none;margin-top:.5rem"></p>
+      </div>
+
+      <!-- PASO 2 -->
+      <div class="paso" id="paso2">
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">
+          Revisa el comprobante antes de descargarlo como PDF.
+        </p>
+        <div class="boleta-preview" id="boletaTexto"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" id="btn-atras"     onclick="irPaso1()" style="display:none">← Atrás</button>
+      <button class="btn btn-outline btn-sm"                    onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-dorado btn-sm"  id="btn-siguiente" onclick="irPaso2()">Continuar →</button>
+      <button class="btn btn-rojo btn-sm"    id="btn-pdf"       onclick="verPDF()" style="display:none">📄 Ver PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- jsPDF desde CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ── Estado comprobante ── */
+let pedidoActual = null;
+let tipoDoc      = 'DNI';
+
+function abrirComprobante(id, nombreCliente) {
+  pedidoActual = id;
+  irPaso1();
+  document.getElementById('inp-nombre').value = nombreCliente || '';
+  document.getElementById('inp-doc').value = '';
+  document.getElementById('modalComprobante').classList.add('activo');
+}
+function cerrarModal() {
+  document.getElementById('modalComprobante').classList.remove('activo');
+}
+document.getElementById('modalComprobante').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+function selTipo(tipo, btn) {
+  tipoDoc = tipo;
+  document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  const labels = { DNI:'Número de DNI', RUC:'Número de RUC', CE:'Número de Carné', Pasaporte:'Número de Pasaporte' };
+  document.getElementById('lbl-doc').textContent = labels[tipo] || 'Número de documento';
+  const maxLen = { DNI:'8', RUC:'11', CE:'12', Pasaporte:'20' };
+  document.getElementById('inp-doc').maxLength = maxLen[tipo] || 20;
+}
+
+async function irPaso2() {
+  const doc    = document.getElementById('inp-doc').value.trim();
+  const nombre = document.getElementById('inp-nombre').value.trim();
+  const errEl  = document.getElementById('error-paso1');
+
+  if (!doc) { errEl.textContent='El número de documento es obligatorio.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='DNI' && (doc.length!==8||!/^\d+$/.test(doc))) { errEl.textContent='El DNI debe tener exactamente 8 dígitos.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='RUC' && (doc.length!==11||!/^\d+$/.test(doc))) { errEl.textContent='El RUC debe tener exactamente 11 dígitos.'; errEl.style.display='block'; return; }
+  if (!nombre) { errEl.textContent='El nombre completo es obligatorio.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  const btn = document.getElementById('btn-siguiente');
+  btn.textContent='Generando…'; btn.disabled=true;
+  try {
+    const res  = await fetch(`/admin/pedido_comprobante/${pedidoActual}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    generarBoleta(data, nombre, doc);
+    document.getElementById('paso1').classList.remove('activo');
+    document.getElementById('paso2').classList.add('activo');
+    document.getElementById('btn-atras').style.display    = 'inline-flex';
+    document.getElementById('btn-siguiente').style.display = 'none';
+    document.getElementById('btn-pdf').style.display       = 'inline-flex';
+  } catch(e) {
+    errEl.textContent='Error al obtener el pedido: '+e.message;
+    errEl.style.display='block';
+  } finally {
+    btn.textContent='Continuar →'; btn.disabled=false;
+  }
+}
+
+function irPaso1() {
+  document.getElementById('paso1').classList.add('activo');
+  document.getElementById('paso2').classList.remove('activo');
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'inline-flex';
+  document.getElementById('btn-pdf').style.display        = 'none';
+  document.getElementById('error-paso1').style.display    = 'none';
+}
+
+function generarBoleta(data, nombre, doc) {
+  const now      = new Date();
+  const fechaImp = now.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit',year:'numeric'});
+  const horaImp  = now.toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit'});
+  const numSerie = 'B001-' + String(data.id_pedido).padStart(7, '0');
+
+  const W = 44;
+  const centro = t => ' '.repeat(Math.max(0,Math.floor((W-t.length)/2))) + t;
+  const fila   = (i,d) => i + ' '.repeat(Math.max(1, W-i.length-d.length)) + d;
+  const sep    = '-'.repeat(W);
+
+  let lines = [
+    centro('RESTAURANTE SAN ANTONIO S.A.C.'),
+    centro('RUC: 20765432101'),
+    centro('Av. José María Seguín 893'),
+    centro('Cel: 999907193'),
+    sep,
+    centro('BOLETA DE VENTA ELECTRÓNICA'),
+    centro(numSerie),
+    sep,
+    fila('FECHA:', fechaImp + '  HORA: ' + horaImp),
+    sep,
+    fila('CLIENTE:', nombre),
+    fila(tipoDoc + ':', doc),
+    sep,
+    fila('CANT  DESCRIPCIÓN', 'TOTAL'),
+    sep,
+  ];
+  for (const det of data.detalles) {
+    lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    for (const p of det.pers)
+      lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
+  }
+  const igv = data.total * 0.18 / 1.18;
+  lines.push(sep);
+  lines.push(fila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2)));
+  lines.push(fila('IGV (18%):', 'S/ ' + igv.toFixed(2)));
+  lines.push(sep);
+  lines.push(fila('TOTAL (S/):', data.total.toFixed(2)));
+  lines.push(sep);
+  lines.push(centro('¡Gracias por su preferencia!'));
+  lines.push(centro('restaurante-san-antonio-q3gd.onrender.com'));
+
+  document.getElementById('boletaTexto').textContent = lines.join('\n');
+  window._boletaData = { data, nombre, doc, numSerie, fechaImp, horaImp };
+}
+
+function verPDF() {
+  const btn = document.getElementById('btn-pdf');
+  btn.innerHTML = '<span class="spin">⏳</span> Generando…';
+  btn.disabled  = true;
+
+  setTimeout(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const { data, nombre, doc, numSerie, fechaImp, horaImp } = window._boletaData;
+
+      const pdf   = new jsPDF({ unit: 'mm', format: [80, 200], orientation: 'portrait' });
+      const PW    = 72;
+      const LEFT  = 4;
+      let   y     = 8;
+      const LS    = 5;
+
+      const addCentro = (txt, size=8, bold=false) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', bold ? 'bold' : 'normal');
+        const w = pdf.getTextWidth(txt);
+        pdf.text(txt, LEFT + (PW - w) / 2, y);
+        y += LS;
+      };
+      const addFila = (izq, der, size=8) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', 'normal');
+        pdf.text(izq, LEFT, y);
+        pdf.text(der, LEFT + PW, y, { align: 'right' });
+        y += LS;
+      };
+      const addSep = () => {
+        pdf.setDrawColor(160);
+        pdf.setLineDashPattern([1, 1], 0);
+        pdf.line(LEFT, y - 1, LEFT + PW, y - 1);
+        y += 2;
+      };
+
+      addCentro('RESTAURANTE SAN ANTONIO S.A.C.', 8, true);
+      addCentro('RUC: 20765432101', 7);
+      addCentro('Av. José María Seguín 893', 7);
+      addCentro('Cel: 999907193', 7);
+      addSep();
+      addCentro('BOLETA DE VENTA ELECTRÓNICA', 8, true);
+      addCentro(numSerie, 8, true);
+      addSep();
+      addFila('FECHA:', fechaImp + '  ' + horaImp);
+      addSep();
+      addFila('CLIENTE:', nombre);
+      addFila(tipoDoc + ':', doc);
+      addSep();
+
+      pdf.setFont('courier', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.text('CANT  DESCRIPCIÓN', LEFT, y);
+      pdf.text('TOTAL', LEFT + PW, y, { align: 'right' });
+      y += LS;
+      addSep();
+
+      for (const det of data.detalles) {
+        addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        for (const p of det.pers) {
+          pdf.setFontSize(7); pdf.setFont('courier', 'normal');
+          pdf.text('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''), LEFT, y);
+          y += LS - 1;
+        }
+      }
+
+      addSep();
+      const igv = data.total * 0.18 / 1.18;
+      addFila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2));
+      addFila('IGV (18%):', 'S/ ' + igv.toFixed(2));
+      addSep();
+      pdf.setFont('courier', 'bold'); pdf.setFontSize(9);
+      addFila('TOTAL (S/):', data.total.toFixed(2), 9);
+      addSep();
+
+      addCentro('¡Gracias por su preferencia!', 7);
+      addCentro('restaurante-san-antonio-q3gd.onrender.com', 6.5);
+
+      pdf.internal.pageSize.height = y + 8;
+
+      const pdfBlob = pdf.output('blob');
+      const url     = URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
+
+    } catch(err) {
+      alert('Error al generar el PDF: ' + err.message);
+    } finally {
+      btn.innerHTML = '📄 Ver PDF';
+      btn.disabled  = false;
+    }
+  }, 50);
+}
+</script>
 
 <div class="toast" id="toast">✅ Estado actualizado</div>
 
