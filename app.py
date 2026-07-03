@@ -931,7 +931,19 @@ def admin_reportes():
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/reclamos')
 def reclamos():
-    return render_template('reclamos.html')
+    mis_reclamos = []
+    if 'id_cliente' in session:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT id_reclamo, fecha_reclamo, asunto, mensaje, estado
+            FROM Reclamo
+            WHERE id_cliente = %s
+            ORDER BY fecha_reclamo DESC
+        """, (session['id_cliente'],))
+        mis_reclamos = cur.fetchall()
+        conn.close()
+    return render_template('reclamos.html', mis_reclamos=mis_reclamos)
 
 
 @app.route('/reclamos/enviar', methods=['POST'])
@@ -947,12 +959,14 @@ def reclamos_enviar():
     if not celular and not email:
         return jsonify({'ok': False, 'error': 'Ingresa al menos un medio de contacto.'}), 400
 
+    id_cliente = session.get('id_cliente')
+
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
-        INSERT INTO Reclamo (nombre, celular, email, asunto, mensaje)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (nombre, celular or None, email or None, asunto, mensaje))
+        INSERT INTO Reclamo (nombre, celular, email, asunto, mensaje, id_cliente)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (nombre, celular or None, email or None, asunto, mensaje, id_cliente))
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
