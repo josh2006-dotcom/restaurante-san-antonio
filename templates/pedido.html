@@ -1,4 +1,5 @@
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -307,7 +308,7 @@
       <div class="entrega-grid">
         <div class="form-group" style="margin:0">
           <label class="form-label">Tipo de entrega</label>
-          <select name="tipo_entrega" class="form-control">
+          <select name="tipo_entrega" id="tipo-entrega-select" class="form-control" onchange="actualizarResumen()">
             <option value="delivery">🚚 Delivery</option>
             <option value="recoge_local">🏪 Recojo en local</option>
           </select>
@@ -446,6 +447,9 @@
           <div class="resumen-subtotal" id="res-linea-menus" style="display:none">
             <span id="res-menus-label">Menús completos</span><span id="res-menus-val"></span>
           </div>
+          <div class="resumen-subtotal" id="res-linea-delivery" style="display:none;color:var(--dorado);font-weight:600">
+            <span>🚚 Delivery / Movilidad</span><span id="res-delivery-val">S/ 1.00</span>
+          </div>
           <div class="resumen-total">
             <span>Total a pagar</span>
             <span class="resumen-total-num" id="res-total">S/ 0.00</span>
@@ -475,6 +479,7 @@ let modoActual = null; // 'entrada' | 'segundo' | 'menu'
 const PRECIO_ENTRADA = 5;
 const PRECIO_SEGUNDO = 10;
 const PRECIO_MENU    = 11;
+const RECARGO_DELIVERY = 1;
 
 /* ══════════════════════════════════════════════════════
    MODO DE PEDIDO
@@ -730,6 +735,17 @@ function actualizarResumen() {
   }
 
   itemsList.innerHTML = html;
+
+  // Recargo por delivery
+  const esDelivery = document.getElementById('tipo-entrega-select').value === 'delivery';
+  const lineaDelivery = document.getElementById('res-linea-delivery');
+  if (esDelivery) {
+    total += RECARGO_DELIVERY;
+    lineaDelivery.style.display = 'flex';
+  } else {
+    lineaDelivery.style.display = 'none';
+  }
+
   document.getElementById('res-subtotal').textContent = `S/ ${subtotalPlatos.toFixed(2)}`;
   document.getElementById('res-extras').textContent   = `S/ ${subtotalExtras.toFixed(2)}`;
   document.getElementById('res-total').textContent    = `S/ ${total.toFixed(2)}`;
