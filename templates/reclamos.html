@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<style>
+  .reclamos-page { padding: 3rem 0 5rem; }
+
+  /* Hero */
+  .reclamo-hero {
+    background: linear-gradient(135deg, #2D1B00, #5A2A00);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    color: #fff;
+    margin-bottom: 2.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .reclamo-hero-icon {
+    font-size: 3rem;
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,.1);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .reclamo-hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem; font-weight: 700;
+    margin-bottom: .3rem;
+  }
+  .reclamo-hero p { font-size: .88rem; opacity: .75; line-height: 1.6; }
+
+  /* Card formulario */
+  .reclamo-card {
+    background: var(--blanco);
+    border-radius: 16px;
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .reclamo-card-header {
+    background: #FFFBF4;
+    border-bottom: 1px solid #F0E4CC;
+    padding: 1.2rem 1.8rem;
+    display: flex; align-items: center; gap: .7rem;
+  }
+  .reclamo-card-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem; color: var(--rojo); font-weight: 700;
+  }
+  .reclamo-card-body { padding: 1.8rem; }
+
+  /* Campos */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+
+  .campo { margin-bottom: 1.2rem; }
+  .campo label {
+    display: block;
+    font-size: .78rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--gris); margin-bottom: .4rem;
+  }
+  .campo label .req { color: var(--rojo); margin-left: 2px; }
+  .campo input, .campo textarea, .campo select {
+    width: 100%;
+    padding: .7rem 1rem;
+    border: 1.5px solid #E8D5B7;
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: .92rem;
+    background: var(--blanco);
+    color: var(--marron);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .campo input:focus, .campo textarea:focus, .campo select:focus {
+    border-color: var(--dorado);
+    box-shadow: 0 0 0 3px rgba(200,134,10,.15);
+  }
+  .campo textarea { resize: vertical; min-height: 130px; line-height: 1.6; }
+
+  /* Nota contacto */
+  .nota-contacto {
+    font-size: .78rem; color: var(--gris);
+    margin-top: .3rem; display: flex; align-items: center; gap: .3rem;
+  }
+
+  /* Asunto chips */
+  .asunto-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .6rem; }
+  .chip {
+    padding: .3rem .85rem;
+    border-radius: 20px;
+    border: 1.5px solid #E8D5B7;
+    background: var(--blanco);
+    font-size: .78rem; font-weight: 600;
+    color: var(--gris); cursor: pointer;
+    transition: all .18s;
+    font-family: 'Jost', sans-serif;
+  }
+  .chip:hover { border-color: var(--dorado); color: var(--dorado); }
+  .chip.activo { border-color: var(--rojo); background: #FCE8E8; color: var(--rojo); }
+
+  /* Submit */
+  .btn-submit {
+    width: 100%; padding: .85rem;
+    background: var(--rojo); color: #fff;
+    border: none; border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-size: 1rem; font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .15s, box-shadow .2s;
+    display: flex; align-items: center; justify-content: center; gap: .5rem;
+    margin-top: .5rem;
+  }
+  .btn-submit:hover { background: var(--rojo-osc); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(139,26,26,.3); }
+  .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* Éxito */
+  .exito-box {
+    display: none;
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+  .exito-box .exito-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    animation: pop .4s ease;
+  }
+  @keyframes pop { 0%{transform:scale(.5);opacity:0} 80%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  .exito-box h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.7rem; color: var(--verde); margin-bottom: .5rem;
+  }
+  .exito-box p { color: var(--gris); font-size: .9rem; margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+<div class="reclamos-page">
+
+  <!-- Hero -->
+  <div class="reclamo-hero">
+    <div class="reclamo-hero-icon">📋</div>
+    <div>
+      <h1>Libro de Reclamaciones</h1>
+      <p>Tu opinión nos ayuda a mejorar. Describe tu experiencia y nos pondremos en contacto contigo a la brevedad posible.</p>
+    </div>
+  </div>
+
+  <!-- Card formulario -->
+  <div class="reclamo-card">
+    <div class="reclamo-card-header">
+      <span style="font-size:1.2rem">✍️</span>
+      <h2>Nuevo Reclamo</h2>
+    </div>
+
+    <div class="reclamo-card-body">
+
+      <!-- Éxito -->
+      <div class="exito-box" id="exitoBox">
+        <div class="exito-icon">✅</div>
+        <h3>¡Reclamo enviado!</h3>
+        <p>Hemos recibido tu mensaje. Nos contactaremos contigo pronto.</p>
+        <a href="/" class="btn btn-rojo btn-sm">Volver al inicio</a>
+      </div>
+
+      <!-- Formulario -->
+      <div id="formBox">
+        <form id="formReclamo" onsubmit="enviarReclamo(event)">
+
+          <div class="form-row">
+            <div class="campo">
+              <label>Nombre completo <span class="req">*</span></label>
+              <input type="text" id="r-nombre" placeholder="Tu nombre" required>
+            </div>
+            <div class="campo">
+              <label>Celular <span class="req">*</span></label>
+              <input type="tel" id="r-celular" placeholder="Ej: 987654321" required>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Correo electrónico <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+            <input type="email" id="r-email" placeholder="para recibir respuesta por email">
+            <p class="nota-contacto">ℹ️ Completa al menos celular o correo para que podamos contactarte.</p>
+          </div>
+
+          <div class="campo">
+            <label>Asunto <span class="req">*</span></label>
+            <div class="asunto-chips">
+              <button type="button" class="chip" onclick="selAsunto('Demora en atención', this)">⏱️ Demora</button>
+              <button type="button" class="chip" onclick="selAsunto('Calidad del plato', this)">🍽️ Calidad</button>
+              <button type="button" class="chip" onclick="selAsunto('Pedido incorrecto', this)">❌ Pedido incorrecto</button>
+              <button type="button" class="chip" onclick="selAsunto('Mal trato', this)">😤 Mal trato</button>
+              <button type="button" class="chip" onclick="selAsunto('Problema con cobro', this)">💳 Cobro</button>
+              <button type="button" class="chip" onclick="selAsunto('Otro', this)">📝 Otro</button>
+            </div>
+            <input type="text" id="r-asunto" placeholder="O escribe el asunto aquí…" required>
+          </div>
+
+          <div class="campo">
+            <label>Descripción del problema <span class="req">*</span></label>
+            <textarea id="r-mensaje" placeholder="Cuéntanos con detalle qué ocurrió, la fecha aproximada y cualquier información que nos ayude a resolver tu caso…" required></textarea>
+          </div>
+
+          <p id="r-error" style="color:var(--rojo);font-size:.82rem;display:none;margin-bottom:.8rem"></p>
+
+          <button type="submit" class="btn-submit" id="btn-enviar">
+            📨 Enviar reclamo
+          </button>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+function selAsunto(texto, btn) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('activo'));
+  btn.classList.add('activo');
+  document.getElementById('r-asunto').value = texto;
+}
+
+async function enviarReclamo(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('r-error');
+  errEl.style.display = 'none';
+
+  const nombre  = document.getElementById('r-nombre').value.trim();
+  const celular = document.getElementById('r-celular').value.trim();
+  const email   = document.getElementById('r-email').value.trim();
+  const asunto  = document.getElementById('r-asunto').value.trim();
+  const mensaje = document.getElementById('r-mensaje').value.trim();
+
+  if (!nombre || !asunto || !mensaje) {
+    errEl.textContent = 'Completa los campos obligatorios (*)'; errEl.style.display='block'; return;
+  }
+  if (!celular && !email) {
+    errEl.textContent = 'Ingresa al menos un medio de contacto (celular o correo).'; errEl.style.display='block'; return;
+  }
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.innerHTML = '⏳ Enviando…';
+
+  const fd = new FormData();
+  fd.append('nombre',  nombre);
+  fd.append('celular', celular);
+  fd.append('email',   email);
+  fd.append('asunto',  asunto);
+  fd.append('mensaje', mensaje);
+
+  try {
+    const res  = await fetch('/reclamos/enviar', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('formBox').style.display  = 'none';
+      document.getElementById('exitoBox').style.display = 'block';
+    } else {
+      throw new Error(data.error || 'Error desconocido');
+    }
+  } catch(err) {
+    errEl.textContent = 'Error al enviar: ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.innerHTML = '📨 Enviar reclamo';
+  }
+}
+</script>
+{% endblock %}
