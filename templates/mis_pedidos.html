@@ -1,5 +1,6 @@
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -178,38 +179,38 @@
         </div>
 
         <div class="pedido-body" id="body-{{ ped[0] }}">
-          {% set menu = es_menu.get(ped[0], False) %}
+          {% set pinfo = info[ped[0]] %}
           <table class="detalle-table">
             <thead>
               <tr>
-                <th>Plato</th><th>Cant.</th><th>{% if menu %}Precio{% else %}Precio unit.{% endif %}</th>
-                <th>Personalizaciones</th><th style="text-align:right">{% if menu %}Extra{% else %}Subtotal{% endif %}</th>
+                <th>Plato</th><th>Cant.</th><th>Precio</th>
+                <th>Personalizaciones</th><th style="text-align:right">Subtotal</th>
               </tr>
             </thead>
             <tbody>
-              {% for det in detalles[ped[0]] %}
+              {% for det in pinfo.detalles %}
               <tr>
                 <td><strong>{{ det.nombre }}</strong></td>
                 <td>{{ det.cantidad }}</td>
                 <td>
-                  {% if menu %}
+                  {% if det.modo_precio == 'menu' %}
                     <span style="color:var(--gris);font-size:.82rem">Incluido en menú</span>
                   {% else %}
-                    S/ {{ "%.2f"|format(det.precio_unitario) }}
+                    S/ {{ "%.2f"|format(det.precio) }}
                   {% endif %}
                 </td>
                 <td>
-                  {% if det.personalizaciones %}
-                    {% for pers in det.personalizaciones %}
-                      <span class="pers-tag {{ pers[0] }}">{{ pers[0] }} {{ pers[1] }}{% if pers[2] > 0 %} +S/{{ "%.2f"|format(pers[2]) }}{% endif %}</span>
+                  {% if det.pers %}
+                    {% for pers in det.pers %}
+                      <span class="pers-tag {{ pers.accion }}">{{ pers.accion }} {{ pers.ingrediente }}{% if pers.costo > 0 %} +S/{{ "%.2f"|format(pers.costo) }}{% endif %}</span>
                     {% endfor %}
                   {% else %}
                     <span style="color:var(--gris);font-size:.82rem">Sin cambios</span>
                   {% endif %}
                 </td>
                 <td style="text-align:right;font-weight:700;color:var(--verde)">
-                  {% if menu %}
-                    {% if det.costo_extra > 0 %}S/ {{ "%.2f"|format(det.costo_extra * det.cantidad) }}{% else %}—{% endif %}
+                  {% if det.modo_precio == 'menu' %}
+                    {% if det.costo_extra_unitario > 0 %}S/ {{ "%.2f"|format(det.costo_extra_unitario * det.cantidad) }}{% else %}—{% endif %}
                   {% else %}
                     S/ {{ "%.2f"|format(det.subtotal) }}
                   {% endif %}
@@ -218,14 +219,20 @@
               {% endfor %}
             </tbody>
             <tfoot>
-              {% if menu %}
+              {% if pinfo.tiene_menu %}
               <tr>
                 <td colspan="4" style="text-align:right;color:var(--dorado);font-weight:600;padding-top:.8rem">
-                  🍱 {{ pares[ped[0]] }} menú{% if pares[ped[0]] != 1 %}s{% endif %} completo{% if pares[ped[0]] != 1 %}s{% endif %} × S/ 11.00
+                  🍱 {{ pinfo.pares }} menú{% if pinfo.pares != 1 %}s{% endif %} completo{% if pinfo.pares != 1 %}s{% endif %} × S/ 11.00
                 </td>
                 <td style="text-align:right;color:var(--dorado);font-weight:600;padding-top:.8rem">
-                  S/ {{ "%.2f"|format(pares[ped[0]] * 11) }}
+                  S/ {{ "%.2f"|format(pinfo.pares * 11) }}
                 </td>
+              </tr>
+              {% endif %}
+              {% if ped[2] == 'delivery' %}
+              <tr>
+                <td colspan="4" style="text-align:right;color:var(--dorado);font-weight:600">🚚 Delivery / Movilidad</td>
+                <td style="text-align:right;color:var(--dorado);font-weight:600">S/ 1.00</td>
               </tr>
               {% endif %}
               <tr>
@@ -416,7 +423,7 @@ function generarBoleta(data, nombre, doc) {
     sep,
   ];
   for (const det of data.detalles) {
-    if (data.es_menu) {
+    if (det.modo_precio === 'menu') {
       const extra = det.costo_extra_unitario * det.cantidad;
       lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido'));
     } else {
@@ -425,7 +432,7 @@ function generarBoleta(data, nombre, doc) {
     for (const p of det.pers)
       lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
   }
-  if (data.es_menu) {
+  if (data.tiene_menu) {
     lines.push(sep);
     lines.push(fila(`${data.pares} MENU${data.pares!==1?'S':''} COMPLETO${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2)));
   }
@@ -458,7 +465,7 @@ function calcularAlturaBoleta(data) {
     y += LS;
     y += (det.pers ? det.pers.length : 0) * LSp;
   }
-  if (data.es_menu) y += 2 + LS;
+  if (data.tiene_menu) y += 2 + LS;
   if (data.tipo_entrega === 'delivery') y += 2 + LS;
   y += 2 + LS + 2;   // separador + TOTAL + separador
   y += LS * 2;       // pie (2 líneas)
@@ -536,7 +543,7 @@ function verPDF() {
 
       // ── Detalles ──
       for (const det of data.detalles) {
-        if (data.es_menu) {
+        if (det.modo_precio === 'menu') {
           const extra = det.costo_extra_unitario * det.cantidad;
           addFila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido', 8);
         } else {
@@ -548,7 +555,7 @@ function verPDF() {
           y += LS - 1;
         }
       }
-      if (data.es_menu) {
+      if (data.tiene_menu) {
         addSep();
         pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
         addFila(`${data.pares} MENU${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2), 7.5);
