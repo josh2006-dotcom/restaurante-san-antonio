@@ -1,4 +1,5 @@
 import os
+from datetime import date, timedelta
 from flask import (Flask, render_template, request,
                    redirect, url_for, session, flash, jsonify)
 from werkzeug.utils import secure_filename
@@ -1052,7 +1053,7 @@ def admin_reportes():
         AND fecha_pedido >= NOW() - (%s || ' days')::interval
         GROUP BY DATE(fecha_pedido) ORDER BY dia
     """, (dias,))
-    ganancias_por_dia = cur.fetchall()
+    ganancias_raw = cur.fetchall()
 
     cur.execute("""
         SELECT DATE(fecha_pedido) as dia, COUNT(*) as cantidad, COALESCE(SUM(total), 0) as monto
@@ -1060,7 +1061,18 @@ def admin_reportes():
         AND fecha_pedido >= NOW() - (%s || ' days')::interval
         GROUP BY DATE(fecha_pedido) ORDER BY dia
     """, (dias,))
-    cancelados_por_dia = cur.fetchall()
+    cancelados_raw = cur.fetchall()
+
+    # Construir el rango completo de días (todos, incluso sin pedidos), en orden cronológico
+    hoy = date.today()
+    rango_fechas = [hoy - timedelta(days=i) for i in range(dias - 1, -1, -1)]
+
+    mapa_ganancias = {g[0]: float(g[1]) for g in ganancias_raw}
+    mapa_cant_cancel = {c[0]: c[1] for c in cancelados_raw}
+    mapa_monto_cancel = {c[0]: float(c[2]) for c in cancelados_raw}
+
+    ganancias_por_dia = [(f, mapa_ganancias.get(f, 0.0)) for f in rango_fechas]
+    cancelados_por_dia = [(f, mapa_cant_cancel.get(f, 0), mapa_monto_cancel.get(f, 0.0)) for f in rango_fechas]
 
     cur.execute("""
         SELECT pl.nombre, SUM(dp.cantidad) as total_vendido
