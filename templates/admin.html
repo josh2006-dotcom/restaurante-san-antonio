@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -9,13 +8,23 @@
     background: linear-gradient(135deg, #2D1B00, #5A2A00);
     padding: 1rem 1.5rem;
     display: flex; align-items: center; justify-content: space-between;
-    border-radius: 12px; margin-bottom: 2rem; color: #fff;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: #fff;
   }
   .admin-topbar h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 700; }
   .admin-topbar p { font-size: .82rem; opacity: .7; }
 
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .kpi-card { background: var(--blanco); border-radius: 12px; padding: 1.3rem 1.5rem; box-shadow: var(--sombra); display: flex; align-items: center; gap: 1rem; }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .kpi-card {
+    background: var(--blanco); border-radius: 12px;
+    padding: 1.3rem 1.5rem; box-shadow: var(--sombra);
+    display: flex; align-items: center; gap: 1rem;
+  }
   .kpi-icon { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
   .kpi-icon.rojo   { background: #FCE8E8; }
   .kpi-icon.dorado { background: #FFF0CC; }
@@ -24,12 +33,17 @@
   .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1; }
   .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
 
-  .accesos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+  .accesos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem; margin-bottom: 2.5rem;
+  }
   .acceso-card {
     background: var(--blanco); border-radius: 12px; padding: 1.3rem 1.5rem;
     box-shadow: var(--sombra); display: flex; align-items: center; gap: 1rem;
     text-decoration: none; color: var(--marron);
-    transition: transform .2s, box-shadow .2s; border-left: 4px solid var(--dorado);
+    transition: transform .2s, box-shadow .2s;
+    border-left: 4px solid var(--dorado);
   }
   .acceso-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-lg); }
   .acceso-card .acceso-icon { font-size: 1.8rem; width: 48px; height: 48px; background: #FFF0CC; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -41,13 +55,18 @@
   .estado-select {
     border: 1.5px solid #D0B896; border-radius: 6px;
     padding: .35rem .6rem; font-family: 'Jost', sans-serif;
-    font-size: .82rem; background: var(--blanco); cursor: pointer; color: var(--marron);
+    font-size: .82rem; background: var(--blanco);
+    cursor: pointer; color: var(--marron);
   }
 
   .btn-eliminar {
-    background: #FCE8E8; color: var(--rojo); border: none; border-radius: 6px;
-    width: 30px; height: 30px; font-size: .9rem; font-weight: 700; cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center; transition: all .2s;
+    background: #FCE8E8; color: var(--rojo);
+    border: none; border-radius: 6px;
+    width: 30px; height: 30px;
+    font-size: .9rem; font-weight: 700;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all .2s;
   }
   .btn-eliminar:hover { background: var(--rojo); color: #fff; }
 
@@ -56,75 +75,12 @@
     padding: .4rem .8rem; border-radius: 6px;
     background: transparent; border: 1.5px solid var(--dorado);
     color: var(--dorado); font-family: 'Jost', sans-serif;
-    font-size: .78rem; font-weight: 600; cursor: pointer; transition: all .2s; white-space: nowrap;
+    font-size: .78rem; font-weight: 600; letter-spacing: .3px;
+    cursor: pointer; transition: all .2s; white-space: nowrap;
   }
   .btn-comprobante-admin:hover { background: var(--dorado); color: #fff; }
 
-  /* ── FILA EXPANDIBLE ── */
-  .btn-expandir {
-    background: none; border: none; cursor: pointer;
-    font-size: 1rem; color: var(--gris);
-    transition: transform .2s, color .2s;
-    padding: .2rem .4rem; border-radius: 4px;
-  }
-  .btn-expandir:hover { color: var(--rojo); }
-  .btn-expandir.abierto { transform: rotate(180deg); color: var(--rojo); }
-
-  .fila-detalle {
-    display: none;
-    background: #FFFBF4;
-  }
-  .fila-detalle.visible { display: table-row; }
-
-  .detalle-panel {
-    padding: 1rem 1.5rem 1.2rem;
-    border-top: 2px solid var(--dorado);
-  }
-
-  .detalle-panel-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: .8rem;
-  }
-  .detalle-panel-titulo {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1rem; font-weight: 700; color: var(--marron);
-    display: flex; align-items: center; gap: .4rem;
-  }
-  .detalle-panel-entrega {
-    font-size: .78rem; color: var(--gris);
-    background: #F0E4CC; padding: .2rem .6rem; border-radius: 20px;
-  }
-
-  .detalle-tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
-  .detalle-tabla thead tr { background: #F7ECD8; }
-  .detalle-tabla th {
-    padding: .5rem .8rem; text-align: left;
-    font-weight: 700; font-size: .75rem;
-    text-transform: uppercase; letter-spacing: .5px; color: var(--gris);
-  }
-  .detalle-tabla td { padding: .55rem .8rem; border-bottom: 1px solid #F0E4CC; vertical-align: top; }
-  .detalle-tabla tr:last-child td { border-bottom: none; }
-  .detalle-tabla tfoot td {
-    padding-top: .7rem; font-weight: 700;
-    color: var(--rojo); font-size: .95rem; border-top: 1.5px solid #E8D5B7;
-  }
-
-  .tipo-badge {
-    display: inline-block; font-size: .68rem; padding: .1rem .4rem;
-    border-radius: 3px; font-weight: 700; text-transform: uppercase; margin-left: .3rem;
-  }
-  .tipo-badge.entrada { background: #FFF0CC; color: #7A5200; }
-  .tipo-badge.segundo { background: #FCE8E8; color: var(--rojo); }
-
-  .pers-tag-admin {
-    display: inline-block; font-size: .7rem; padding: .12rem .4rem;
-    border-radius: 3px; margin: .1rem;
-  }
-  .pers-tag-admin.quitar  { background: #FCE8E8; color: var(--rojo); }
-  .pers-tag-admin.agregar { background: #D4EDDA; color: var(--verde); }
-  .pers-tag-admin.cambiar { background: #CCE5FF; color: #004085; }
-
-  /* ── MODAL COMPROBANTE ── */
+  /* ── MODAL COMPROBANTE (admin) ── */
   .modal-overlay {
     display: none; position: fixed; inset: 0;
     background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
@@ -138,40 +94,70 @@
   }
   @keyframes modalIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
   .modal-header {
-    background: var(--rojo); color: #fff; padding: 1.2rem 1.5rem;
-    display: flex; align-items: center; justify-content: space-between; border-radius: 16px 16px 0 0;
+    background: var(--rojo); color: #fff;
+    padding: 1.2rem 1.5rem; display: flex;
+    align-items: center; justify-content: space-between;
+    border-radius: 16px 16px 0 0;
   }
-  .modal-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; }
-  .modal-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; }
+  .modal-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:700; letter-spacing:.3px; }
+  .modal-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; line-height:1; transition:color .15s; }
   .modal-close:hover { color:#fff; }
   .modal-body { padding: 1.5rem; }
+
   .paso { display: none; }
   .paso.activo { display: block; }
+
   .modal-body .form-group { margin-bottom: 1rem; }
-  .modal-body .form-label { display:block; font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); margin-bottom:.35rem; }
-  .modal-body .form-control { width:100%; padding:.6rem .9rem; border:1.5px solid #E8D5B7; border-radius:8px; font-family:'Jost',sans-serif; font-size:.92rem; background:var(--blanco); color:var(--marron); outline:none; transition:border-color .2s,box-shadow .2s; }
+  .modal-body .form-label {
+    display: block; font-size:.78rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px; color:var(--gris); margin-bottom:.35rem;
+  }
+  .modal-body .form-control {
+    width:100%; padding:.6rem .9rem; border:1.5px solid #E8D5B7;
+    border-radius:8px; font-family:'Jost',sans-serif; font-size:.92rem;
+    background:var(--blanco); color:var(--marron); outline:none; transition:border-color .2s,box-shadow .2s;
+  }
   .modal-body .form-control:focus { border-color:var(--dorado); box-shadow:0 0 0 3px rgba(200,134,10,.15); }
+
   .tipo-doc-group { display:flex; gap:.6rem; margin-bottom:1rem; }
-  .tipo-doc-btn { flex:1; padding:.5rem; border:1.5px solid #E8D5B7; border-radius:7px; background:var(--blanco); color:var(--gris); font-family:'Jost',sans-serif; font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:center; }
+  .tipo-doc-btn {
+    flex:1; padding:.5rem; border:1.5px solid #E8D5B7; border-radius:7px;
+    background:var(--blanco); color:var(--gris); font-family:'Jost',sans-serif;
+    font-size:.85rem; font-weight:600; cursor:pointer; transition:all .2s; text-align:center;
+  }
   .tipo-doc-btn.activo { border-color:var(--rojo); background:#FCE8E8; color:var(--rojo); }
-  .boleta-preview { font-family:'Courier New',monospace; font-size:.8rem; background:#fff; border:1px dashed #ccc; border-radius:8px; padding:1.2rem; line-height:1.6; white-space:pre-wrap; color:#1a1a1a; }
-  .modal-footer { padding:1rem 1.5rem 1.5rem; display:flex; gap:.7rem; justify-content:flex-end; }
+
+  .boleta-preview {
+    font-family:'Courier New',monospace; font-size:.8rem; background:#fff;
+    border:1px dashed #ccc; border-radius:8px; padding:1.2rem;
+    line-height:1.6; white-space:pre-wrap; color:#1a1a1a;
+  }
+
+  .modal-footer {
+    padding:1rem 1.5rem 1.5rem; display:flex; gap:.7rem; justify-content:flex-end;
+  }
   .modal-footer .btn { padding:.55rem 1.3rem; font-size:.85rem; }
+
   .spin { display:inline-block; animation: girar .7s linear infinite; }
   @keyframes girar { to { transform: rotate(360deg); } }
 
   .toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
-    background: #2C4A1E; color: #fff; padding: .8rem 1.3rem; border-radius: 8px;
-    font-size: .88rem; display: none; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    background: #2C4A1E; color: #fff;
+    padding: .8rem 1.3rem; border-radius: 8px;
+    font-size: .88rem; display: none; z-index: 999;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    animation: slideUp .3s ease;
   }
+  @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; } }
 
   .filtros { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
   .filtro-btn {
     padding: .35rem .9rem; border-radius: 20px;
     border: 1.5px solid #D0B896; background: var(--blanco);
-    font-size: .8rem; cursor: pointer; font-family: 'Jost', sans-serif;
-    font-weight: 600; transition: all .2s; color: var(--gris);
+    font-size: .8rem; cursor: pointer;
+    font-family: 'Jost', sans-serif; font-weight: 600;
+    transition: all .2s; color: var(--gris);
   }
   .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
 </style>
@@ -244,31 +230,17 @@
     <button class="filtro-btn" onclick="filtrar('entregado', this)">📦 Entregados</button>
     <button class="filtro-btn" onclick="filtrar('cancelado', this)">❌ Cancelados</button>
   </div>
-
   <div class="tabla-wrapper">
     <table id="tabla-pedidos">
       <thead>
         <tr>
-          <th></th>
-          <th>#</th>
-          <th>Cliente</th>
-          <th>Fecha</th>
-          <th>Entrega</th>
-          <th>Hora Est.</th>
-          <th>Total</th>
-          <th>Estado</th>
-          <th>Acción</th>
-          <th>Comprobante</th>
-          <th></th>
+          <th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th>
+          <th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th>Comprobante</th><th></th>
         </tr>
       </thead>
       <tbody>
         {% for p in pedidos %}
-        {# fila principal #}
         <tr data-estado="{{ p[5] }}" id="fila-{{ p[0] }}">
-          <td>
-            <button class="btn-expandir" id="btn-exp-{{ p[0] }}" onclick="toggleDetalle({{ p[0] }})" title="Ver detalle del pedido">▼</button>
-          </td>
           <td><strong>#{{ p[0] }}</strong></td>
           <td>{{ p[1] }}</td>
           <td>{{ p[2].strftime('%d/%m/%Y %H:%M') }}</td>
@@ -289,80 +261,11 @@
           </td>
           <td>
             <button class="btn-comprobante-admin" data-id="{{ p[0] }}" data-nombre="{{ p[1] }}" onclick="abrirComprobante(this)">
-              🧾 Comprobante
+              🧾 Visualizar comprobante
             </button>
           </td>
           <td>
             <button class="btn-eliminar" onclick="eliminarPedido({{ p[0] }})" title="Eliminar pedido">✕</button>
-          </td>
-        </tr>
-
-        {# fila expandible con detalle #}
-        <tr class="fila-detalle" id="detalle-{{ p[0] }}" data-estado="{{ p[5] }}">
-          <td colspan="11" style="padding:0">
-            <div class="detalle-panel">
-
-              <div class="detalle-panel-header">
-                <div class="detalle-panel-titulo">
-                  🍽️ Detalle del Pedido #{{ p[0] }}
-                  <span style="font-size:.78rem;color:var(--gris);font-family:'Jost',sans-serif;font-weight:400">— {{ p[1] }}</span>
-                </div>
-                <span class="detalle-panel-entrega">
-                  {% if p[3] == 'delivery' %}🚚 Delivery{% else %}🏪 Recojo local{% endif %}
-                  {% if p[4] %} · 🕐 {{ p[4] }}{% endif %}
-                </span>
-              </div>
-
-              {% set dets = detalles_por_pedido.get(p[0], []) %}
-              {% if dets %}
-              <table class="detalle-tabla">
-                <thead>
-                  <tr>
-                    <th>Plato</th>
-                    <th>Cant.</th>
-                    <th>Precio unit.</th>
-                    <th>Personalizaciones</th>
-                    <th style="text-align:right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for det in dets %}
-                  <tr>
-                    <td>
-                      <strong>{{ det.nombre }}</strong>
-                      <span class="tipo-badge {{ det.tipo }}">{{ det.tipo }}</span>
-                    </td>
-                    <td>{{ det.cantidad }}</td>
-                    <td>S/ {{ "%.2f"|format(det.precio_unitario) }}</td>
-                    <td>
-                      {% if det.personalizaciones %}
-                        {% for pers in det.personalizaciones %}
-                          <span class="pers-tag-admin {{ pers[0] }}">{{ pers[0] }} {{ pers[1] }}{% if pers[2] > 0 %} +S/{{ "%.2f"|format(pers[2]) }}{% endif %}</span>
-                        {% endfor %}
-                      {% else %}
-                        <span style="color:var(--gris);font-size:.8rem">Sin cambios</span>
-                      {% endif %}
-                    </td>
-                    <td style="text-align:right;font-weight:700;color:var(--verde)">
-                      S/ {{ "%.2f"|format(det.subtotal) }}
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="4" style="text-align:right">Total del pedido:</td>
-                    <td style="text-align:right;color:var(--rojo);font-size:1rem">
-                      S/ {{ "%.2f"|format(p[6]) }}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-              {% else %}
-              <p style="color:var(--gris);font-size:.88rem">Sin detalles registrados.</p>
-              {% endif %}
-
-            </div>
           </td>
         </tr>
         {% endfor %}
@@ -373,16 +276,20 @@
 </div>
 </div>
 
-<!-- MODAL COMPROBANTE -->
+<!-- MODAL COMPROBANTE (admin) -->
 <div class="modal-overlay" id="modalComprobante">
   <div class="modal-box">
     <div class="modal-header">
       <h2>🧾 Comprobante de Pago</h2>
       <button class="modal-close" onclick="cerrarModal()">×</button>
     </div>
+
     <div class="modal-body">
+      <!-- PASO 1 -->
       <div class="paso activo" id="paso1">
-        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem">Verifica los datos del cliente para generar la boleta electrónica.</p>
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem">
+          Verifica los datos del cliente para generar la boleta electrónica.
+        </p>
         <div class="form-group">
           <label class="form-label">Tipo de documento</label>
           <div class="tipo-doc-group">
@@ -402,11 +309,16 @@
         </div>
         <p id="error-paso1" style="color:var(--rojo);font-size:.82rem;display:none;margin-top:.5rem"></p>
       </div>
+
+      <!-- PASO 2 -->
       <div class="paso" id="paso2">
-        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Revisa el comprobante antes de descargarlo como PDF.</p>
+        <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">
+          Revisa el comprobante antes de descargarlo como PDF.
+        </p>
         <div class="boleta-preview" id="boletaTexto"></div>
       </div>
     </div>
+
     <div class="modal-footer">
       <button class="btn btn-outline btn-sm" id="btn-atras"     onclick="volverPreview()" style="display:none">← Cancelar edición</button>
       <button class="btn btn-outline btn-sm"                    onclick="cerrarModal()">Cerrar</button>
@@ -417,153 +329,100 @@
   </div>
 </div>
 
+<!-- jsPDF desde CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<div class="toast" id="toast">✅ Estado actualizado</div>
-
 <script>
-/* ══ EXPANDIR DETALLE ══════════════════════════════ */
-function toggleDetalle(id) {
-  const fila   = document.getElementById('detalle-' + id);
-  const btn    = document.getElementById('btn-exp-' + id);
-  const abierto = fila.classList.contains('visible');
-  fila.classList.toggle('visible', !abierto);
-  btn.classList.toggle('abierto', !abierto);
-}
-
-/* ══ FILTRO (incluye filas de detalle) ═════════════ */
-function filtrar(estado, btn) {
-  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
-  btn.classList.add('activo');
-  document.querySelectorAll('#tabla-pedidos tbody tr[id^="fila-"]').forEach(fila => {
-    const mostrar = (estado === 'todos' || fila.dataset.estado === estado);
-    fila.style.display = mostrar ? '' : 'none';
-    // también ocultar su fila detalle
-    const id = fila.id.replace('fila-', '');
-    const det = document.getElementById('detalle-' + id);
-    if (det) det.style.display = mostrar ? '' : 'none';
-  });
-}
-
-/* ══ CAMBIAR ESTADO ════════════════════════════════ */
-function cambiarEstado(idPedido, nuevoEstado) {
-  const fd = new FormData();
-  fd.append('id_pedido', idPedido);
-  fd.append('estado', nuevoEstado);
-  fetch('/admin/actualizar_estado', { method:'POST', body:fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        document.getElementById('estado-badge-' + idPedido).innerHTML =
-          `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase()+nuevoEstado.slice(1)}</span>`;
-        document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
-        document.getElementById('detalle-' + idPedido).dataset.estado = nuevoEstado;
-        mostrarToast('✅ Estado actualizado');
-      }
-    }).catch(() => alert('Error al actualizar.'));
-}
-
-/* ══ ELIMINAR PEDIDO ═══════════════════════════════ */
-function eliminarPedido(idPedido) {
-  if (!confirm('¿Seguro que deseas eliminar el pedido #' + idPedido + '?\nEsta acción no se puede deshacer.')) return;
-  const fd = new FormData();
-  fd.append('id_pedido', idPedido);
-  fetch('/admin/eliminar_pedido', { method:'POST', body:fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        ['fila-', 'detalle-'].forEach(pfx => {
-          const el = document.getElementById(pfx + idPedido);
-          if (el) { el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }
-        });
-        mostrarToast('🗑️ Pedido #' + idPedido + ' eliminado');
-      }
-    }).catch(() => alert('Error al eliminar.'));
-}
-
-/* ══ TOAST ═════════════════════════════════════════ */
-function mostrarToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.display = 'block';
-  setTimeout(() => { t.style.display = 'none'; }, 2500);
-}
-
-/* ══ COMPROBANTE ═══════════════════════════════════ */
+/* ── Estado comprobante ── */
 let pedidoActual = null;
-let tipoDoc = 'DNI';
+let tipoDoc      = 'DNI';
 
 function abrirComprobante(btnEl) {
-  pedidoActual = btnEl.dataset.id;
+  const id = btnEl.dataset.id;
   const nombreCliente = btnEl.dataset.nombre;
+  pedidoActual = id;
+
   document.getElementById('modalComprobante').classList.add('activo');
-  document.getElementById('boletaTexto').textContent = 'Cargando…';
+  document.getElementById('boletaTexto').textContent = 'Cargando comprobante…';
   document.getElementById('paso1').classList.remove('activo');
   document.getElementById('paso2').classList.add('activo');
-  document.getElementById('btn-atras').style.display    = 'none';
-  document.getElementById('btn-siguiente').style.display = 'none';
-  document.getElementById('btn-editar').style.display    = 'none';
-  document.getElementById('btn-pdf').style.display       = 'none';
-  cargarComprobante(nombreCliente);
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'none';
+  document.getElementById('btn-editar').style.display     = 'none';
+  document.getElementById('btn-pdf').style.display        = 'none';
+
+  cargarYMostrarComprobante(nombreCliente);
 }
 
-async function cargarComprobante(nombreCliente) {
+async function cargarYMostrarComprobante(nombreCliente) {
   try {
     const res  = await fetch(`/admin/pedido_comprobante/${pedidoActual}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
+
     document.getElementById('inp-nombre').value = data.cliente_nombre || nombreCliente || '';
     document.getElementById('inp-doc').value = '';
-    tipoDoc = 'DNI';
     document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
     document.querySelector('.tipo-doc-btn').classList.add('activo');
+    tipoDoc = 'DNI';
     document.getElementById('lbl-doc').textContent = 'Número de DNI';
+
     generarBoleta(data, data.cliente_nombre || nombreCliente || '—', '—');
     volverPreview();
   } catch(e) {
-    document.getElementById('boletaTexto').textContent = 'Error: ' + e.message;
+    document.getElementById('boletaTexto').textContent = 'Error al cargar el comprobante: ' + e.message;
   }
 }
 
-function cerrarModal() { document.getElementById('modalComprobante').classList.remove('activo'); }
-document.getElementById('modalComprobante').addEventListener('click', function(e) { if(e.target===this) cerrarModal(); });
+function cerrarModal() {
+  document.getElementById('modalComprobante').classList.remove('activo');
+}
+document.getElementById('modalComprobante').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
 
 function selTipo(tipo, btn) {
   tipoDoc = tipo;
   document.querySelectorAll('.tipo-doc-btn').forEach(b => b.classList.remove('activo'));
   btn.classList.add('activo');
   const labels = { DNI:'Número de DNI', RUC:'Número de RUC', CE:'Número de Carné', Pasaporte:'Número de Pasaporte' };
-  document.getElementById('lbl-doc').textContent = labels[tipo];
-  document.getElementById('inp-doc').maxLength = { DNI:8, RUC:11, CE:12, Pasaporte:20 }[tipo] || 20;
+  document.getElementById('lbl-doc').textContent = labels[tipo] || 'Número de documento';
+  const maxLen = { DNI:'8', RUC:'11', CE:'12', Pasaporte:'20' };
+  document.getElementById('inp-doc').maxLength = maxLen[tipo] || 20;
 }
 
+/* ── Vista previa (paso 2): boleta ya cargada, botones Editar + Ver PDF ── */
 function volverPreview() {
   document.getElementById('paso1').classList.remove('activo');
   document.getElementById('paso2').classList.add('activo');
-  document.getElementById('btn-atras').style.display    = 'none';
-  document.getElementById('btn-siguiente').style.display = 'none';
-  document.getElementById('btn-editar').style.display    = 'inline-flex';
-  document.getElementById('btn-pdf').style.display       = 'inline-flex';
-  document.getElementById('error-paso1').style.display   = 'none';
+  document.getElementById('btn-atras').style.display     = 'none';
+  document.getElementById('btn-siguiente').style.display  = 'none';
+  document.getElementById('btn-editar').style.display     = 'inline-flex';
+  document.getElementById('btn-pdf').style.display        = 'inline-flex';
+  document.getElementById('error-paso1').style.display    = 'none';
 }
 
+/* ── Edición manual de datos (para emitir boleta con DNI real) ── */
 function editarDatos() {
   document.getElementById('paso2').classList.remove('activo');
   document.getElementById('paso1').classList.add('activo');
-  document.getElementById('btn-editar').style.display    = 'none';
-  document.getElementById('btn-pdf').style.display       = 'none';
-  document.getElementById('btn-atras').style.display     = 'inline-flex';
-  document.getElementById('btn-siguiente').style.display = 'inline-flex';
+  document.getElementById('btn-editar').style.display     = 'none';
+  document.getElementById('btn-pdf').style.display        = 'none';
+  document.getElementById('btn-atras').style.display      = 'inline-flex';
+  document.getElementById('btn-siguiente').style.display  = 'inline-flex';
 }
 
 async function irPaso2() {
   const doc    = document.getElementById('inp-doc').value.trim();
   const nombre = document.getElementById('inp-nombre').value.trim();
   const errEl  = document.getElementById('error-paso1');
+
   if (!doc) { errEl.textContent='El número de documento es obligatorio.'; errEl.style.display='block'; return; }
-  if (tipoDoc==='DNI' && (doc.length!==8||!/^\d+$/.test(doc))) { errEl.textContent='El DNI debe tener 8 dígitos.'; errEl.style.display='block'; return; }
-  if (tipoDoc==='RUC' && (doc.length!==11||!/^\d+$/.test(doc))) { errEl.textContent='El RUC debe tener 11 dígitos.'; errEl.style.display='block'; return; }
-  if (!nombre) { errEl.textContent='El nombre es obligatorio.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='DNI' && (doc.length!==8||!/^\d+$/.test(doc))) { errEl.textContent='El DNI debe tener exactamente 8 dígitos.'; errEl.style.display='block'; return; }
+  if (tipoDoc==='RUC' && (doc.length!==11||!/^\d+$/.test(doc))) { errEl.textContent='El RUC debe tener exactamente 11 dígitos.'; errEl.style.display='block'; return; }
+  if (!nombre) { errEl.textContent='El nombre completo es obligatorio.'; errEl.style.display='block'; return; }
   errEl.style.display='none';
+
   const btn = document.getElementById('btn-siguiente');
   btn.textContent='Generando…'; btn.disabled=true;
   try {
@@ -573,70 +432,204 @@ async function irPaso2() {
     generarBoleta(data, nombre, doc);
     volverPreview();
   } catch(e) {
-    errEl.textContent='Error: '+e.message; errEl.style.display='block';
-  } finally { btn.textContent='Continuar →'; btn.disabled=false; }
+    errEl.textContent='Error al obtener el pedido: '+e.message;
+    errEl.style.display='block';
+  } finally {
+    btn.textContent='Continuar →'; btn.disabled=false;
+  }
 }
 
 function generarBoleta(data, nombre, doc) {
   const now      = new Date();
-  const fechaImp = now.toLocaleDateString('es-PE',{day:'2-digit',month:'2-digit',year:'numeric'});
-  const horaImp  = now.toLocaleTimeString('es-PE',{hour:'2-digit',minute:'2-digit'});
-  const numSerie = 'B001-' + String(data.id_pedido).padStart(7,'0');
-  const W=44, centro=t=>' '.repeat(Math.max(0,Math.floor((W-t.length)/2)))+t;
-  const fila=(i,d)=>i+' '.repeat(Math.max(1,W-i.length-d.length))+d;
-  const sep='-'.repeat(W);
-  let lines=[
-    centro('RESTAURANTE SAN ANTONIO S.A.C.'),centro('RUC: 20765432101'),
-    centro('Av. José María Seguín 893'),centro('Cel: 999907193'),
-    sep,centro('BOLETA DE VENTA ELECTRÓNICA'),centro(numSerie),
-    sep,fila('FECHA:',fechaImp+'  HORA: '+horaImp),
-    sep,fila('CLIENTE:',nombre),fila(tipoDoc+':',doc),
-    sep,fila('CANT  DESCRIPCIÓN','TOTAL'),sep
+  const fechaImp = now.toLocaleDateString('es-PE', {day:'2-digit',month:'2-digit',year:'numeric'});
+  const horaImp  = now.toLocaleTimeString('es-PE', {hour:'2-digit',minute:'2-digit'});
+  const numSerie = 'B001-' + String(data.id_pedido).padStart(7, '0');
+
+  const W = 44;
+  const centro = t => ' '.repeat(Math.max(0,Math.floor((W-t.length)/2))) + t;
+  const fila   = (i,d) => i + ' '.repeat(Math.max(1, W-i.length-d.length)) + d;
+  const sep    = '-'.repeat(W);
+
+  let lines = [
+    centro('RESTAURANTE SAN ANTONIO S.A.C.'),
+    centro('RUC: 20765432101'),
+    centro('Av. José María Seguín 893'),
+    centro('Cel: 999907193'),
+    sep,
+    centro('BOLETA DE VENTA ELECTRÓNICA'),
+    centro(numSerie),
+    sep,
+    fila('FECHA:', fechaImp + '  HORA: ' + horaImp),
+    sep,
+    fila('CLIENTE:', nombre),
+    fila(tipoDoc + ':', doc),
+    sep,
+    fila('CANT  DESCRIPCIÓN', 'TOTAL'),
+    sep,
   ];
-  for(const det of data.detalles){
-    lines.push(fila('  '+det.cantidad+'   '+det.nombre,'S/ '+det.subtotal.toFixed(2)));
-    for(const p of det.pers) lines.push('      '+p.accion+' '+p.ingrediente+(p.costo>0?' +S/'+p.costo.toFixed(2):''));
+  for (const det of data.detalles) {
+    lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    for (const p of det.pers)
+      lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
   }
-  const igv=data.total*0.18/1.18;
-  lines.push(sep,fila('SUBTOTAL:','S/ '+data.total.toFixed(2)),fila('IGV (18%):','S/ '+igv.toFixed(2)),
-    sep,fila('TOTAL (S/):',data.total.toFixed(2)),sep,
-    centro('¡Gracias por su preferencia!'),centro('restaurante-san-antonio-q3gd.onrender.com'));
-  document.getElementById('boletaTexto').textContent=lines.join('\n');
-  window._boletaData={data,nombre,doc,numSerie,fechaImp,horaImp};
+  const igv = data.total * 0.18 / 1.18;
+  lines.push(sep);
+  lines.push(fila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2)));
+  lines.push(fila('IGV (18%):', 'S/ ' + igv.toFixed(2)));
+  lines.push(sep);
+  lines.push(fila('TOTAL (S/):', data.total.toFixed(2)));
+  lines.push(sep);
+  lines.push(centro('¡Gracias por su preferencia!'));
+  lines.push(centro('restaurante-san-antonio-q3gd.onrender.com'));
+
+  document.getElementById('boletaTexto').textContent = lines.join('\n');
+  window._boletaData = { data, nombre, doc, numSerie, fechaImp, horaImp };
 }
 
 function verPDF() {
-  const btn=document.getElementById('btn-pdf');
-  btn.innerHTML='<span class="spin">⏳</span> Generando…'; btn.disabled=true;
-  setTimeout(()=>{
+  const btn = document.getElementById('btn-pdf');
+  btn.innerHTML = '<span class="spin">⏳</span> Generando…';
+  btn.disabled  = true;
+
+  setTimeout(() => {
     try {
-      const {jsPDF}=window.jspdf;
-      const {data,nombre,doc,numSerie,fechaImp,horaImp}=window._boletaData;
-      const pdf=new jsPDF({unit:'mm',format:[80,200],orientation:'portrait'});
-      const PW=72,LEFT=4; let y=8; const LS=5;
-      const addCentro=(txt,size=8,bold=false)=>{pdf.setFontSize(size);pdf.setFont('courier',bold?'bold':'normal');const w=pdf.getTextWidth(txt);pdf.text(txt,LEFT+(PW-w)/2,y);y+=LS;};
-      const addFila=(izq,der,size=8)=>{pdf.setFontSize(size);pdf.setFont('courier','normal');pdf.text(izq,LEFT,y);pdf.text(der,LEFT+PW,y,{align:'right'});y+=LS;};
-      const addSep=()=>{pdf.setDrawColor(160);pdf.setLineDashPattern([1,1],0);pdf.line(LEFT,y-1,LEFT+PW,y-1);y+=2;};
-      addCentro('RESTAURANTE SAN ANTONIO S.A.C.',8,true);addCentro('RUC: 20765432101',7);
-      addCentro('Av. José María Seguín 893',7);addCentro('Cel: 999907193',7);addSep();
-      addCentro('BOLETA DE VENTA ELECTRÓNICA',8,true);addCentro(numSerie,8,true);addSep();
-      addFila('FECHA:',fechaImp+'  '+horaImp);addSep();
-      addFila('CLIENTE:',nombre);addFila(tipoDoc+':',doc);addSep();
-      pdf.setFont('courier','bold');pdf.setFontSize(7.5);
-      pdf.text('CANT  DESCRIPCIÓN',LEFT,y);pdf.text('TOTAL',LEFT+PW,y,{align:'right'});y+=LS;addSep();
-      for(const det of data.detalles){
-        addFila('  '+det.cantidad+'   '+det.nombre,'S/ '+det.subtotal.toFixed(2),8);
-        for(const p of det.pers){pdf.setFontSize(7);pdf.setFont('courier','normal');pdf.text('      '+p.accion+' '+p.ingrediente+(p.costo>0?' +S/'+p.costo.toFixed(2):''),LEFT,y);y+=LS-1;}
+      const { jsPDF } = window.jspdf;
+      const { data, nombre, doc, numSerie, fechaImp, horaImp } = window._boletaData;
+
+      const pdf   = new jsPDF({ unit: 'mm', format: [80, 200], orientation: 'portrait' });
+      const PW    = 72;
+      const LEFT  = 4;
+      let   y     = 8;
+      const LS    = 5;
+
+      const addCentro = (txt, size=8, bold=false) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', bold ? 'bold' : 'normal');
+        const w = pdf.getTextWidth(txt);
+        pdf.text(txt, LEFT + (PW - w) / 2, y);
+        y += LS;
+      };
+      const addFila = (izq, der, size=8) => {
+        pdf.setFontSize(size);
+        pdf.setFont('courier', 'normal');
+        pdf.text(izq, LEFT, y);
+        pdf.text(der, LEFT + PW, y, { align: 'right' });
+        y += LS;
+      };
+      const addSep = () => {
+        pdf.setDrawColor(160);
+        pdf.setLineDashPattern([1, 1], 0);
+        pdf.line(LEFT, y - 1, LEFT + PW, y - 1);
+        y += 2;
+      };
+
+      addCentro('RESTAURANTE SAN ANTONIO S.A.C.', 8, true);
+      addCentro('RUC: 20765432101', 7);
+      addCentro('Av. José María Seguín 893', 7);
+      addCentro('Cel: 999907193', 7);
+      addSep();
+      addCentro('BOLETA DE VENTA ELECTRÓNICA', 8, true);
+      addCentro(numSerie, 8, true);
+      addSep();
+      addFila('FECHA:', fechaImp + '  ' + horaImp);
+      addSep();
+      addFila('CLIENTE:', nombre);
+      addFila(tipoDoc + ':', doc);
+      addSep();
+
+      pdf.setFont('courier', 'bold');
+      pdf.setFontSize(7.5);
+      pdf.text('CANT  DESCRIPCIÓN', LEFT, y);
+      pdf.text('TOTAL', LEFT + PW, y, { align: 'right' });
+      y += LS;
+      addSep();
+
+      for (const det of data.detalles) {
+        addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        for (const p of det.pers) {
+          pdf.setFontSize(7); pdf.setFont('courier', 'normal');
+          pdf.text('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''), LEFT, y);
+          y += LS - 1;
+        }
       }
-      addSep();const igv=data.total*0.18/1.18;
-      addFila('SUBTOTAL:','S/ '+data.total.toFixed(2));addFila('IGV (18%):','S/ '+igv.toFixed(2));addSep();
-      pdf.setFont('courier','bold');pdf.setFontSize(9);addFila('TOTAL (S/):',data.total.toFixed(2),9);addSep();
-      addCentro('¡Gracias por su preferencia!',7);addCentro('restaurante-san-antonio-q3gd.onrender.com',6.5);
-      pdf.internal.pageSize.height=y+8;
-      window.open(URL.createObjectURL(pdf.output('blob')),'_blank');
-    } catch(err){alert('Error al generar el PDF: '+err.message);}
-    finally{btn.innerHTML='📄 Ver PDF';btn.disabled=false;}
-  },50);
+
+      addSep();
+      const igv = data.total * 0.18 / 1.18;
+      addFila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2));
+      addFila('IGV (18%):', 'S/ ' + igv.toFixed(2));
+      addSep();
+      pdf.setFont('courier', 'bold'); pdf.setFontSize(9);
+      addFila('TOTAL (S/):', data.total.toFixed(2), 9);
+      addSep();
+
+      addCentro('¡Gracias por su preferencia!', 7);
+      addCentro('restaurante-san-antonio-q3gd.onrender.com', 6.5);
+
+      pdf.internal.pageSize.height = y + 8;
+
+      const pdfBlob = pdf.output('blob');
+      const url     = URL.createObjectURL(pdfBlob);
+      window.open(url, '_blank');
+
+    } catch(err) {
+      alert('Error al generar el PDF: ' + err.message);
+    } finally {
+      btn.innerHTML = '📄 Ver PDF';
+      btn.disabled  = false;
+    }
+  }, 50);
+}
+</script>
+
+<div class="toast" id="toast">✅ Estado actualizado</div>
+
+<script>
+function cambiarEstado(idPedido, nuevoEstado) {
+  const formData = new FormData();
+  formData.append('id_pedido', idPedido);
+  formData.append('estado', nuevoEstado);
+  fetch('/admin/actualizar_estado', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const badgeCell = document.getElementById('estado-badge-' + idPedido);
+        badgeCell.innerHTML = `<span class="badge badge-${nuevoEstado}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
+        document.getElementById('fila-' + idPedido).dataset.estado = nuevoEstado;
+        const toast = document.getElementById('toast');
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 2500);
+      }
+    })
+    .catch(() => alert('Error al actualizar.'));
+}
+
+function eliminarPedido(idPedido) {
+  if (!confirm('¿Seguro que deseas eliminar el pedido #' + idPedido + '?\nEsta acción no se puede deshacer.')) return;
+  const formData = new FormData();
+  formData.append('id_pedido', idPedido);
+  fetch('/admin/eliminar_pedido', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        const fila = document.getElementById('fila-' + idPedido);
+        fila.style.transition = 'opacity .3s';
+        fila.style.opacity = '0';
+        setTimeout(() => fila.remove(), 300);
+        const toast = document.getElementById('toast');
+        toast.textContent = '🗑️ Pedido #' + idPedido + ' eliminado';
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; toast.textContent = '✅ Estado actualizado'; }, 2500);
+      }
+    })
+    .catch(() => alert('Error al eliminar.'));
+}
+
+function filtrar(estado, btn) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  document.querySelectorAll('#tabla-pedidos tbody tr').forEach(fila => {
+    fila.style.display = (estado === 'todos' || fila.dataset.estado === estado) ? '' : 'none';
+  });
 }
 </script>
 {% endblock %}
