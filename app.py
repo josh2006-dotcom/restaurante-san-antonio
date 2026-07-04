@@ -246,6 +246,69 @@ def admin_platos_eliminar():
         return jsonify({'ok': False, 'error': 'No se puede eliminar: el plato ya tiene pedidos asociados. Puedes desactivarlo en su lugar.'}), 400
     return jsonify({'ok': True})
 
+
+@app.route('/admin/platos/editar', methods=['POST'])
+def admin_platos_editar():
+    if not session.get('es_admin'):
+        return jsonify({'ok': False, 'error': 'No autorizado'}), 403
+
+    id_plato = request.form.get('id_plato')
+    nombre   = request.form.get('nombre', '').strip()
+    precio   = request.form.get('precio', '').strip()
+    tipo     = request.form.get('tipo', 'segundo')
+    archivo  = request.files.get('imagen')
+
+    if not id_plato or not nombre or not precio:
+        return jsonify({'ok': False, 'error': 'El nombre y el precio son obligatorios.'}), 400
+
+    try:
+        precio_val = float(precio)
+    except ValueError:
+        return jsonify({'ok': False, 'error': 'El precio no es válido.'}), 400
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    if archivo and archivo.filename:
+        extension = archivo.filename.rsplit('.', 1)[-1].lower()
+        if extension not in EXTENSIONES_IMG_PERMITIDAS:
+            conn.close()
+            return jsonify({'ok': False, 'error': 'Formato de imagen no permitido (usa png, jpg, jpeg o webp).'}), 400
+        carpeta = 'imagenes_entrada' if tipo == 'entrada' else 'imagenes_plato'
+        nombre_archivo = secure_filename(nombre.lower().replace(' ', '_')) + '.' + extension
+        ruta_disco = os.path.join(app.root_path, 'static', carpeta, nombre_archivo)
+        archivo.save(ruta_disco)
+        ruta_imagen = f'{carpeta}/{nombre_archivo}'
+
+        cur.execute("""
+            UPDATE Plato SET nombre = %s, precio = %s, tipo = %s, imagen = %s
+            WHERE id_plato = %s
+        """, (nombre, precio_val, tipo, ruta_imagen, id_plato))
+    else:
+        cur.execute("""
+            UPDATE Plato SET nombre = %s, precio = %s, tipo = %s
+            WHERE id_plato = %s
+        """, (nombre, precio_val, tipo, id_plato))
+        ruta_imagen = None
+
+    conn.commit()
+
+    cur.execute("SELECT nombre, precio, tipo, disponible, imagen FROM Plato WHERE id_plato = %s", (id_plato,))
+    row = cur.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({'ok': False, 'error': 'Plato no encontrado.'}), 404
+
+    return jsonify({
+        'ok': True,
+        'nombre': row[0],
+        'precio': float(row[1]),
+        'tipo': row[2],
+        'disponible': row[3],
+        'imagen': row[4],
+    })
+
 # ╔══════════════════════════════════════════════════════╗
 # ║  REGISTRO DE CLIENTE                                 ║
 # ╚══════════════════════════════════════════════════════╝
