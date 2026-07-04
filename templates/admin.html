@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -79,6 +80,31 @@
     cursor: pointer; transition: all .2s; white-space: nowrap;
   }
   .btn-comprobante-admin:hover { background: var(--dorado); color: #fff; }
+
+  .btn-toggle-detalle {
+    background: none; border: 1.5px solid #E8D5B7; border-radius: 6px;
+    width: 32px; height: 32px; cursor: pointer; font-size: .8rem;
+    color: var(--rojo); transition: all .2s;
+  }
+  .btn-toggle-detalle:hover { background: #FCE8E8; border-color: var(--rojo); }
+
+  tr.fila-detalle td { padding: 0 !important; border-bottom: 1px solid #F0E4CC; background: #FBF4E6; }
+  .detalle-admin-wrap { padding: 1.1rem 1.3rem; }
+  .detalle-loading { color: var(--gris); font-size: .85rem; text-align: center; padding: .6rem; }
+
+  .detalle-table-admin { width: 100%; border-collapse: collapse; font-size: .85rem; background: var(--blanco); border-radius: 10px; overflow: hidden; box-shadow: var(--sombra); }
+  .detalle-table-admin thead tr { background: #F7ECD8; }
+  .detalle-table-admin th {
+    padding: .6rem .9rem; text-align: left; font-size: .72rem;
+    text-transform: uppercase; letter-spacing: .4px; color: var(--marron);
+  }
+  .detalle-table-admin td { padding: .6rem .9rem; border-bottom: 1px solid #F0E4CC; vertical-align: top; }
+  .detalle-table-admin tr:last-child td { border-bottom: none; }
+
+  .pers-tag-admin { display: inline-block; font-size: .7rem; padding: .15rem .45rem; border-radius: 3px; margin: .1rem; }
+  .pers-tag-admin.quitar  { background: #FCE8E8; color: var(--rojo); }
+  .pers-tag-admin.agregar { background: #D4EDDA; color: #1e7e34; }
+  .pers-tag-admin.cambiar { background: #CCE5FF; color: #004085; }
 
   /* ── MODAL COMPROBANTE (admin) ── */
   .modal-overlay {
@@ -234,13 +260,16 @@
     <table id="tabla-pedidos">
       <thead>
         <tr>
-          <th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th>
+          <th></th><th>#</th><th>Cliente</th><th>Fecha</th><th>Entrega</th>
           <th>Hora Est.</th><th>Total</th><th>Estado</th><th>Acción</th><th>Comprobante</th><th></th>
         </tr>
       </thead>
       <tbody>
         {% for p in pedidos %}
         <tr data-estado="{{ p[5] }}" id="fila-{{ p[0] }}">
+          <td>
+            <button class="btn-toggle-detalle" id="toggle-btn-{{ p[0] }}" onclick="toggleDetallePedido({{ p[0] }})" title="Ver detalle del pedido">▼</button>
+          </td>
           <td><strong>#{{ p[0] }}</strong></td>
           <td>{{ p[1] }}</td>
           <td>{{ p[2].strftime('%d/%m/%Y %H:%M') }}</td>
@@ -266,6 +295,13 @@
           </td>
           <td>
             <button class="btn-eliminar" onclick="eliminarPedido({{ p[0] }})" title="Eliminar pedido">✕</button>
+          </td>
+        </tr>
+        <tr class="fila-detalle" id="detalle-row-{{ p[0] }}" style="display:none">
+          <td colspan="11">
+            <div class="detalle-admin-wrap" id="detalle-content-{{ p[0] }}">
+              <div class="detalle-loading">Cargando detalle del pedido…</div>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -612,9 +648,10 @@ function eliminarPedido(idPedido) {
     .then(data => {
       if (data.ok) {
         const fila = document.getElementById('fila-' + idPedido);
+        const filaDetalle = document.getElementById('detalle-row-' + idPedido);
         fila.style.transition = 'opacity .3s';
         fila.style.opacity = '0';
-        setTimeout(() => fila.remove(), 300);
+        setTimeout(() => { fila.remove(); if (filaDetalle) filaDetalle.remove(); }, 300);
         const toast = document.getElementById('toast');
         toast.textContent = '🗑️ Pedido #' + idPedido + ' eliminado';
         toast.style.display = 'block';
@@ -624,10 +661,81 @@ function eliminarPedido(idPedido) {
     .catch(() => alert('Error al eliminar.'));
 }
 
+/* ══════════════════════════════════════════════════════
+   VER DETALLE DEL PEDIDO (expandir/colapsar)
+══════════════════════════════════════════════════════ */
+const detalleCache = {};
+
+function toggleDetallePedido(idPedido) {
+  const fila = document.getElementById('detalle-row-' + idPedido);
+  const btn  = document.getElementById('toggle-btn-' + idPedido);
+  const abriendo = fila.style.display === 'none';
+
+  fila.style.display = abriendo ? 'table-row' : 'none';
+  btn.textContent = abriendo ? '▲' : '▼';
+
+  if (abriendo && !detalleCache[idPedido]) {
+    cargarDetallePedido(idPedido);
+  }
+}
+
+async function cargarDetallePedido(idPedido) {
+  const cont = document.getElementById('detalle-content-' + idPedido);
+  try {
+    const res  = await fetch(`/admin/pedido_comprobante/${idPedido}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    let filas = '';
+    for (const det of data.detalles) {
+      let persHtml = '';
+      if (det.pers && det.pers.length > 0) {
+        for (const per of det.pers) {
+          persHtml += `<span class="pers-tag-admin ${per.accion}">${per.accion} ${per.ingrediente}${per.costo > 0 ? ' +S/'+per.costo.toFixed(2) : ''}</span>`;
+        }
+      } else {
+        persHtml = '<span style="color:var(--gris);font-size:.82rem">Sin cambios</span>';
+      }
+      filas += `
+        <tr>
+          <td><strong>${det.nombre}</strong></td>
+          <td>${det.cantidad}</td>
+          <td>S/ ${det.precio.toFixed(2)}</td>
+          <td>${persHtml}</td>
+          <td style="text-align:right;font-weight:700;color:var(--verde)">S/ ${det.subtotal.toFixed(2)}</td>
+        </tr>`;
+    }
+
+    cont.innerHTML = `
+      <table class="detalle-table-admin">
+        <thead>
+          <tr><th>Plato</th><th>Cant.</th><th>Precio unit.</th><th>Personalizaciones</th><th style="text-align:right">Subtotal</th></tr>
+        </thead>
+        <tbody>${filas}</tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo)">Total del pedido:</td>
+            <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.05rem">S/ ${data.total.toFixed(2)}</td>
+          </tr>
+        </tfoot>
+      </table>`;
+    detalleCache[idPedido] = true;
+  } catch (e) {
+    cont.innerHTML = `<div class="detalle-loading" style="color:var(--rojo)">Error al cargar el detalle: ${e.message}</div>`;
+  }
+}
+
 function filtrar(estado, btn) {
   document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
   btn.classList.add('activo');
-  document.querySelectorAll('#tabla-pedidos tbody tr').forEach(fila => {
+
+  // Colapsar todos los detalles abiertos al cambiar de filtro
+  document.querySelectorAll('#tabla-pedidos tbody tr.fila-detalle').forEach(fila => {
+    fila.style.display = 'none';
+  });
+  document.querySelectorAll('.btn-toggle-detalle').forEach(b => b.textContent = '▼');
+
+  document.querySelectorAll('#tabla-pedidos tbody tr:not(.fila-detalle)').forEach(fila => {
     fila.style.display = (estado === 'todos' || fila.dataset.estado === estado) ? '' : 'none';
   });
 }
