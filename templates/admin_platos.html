@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -41,18 +42,46 @@
   .plato-card-admin .cuerpo { padding: .8rem .9rem; }
   .plato-card-admin .nombre { font-weight: 700; color: var(--marron); font-size: .95rem; margin-bottom: .15rem; }
   .plato-card-admin .precio { color: var(--verde); font-weight: 700; font-size: .9rem; margin-bottom: .5rem; }
-  .plato-card-admin .acciones { display: flex; gap: .4rem; }
+  .plato-card-admin .acciones { display: flex; gap: .35rem; flex-wrap: wrap; }
   .plato-card-admin .acciones button {
-    flex: 1; border: none; border-radius: 6px; padding: .35rem .4rem;
-    font-size: .72rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif;
+    flex: 1; min-width: 68px; border: none; border-radius: 6px; padding: .35rem .3rem;
+    font-size: .68rem; font-weight: 600; cursor: pointer; font-family: 'Jost', sans-serif;
   }
   .btn-toggle { background: #FFF0CC; color: #8B6500; }
+  .btn-editar-plato { background: #CCE5FF; color: #004085; }
   .btn-eliminar-plato { background: #FCE8E8; color: var(--rojo); }
   .badge-no-disponible {
     position: absolute; background: rgba(0,0,0,.65); color: #fff;
     font-size: .68rem; padding: .15rem .5rem; border-radius: 10px; margin: .5rem;
   }
   .plato-card-admin { position: relative; }
+
+  /* Modal editar plato */
+  .modal-editar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
+    z-index: 600; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-editar-overlay.activo { display: flex; }
+  .modal-editar-box {
+    background: var(--blanco); border-radius: 16px;
+    box-shadow: var(--sombra-lg); width: 100%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-editar-header {
+    background: linear-gradient(135deg, var(--rojo), #5A0F0F); color: #fff;
+    padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-editar-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:700; }
+  .modal-editar-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; }
+  .modal-editar-close:hover { color:#fff; }
+  .modal-editar-body { padding: 1.5rem; }
+  .modal-editar-preview {
+    width: 100%; height: 140px; object-fit: cover; border-radius: 10px;
+    margin-bottom: 1rem; background: var(--crema2);
+  }
+  .modal-editar-footer { padding: 0 1.5rem 1.5rem; display: flex; gap: .7rem; justify-content: flex-end; }
+  .modal-editar-error { color: var(--rojo); font-size: .8rem; margin-top: .5rem; display: none; }
 </style>
 {% endblock %}
 
@@ -103,13 +132,15 @@
         {% for p in platos %}
         <div class="plato-card-admin" id="plato-{{ p[0] }}">
           {% if not p[4] %}<span class="badge-no-disponible">Oculto</span>{% endif %}
-          <img src="{{ url_for('static', filename=p[5] if p[5] else ('imagenes_entrada/ceviche.jpg' if p[3]=='entrada' else 'imagenes_plato/lomo_saltado.jpg')) }}"
+          <img id="img-plato-{{ p[0] }}"
+               src="{{ url_for('static', filename=p[5] if p[5] else ('imagenes_entrada/ceviche.jpg' if p[3]=='entrada' else 'imagenes_plato/lomo_saltado.jpg')) }}"
                alt="{{ p[1] }}"
                onerror="this.src='{{ url_for('static', filename='imagenes_plato/lomo_saltado.jpg') }}'">
           <div class="cuerpo">
-            <div class="nombre">{{ p[1] }}</div>
-            <div class="precio">S/ {{ "%.2f"|format(p[2]) }} · {{ 'Entrada' if p[3]=='entrada' else 'Segundo' }}</div>
+            <div class="nombre" id="nombre-plato-{{ p[0] }}">{{ p[1] }}</div>
+            <div class="precio" id="precio-plato-{{ p[0] }}">S/ {{ "%.2f"|format(p[2]) }} · {{ 'Entrada' if p[3]=='entrada' else 'Segundo' }}</div>
             <div class="acciones">
+              <button class="btn-editar-plato" onclick='abrirEditarPlato({{ p[0] }}, {{ p[1]|tojson }}, {{ p[2] }}, {{ p[3]|tojson }}, {{ (p[5] or "")|tojson }})'>✏️ Editar</button>
               <button class="btn-toggle" onclick="togglePlato({{ p[0] }})">{{ '🙈 Ocultar' if p[4] else '👁️ Mostrar' }}</button>
               <button class="btn-eliminar-plato" onclick="eliminarPlato({{ p[0] }}, '{{ p[1] }}')">🗑️ Eliminar</button>
             </div>
@@ -122,7 +153,124 @@
   </div>
 </section>
 
+<!-- MODAL EDITAR PLATO -->
+<div class="modal-editar-overlay" id="modalEditarPlato">
+  <div class="modal-editar-box">
+    <div class="modal-editar-header">
+      <h2>✏️ Editar Plato</h2>
+      <button class="modal-editar-close" onclick="cerrarEditarPlato()">×</button>
+    </div>
+    <div class="modal-editar-body">
+      <img class="modal-editar-preview" id="editarPreview" src="" alt="Vista previa">
+
+      <div class="form-group">
+        <label class="form-label">Nombre del plato</label>
+        <input type="text" id="editarNombre" class="form-control">
+      </div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Precio (S/)</label>
+          <input type="number" step="0.01" min="0" id="editarPrecio" class="form-control">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label class="form-label">Tipo</label>
+          <select id="editarTipo" class="form-control">
+            <option value="entrada">Entrada</option>
+            <option value="segundo">Segundo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reemplazar imagen (opcional)</label>
+        <input type="file" id="editarImagen" accept=".png,.jpg,.jpeg,.webp" class="form-control" onchange="previsualizarNuevaImagen(this)">
+        <span class="form-hint">Si no seleccionas un archivo nuevo, se conserva la imagen actual.</span>
+      </div>
+      <div class="modal-editar-error" id="editarError"></div>
+    </div>
+    <div class="modal-editar-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarEditarPlato()">Cancelar</button>
+      <button class="btn btn-dorado btn-sm" id="btnGuardarEdicion" onclick="guardarEdicionPlato()">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
 <script>
+let platoEditandoId = null;
+
+function abrirEditarPlato(id, nombre, precio, tipo, imagen) {
+  platoEditandoId = id;
+  document.getElementById('editarNombre').value = nombre;
+  document.getElementById('editarPrecio').value = precio;
+  document.getElementById('editarTipo').value = tipo;
+  document.getElementById('editarImagen').value = '';
+  document.getElementById('editarError').style.display = 'none';
+
+  const preview = document.getElementById('editarPreview');
+  preview.src = imagen
+    ? "{{ url_for('static', filename='') }}" + imagen
+    : document.getElementById('img-plato-' + id).src;
+
+  document.getElementById('modalEditarPlato').classList.add('activo');
+}
+
+function cerrarEditarPlato() {
+  document.getElementById('modalEditarPlato').classList.remove('activo');
+  platoEditandoId = null;
+}
+
+document.getElementById('modalEditarPlato').addEventListener('click', function(e) {
+  if (e.target === this) cerrarEditarPlato();
+});
+
+function previsualizarNuevaImagen(input) {
+  if (input.files && input.files[0]) {
+    document.getElementById('editarPreview').src = URL.createObjectURL(input.files[0]);
+  }
+}
+
+async function guardarEdicionPlato() {
+  const nombre = document.getElementById('editarNombre').value.trim();
+  const precio = document.getElementById('editarPrecio').value;
+  const tipo   = document.getElementById('editarTipo').value;
+  const errEl  = document.getElementById('editarError');
+
+  if (!nombre || !precio) {
+    errEl.textContent = 'El nombre y el precio son obligatorios.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('btnGuardarEdicion');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  try {
+    const fd = new FormData();
+    fd.append('id_plato', platoEditandoId);
+    fd.append('nombre', nombre);
+    fd.append('precio', precio);
+    fd.append('tipo', tipo);
+    const archivo = document.getElementById('editarImagen').files[0];
+    if (archivo) fd.append('imagen', archivo);
+
+    const res  = await fetch('/admin/platos/editar', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (data.ok) {
+      location.reload();
+    } else {
+      throw new Error(data.error || 'Error desconocido');
+    }
+  } catch (e) {
+    errEl.textContent = 'Error al guardar: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Guardar cambios';
+  }
+}
+
 function togglePlato(id) {
   const formData = new FormData();
   formData.append('id_plato', id);
