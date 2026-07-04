@@ -1,6 +1,7 @@
 
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -79,6 +80,53 @@
     cursor: pointer; transition: all .2s;
   }
   .btn-comprobante:hover { background: var(--dorado); color: #fff; }
+
+  .btn-cancelar-pedido {
+    display: inline-flex; align-items: center; gap: .4rem;
+    margin-top: 1rem; padding: .5rem 1.2rem; border-radius: 6px;
+    background: transparent; border: 1.5px solid var(--rojo);
+    color: var(--rojo); font-family: 'Jost', sans-serif;
+    font-size: .82rem; font-weight: 600; letter-spacing: .4px;
+    cursor: pointer; transition: all .2s;
+  }
+  .btn-cancelar-pedido:hover { background: var(--rojo); color: #fff; }
+
+  .aviso-cancelacion {
+    margin-top: 1rem; padding: .6rem 1rem; border-radius: 8px;
+    background: #FCE8E8; color: #721C24; font-size: .8rem;
+    display: flex; align-items: center; border: 1px solid #F5C6CB;
+  }
+
+  /* Modal cancelar pedido */
+  .modal-cancel-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(45,27,0,.55); backdrop-filter: blur(3px);
+    z-index: 600; align-items: center; justify-content: center; padding: 1rem;
+  }
+  .modal-cancel-overlay.activo { display: flex; }
+  .modal-cancel-box {
+    background: var(--blanco); border-radius: 16px;
+    box-shadow: var(--sombra-lg); width: 100%; max-width: 440px;
+    overflow: hidden; animation: modalCancelIn .25s ease;
+  }
+  @keyframes modalCancelIn { from{opacity:0;transform:translateY(16px) scale(.97)} to{opacity:1;transform:none} }
+  .modal-cancel-header {
+    background: var(--rojo); color: #fff; padding: 1.2rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-cancel-header h2 { font-family:'Cormorant Garamond',serif; font-size:1.25rem; font-weight:700; }
+  .modal-cancel-close { background:none; border:none; color:rgba(255,255,255,.75); font-size:1.4rem; cursor:pointer; }
+  .modal-cancel-close:hover { color:#fff; }
+  .modal-cancel-body { padding: 1.5rem; }
+  .modal-cancel-body p { font-size: .85rem; color: var(--gris); margin-bottom: 1rem; }
+  .modal-cancel-body textarea {
+    width: 100%; min-height: 90px; padding: .7rem .9rem; border: 1.5px solid #E8D5B7;
+    border-radius: 8px; font-family: 'Jost', sans-serif; font-size: .9rem;
+    color: var(--marron); outline: none; resize: vertical;
+  }
+  .modal-cancel-body textarea:focus { border-color: var(--rojo); box-shadow: 0 0 0 3px rgba(139,26,26,.12); }
+  .modal-cancel-error { color: var(--rojo); font-size: .8rem; margin-top: .5rem; display: none; }
+  .modal-cancel-footer { padding: 0 1.5rem 1.5rem; display: flex; gap: .7rem; justify-content: flex-end; }
 
   .vacio-msg { text-align: center; padding: 4rem 2rem; background: var(--blanco); border-radius: 14px; box-shadow: var(--sombra); }
   .vacio-msg .icon { font-size: 3rem; margin-bottom: 1rem; }
@@ -172,6 +220,9 @@
           </div>
           <div class="pedido-header-right">
             {% set est = ped[4] %}
+            {% if ped[6] %}
+              <span class="badge" style="background:#F5C6CB;color:#721C24">🚨 Cancelación solicitada</span>
+            {% endif %}
             <span class="badge badge-{{ est }}">{{ est|capitalize }}</span>
             <span class="pedido-total-tag">S/ {{ "%.2f"|format(ped[5]) }}</span>
             <span class="toggle-icon" style="color:var(--gris)">▼</span>
@@ -242,10 +293,22 @@
             </tfoot>
           </table>
 
-          <div style="margin-top:.8rem">
+          <div style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
             <button class="btn-comprobante" onclick="abrirComprobante({{ ped[0] }})">
               🧾 ¿Desea comprobante de pago?
             </button>
+
+            {% if ped[4] in ['pendiente', 'confirmado'] %}
+              {% if ped[6] %}
+                <div class="aviso-cancelacion">
+                  🚨 Solicitaste cancelar este pedido — motivo: "{{ ped[7] }}". Te contactaremos pronto.
+                </div>
+              {% else %}
+                <button class="btn-cancelar-pedido" onclick="abrirCancelacion({{ ped[0] }})">
+                  ❌ Cancelar Pedido
+                </button>
+              {% endif %}
+            {% endif %}
           </div>
         </div>
       </div>
@@ -264,6 +327,25 @@
       </div>
     {% endif %}
 
+  </div>
+</div>
+
+<!-- MODAL CANCELAR PEDIDO -->
+<div class="modal-cancel-overlay" id="modalCancelar">
+  <div class="modal-cancel-box">
+    <div class="modal-cancel-header">
+      <h2>❌ Cancelar Pedido</h2>
+      <button class="modal-cancel-close" onclick="cerrarModalCancelar()">×</button>
+    </div>
+    <div class="modal-cancel-body">
+      <p>Cuéntanos por qué deseas cancelar este pedido. Enviaremos tu solicitud al restaurante de inmediato y te contactaremos a la brevedad.</p>
+      <textarea id="motivoCancelacion" placeholder="Ej: Me equivoqué al pedir, ya no lo necesito, demora mucho, etc."></textarea>
+      <div class="modal-cancel-error" id="errorCancelacion"></div>
+    </div>
+    <div class="modal-cancel-footer">
+      <button class="btn btn-outline btn-sm" onclick="cerrarModalCancelar()">Volver</button>
+      <button class="btn btn-rojo btn-sm" id="btnEnviarCancelacion" onclick="enviarCancelacion()">🚨 Enviar solicitud</button>
+    </div>
   </div>
 </div>
 
@@ -597,6 +679,62 @@ function toggleDetalle(id, headerEl) {
   const isOpen = body.classList.contains('abierto');
   body.classList.toggle('abierto', !isOpen);
   headerEl.classList.toggle('abierto-header', !isOpen);
+}
+
+/* ══════════════════════════════════════════════════════
+   SOLICITAR CANCELACIÓN DE PEDIDO
+══════════════════════════════════════════════════════ */
+let pedidoACancelar = null;
+
+function abrirCancelacion(idPedido) {
+  pedidoACancelar = idPedido;
+  document.getElementById('motivoCancelacion').value = '';
+  document.getElementById('errorCancelacion').style.display = 'none';
+  document.getElementById('modalCancelar').classList.add('activo');
+}
+
+function cerrarModalCancelar() {
+  document.getElementById('modalCancelar').classList.remove('activo');
+}
+
+document.getElementById('modalCancelar').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModalCancelar();
+});
+
+async function enviarCancelacion() {
+  const motivo = document.getElementById('motivoCancelacion').value.trim();
+  const errEl  = document.getElementById('errorCancelacion');
+
+  if (!motivo) {
+    errEl.textContent = 'Por favor cuéntanos el motivo antes de enviar.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  const btn = document.getElementById('btnEnviarCancelacion');
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+
+  try {
+    const fd = new FormData();
+    fd.append('id_pedido', pedidoACancelar);
+    fd.append('motivo', motivo);
+    const res  = await fetch('/pedido/solicitar_cancelacion', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.ok) {
+      cerrarModalCancelar();
+      location.reload();
+    } else {
+      throw new Error(data.error || 'Error desconocido');
+    }
+  } catch (e) {
+    errEl.textContent = 'Error al enviar: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚨 Enviar solicitud';
+  }
 }
 </script>
 {% endblock %}
