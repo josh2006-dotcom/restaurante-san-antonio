@@ -429,10 +429,10 @@ function generarBoleta(data, nombre, doc) {
     lines.push(sep);
     lines.push(fila(`${data.pares} MENU${data.pares!==1?'S':''} COMPLETO${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2)));
   }
-  const igv = data.total * 0.18 / 1.18;
-  lines.push(sep);
-  lines.push(fila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2)));
-  lines.push(fila('IGV (18%):', 'S/ ' + igv.toFixed(2)));
+  if (data.tipo_entrega === 'delivery') {
+    lines.push(sep);
+    lines.push(fila('DELIVERY / MOVILIDAD:', 'S/ 1.00'));
+  }
   lines.push(sep);
   lines.push(fila('TOTAL (S/):', data.total.toFixed(2)));
   lines.push(sep);
@@ -532,12 +532,13 @@ function verPDF() {
         pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
         addFila(`${data.pares} MENU${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2), 7.5);
       }
+      if (data.tipo_entrega === 'delivery') {
+        addSep();
+        pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
+        addFila('DELIVERY / MOVILIDAD:', 'S/ 1.00', 7.5);
+      }
 
       // ── Totales ──
-      addSep();
-      const igv = data.total * 0.18 / 1.18;
-      addFila('SUBTOTAL:', 'S/ ' + data.total.toFixed(2));
-      addFila('IGV (18%):', 'S/ ' + igv.toFixed(2));
       addSep();
       pdf.setFont('courier', 'bold'); pdf.setFontSize(9);
       addFila('TOTAL (S/):', data.total.toFixed(2), 9);
