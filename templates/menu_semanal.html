@@ -1,4 +1,5 @@
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -133,6 +134,17 @@
   'tallarines verdes':    'imagenes_plato/tallarines_verdes.jpg'
 } %}
 
+{% set img_bebida = {
+  'agua de cebada':   'imagenes_bebida/agua_de_cebada.jpg',
+  'agua de manzana':  'imagenes_bebida/agua_de_manzana.jpg',
+  'agua de maracuya': 'imagenes_bebida/agua_de_maracuy.jpg',
+  'agua de maracuyá': 'imagenes_bebida/agua_de_maracuy.jpg',
+  'anis':             'imagenes_bebida/anis.png',
+  'anís':             'imagenes_bebida/anis.png',
+  'chicha morada':    'imagenes_bebida/chicha_morada.jpg',
+  'limonada':         'imagenes_bebida/limonada.jpg'
+} %}
+
 {% set dia_icons = {
   'Lunes': '🌅', 'Martes': '🌤️', 'Miércoles': '⛅',
   'Jueves': '🌞', 'Viernes': '🎉', 'Sábado': '😎'
@@ -209,8 +221,17 @@
           <div class="grupo-tipo">
             <div class="grupo-titulo bebida">🥤 Bebidas</div>
             {% for bebida in datos.bebidas %}
+            {% set key_b = bebida|lower %}
             <div class="plato-item">
-              <div class="plato-item-img-placeholder">🥤</div>
+              {% if img_bebida.get(key_b) %}
+                <img class="plato-item-img"
+                     src="{{ url_for('static', filename=img_bebida.get(key_b)) }}"
+                     alt="{{ bebida }}"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                <div class="plato-item-img-placeholder" style="display:none">🥤</div>
+              {% else %}
+                <div class="plato-item-img-placeholder">🥤</div>
+              {% endif %}
               <div class="plato-item-nombre">{{ bebida }}</div>
             </div>
             {% endfor %}
