@@ -1,4 +1,5 @@
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -186,11 +187,19 @@
     transition: all .2s; color: var(--gris);
   }
   .filtro-btn:hover, .filtro-btn.activo { background: var(--rojo); color: #fff; border-color: var(--rojo); }
+
+  /* Tabla de pedidos más compacta para evitar scroll horizontal innecesario */
+  #tabla-pedidos thead th { padding: .8rem .7rem; font-size: .74rem; white-space: nowrap; }
+  #tabla-pedidos tbody td { padding: .65rem .7rem; font-size: .85rem; }
+  #tabla-pedidos .estado-select { padding: .35rem .5rem; font-size: .82rem; }
+  #tabla-pedidos .btn-comprobante-admin { padding: .35rem .6rem; font-size: .72rem; white-space: nowrap; }
+  #tabla-pedidos .btn-eliminar { width: 28px; height: 28px; font-size: .8rem; }
+  #tabla-pedidos .btn-toggle-detalle { width: 28px; height: 28px; font-size: .75rem; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container" style="max-width:1500px">
 <div class="admin-page">
 
   <div class="admin-topbar">
