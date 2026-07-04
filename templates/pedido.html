@@ -1,5 +1,6 @@
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -720,10 +721,9 @@ function actualizarResumen() {
     for (const id of ids) {
       const p = carrito[id];
       const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
-      const precioMostrado = p.tipo === 'entrada' ? PRECIO_ENTRADA : PRECIO_SEGUNDO;
-      const totalItem = (precioMostrado + costoExtras) * p.cantidad;
+      const totalItem = costoExtras * p.cantidad;
       subtotalExtras += costoExtras * p.cantidad;
-      html += buildResumenItem(p, precioMostrado, totalItem);
+      html += buildResumenItemMenu(p, totalItem);
     }
 
     total = pares * PRECIO_MENU + subtotalExtras;
@@ -769,6 +769,23 @@ function buildResumenItem(p, precioBase, totalItem) {
         ${extrasTexto ? `<div class="resumen-item-extras">${extrasTexto}</div>` : ''}
       </div>
       <span class="resumen-item-precio">S/ ${totalItem.toFixed(2)}</span>
+    </li>`;
+}
+
+function buildResumenItemMenu(p, totalExtrasItem) {
+  let extrasTexto = '';
+  for (const op of Object.values(p.extras)) {
+    extrasTexto += `<br>· ${op.nombre}${op.costo > 0 ? ' (+S/'+op.costo.toFixed(2)+')' : ''}`;
+  }
+  return `
+    <li class="resumen-item">
+      <div>
+        <div class="resumen-item-nombre">${p.cantidad > 1 ? `x${p.cantidad} ` : ''}${p.nombre}</div>
+        ${extrasTexto ? `<div class="resumen-item-extras">${extrasTexto}</div>` : ''}
+      </div>
+      <span class="resumen-item-precio" style="color:var(--gris);font-weight:400">
+        ${totalExtrasItem > 0 ? 'S/ ' + totalExtrasItem.toFixed(2) : 'Incluido en menú'}
+      </span>
     </li>`;
 }
 
