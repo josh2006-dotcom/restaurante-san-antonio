@@ -2,6 +2,7 @@
 
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -36,6 +37,27 @@
   .kpi-icon.azul   { background: #CCE5FF; }
   .kpi-valor { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; color: var(--marron); line-height: 1; }
   .kpi-label { font-size: .78rem; color: var(--gris); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
+
+  .kpi-card.kpi-alerta {
+    border: 2px solid var(--rojo);
+    animation: pulseAlerta 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseAlerta {
+    0%, 100% { box-shadow: var(--sombra); }
+    50% { box-shadow: 0 0 0 6px rgba(139,26,26,.12); }
+  }
+
+  tr.fila-con-solicitud td { background: #FDEDED !important; }
+  tr.fila-con-solicitud td:first-child { border-left: 4px solid var(--rojo); }
+
+  tr.fila-solicitud-cancelacion td { padding: 0 !important; }
+  .solicitud-cancelacion-box {
+    background: #FCE8E8; border-top: 1px dashed #F5C6CB; border-bottom: 1px dashed #F5C6CB;
+    padding: .8rem 1.3rem; display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; flex-wrap: wrap;
+  }
+  .solicitud-texto { font-size: .85rem; color: #721C24; }
+  .solicitud-acciones { display: flex; gap: .6rem; flex-wrap: wrap; }
 
   .accesos-grid {
     display: grid;
@@ -230,6 +252,10 @@
       <div class="kpi-icon azul">👥</div>
       <div><div class="kpi-valor">{{ total_clientes }}</div><div class="kpi-label">Clientes Registrados</div></div>
     </div>
+    <div class="kpi-card{% if solicitudes_cancelacion > 0 %} kpi-alerta{% endif %}">
+      <div class="kpi-icon rojo">🚨</div>
+      <div><div class="kpi-valor">{{ solicitudes_cancelacion }}</div><div class="kpi-label">Solicitudes de Cancelación</div></div>
+    </div>
   </div>
 
   <!-- Herramientas -->
@@ -266,6 +292,7 @@
     <button class="filtro-btn" onclick="filtrar('listo', this)">🟢 Listos</button>
     <button class="filtro-btn" onclick="filtrar('entregado', this)">📦 Entregados</button>
     <button class="filtro-btn" onclick="filtrar('cancelado', this)">❌ Cancelados</button>
+    <button class="filtro-btn" onclick="filtrarSolicitudes(this)" style="border-color:var(--rojo);color:var(--rojo)">🚨 Con solicitud</button>
   </div>
   <div class="tabla-wrapper">
     <table id="tabla-pedidos">
@@ -277,7 +304,7 @@
       </thead>
       <tbody>
         {% for p in pedidos %}
-        <tr data-estado="{{ p[5] }}" id="fila-{{ p[0] }}">
+        <tr data-estado="{{ p[5] }}" data-solicitud="{{ 'si' if p[7] else 'no' }}" id="fila-{{ p[0] }}" class="{% if p[7] %}fila-con-solicitud{% endif %}">
           <td>
             <button class="btn-toggle-detalle" id="toggle-btn-{{ p[0] }}" onclick="toggleDetallePedido({{ p[0] }})" title="Ver detalle del pedido">▼</button>
           </td>
@@ -308,6 +335,22 @@
             <button class="btn-eliminar" onclick="eliminarPedido({{ p[0] }})" title="Eliminar pedido">✕</button>
           </td>
         </tr>
+        {% if p[7] %}
+        <tr class="fila-solicitud-cancelacion" data-estado="{{ p[5] }}" id="fila-solicitud-{{ p[0] }}">
+          <td colspan="11">
+            <div class="solicitud-cancelacion-box">
+              <div class="solicitud-texto">
+                🚨 <strong>El cliente solicitó cancelar este pedido.</strong>
+                Motivo: <em>"{{ p[8] }}"</em>
+              </div>
+              <div class="solicitud-acciones">
+                <button class="btn btn-rojo btn-sm" onclick="confirmarCancelacion({{ p[0] }})">✅ Confirmar cancelación</button>
+                <button class="btn btn-outline btn-sm" onclick="descartarCancelacion({{ p[0] }})">✖️ Descartar solicitud</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
         <tr class="fila-detalle" id="detalle-row-{{ p[0] }}" style="display:none">
           <td colspan="11">
             <div class="detalle-admin-wrap" id="detalle-content-{{ p[0] }}">
@@ -709,6 +752,52 @@ function eliminarPedido(idPedido) {
       }
     })
     .catch(() => alert('Error al eliminar.'));
+}
+
+/* ══════════════════════════════════════════════════════
+   SOLICITUD DE CANCELACIÓN
+══════════════════════════════════════════════════════ */
+function confirmarCancelacion(idPedido) {
+  if (!confirm('¿Confirmas cancelar el pedido #' + idPedido + '? Esta acción cambiará su estado a Cancelado.')) return;
+  const fd = new FormData();
+  fd.append('id_pedido', idPedido);
+  fetch('/admin/cancelacion/confirmar', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) location.reload();
+      else alert('Error al confirmar la cancelación.');
+    })
+    .catch(() => alert('Error al confirmar la cancelación.'));
+}
+
+function descartarCancelacion(idPedido) {
+  if (!confirm('¿Descartar esta solicitud de cancelación? El pedido continuará normalmente.')) return;
+  const fd = new FormData();
+  fd.append('id_pedido', idPedido);
+  fetch('/admin/cancelacion/descartar', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) location.reload();
+      else alert('Error al descartar la solicitud.');
+    })
+    .catch(() => alert('Error al descartar la solicitud.'));
+}
+
+function filtrarSolicitudes(btn) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+
+  document.querySelectorAll('#tabla-pedidos tbody tr.fila-detalle').forEach(fila => fila.style.display = 'none');
+  document.querySelectorAll('.btn-toggle-detalle').forEach(b => b.textContent = '▼');
+
+  document.querySelectorAll('#tabla-pedidos tbody tr[data-solicitud]').forEach(fila => {
+    fila.style.display = (fila.dataset.solicitud === 'si') ? '' : 'none';
+  });
+  document.querySelectorAll('#tabla-pedidos tbody tr.fila-solicitud-cancelacion').forEach(fila => {
+    const idPedido = fila.id.replace('fila-solicitud-', '');
+    const filaPrincipal = document.getElementById('fila-' + idPedido);
+    fila.style.display = (filaPrincipal && filaPrincipal.style.display !== 'none') ? '' : 'none';
+  });
 }
 
 /* ══════════════════════════════════════════════════════
