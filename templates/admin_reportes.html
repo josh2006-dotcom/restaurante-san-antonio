@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -260,35 +261,45 @@ const diasC = [{% for c in cancelados_por_dia %}"{{ c[0].strftime('%d/%m') }}"{%
 const cantC = [{% for c in cancelados_por_dia %}{{ c[1] }}{% if not loop.last %},{% endif %}{% endfor %}];
 const montoC = [{% for c in cancelados_por_dia %}{{ c[2] }}{% if not loop.last %},{% endif %}{% endfor %}];
 
-// Todos los días únicos combinados
-const todosDias = [...new Set([...diasG, ...diasC])].sort();
+// El backend ya entrega ambas series con exactamente las mismas fechas,
+// en orden cronológico (de más antigua a más reciente) y sin huecos.
+const todosDias = diasG.length ? diasG : ['Sin datos'];
+
+// Barras más delgadas cuando hay muchos días (rango "3 Meses"), más
+// anchas cuando hay pocos (rango "1 Semana"), para que siempre se lean bien.
+const numDias = todosDias.length;
+const anchoBarra   = numDias > 45 ? 0.6 : numDias > 15 ? 0.75 : 0.9;
+const anchoCategoria = numDias > 45 ? 0.7 : numDias > 15 ? 0.8 : 0.9;
 
 // Gráfica combinada
 new Chart(document.getElementById('chartCombinado').getContext('2d'), {
   type: 'bar',
   data: {
-    labels: todosDias.length ? todosDias : ['Sin datos'],
+    labels: todosDias,
     datasets: [
       {
         label: 'Ganancias S/',
-        data: todosDias.map(d => { const i = diasG.indexOf(d); return i >= 0 ? montosG[i] : 0; }),
+        data: montosG.length ? montosG : [0],
         backgroundColor: 'rgba(44,74,30,0.7)',
-        borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 4,
-        barPercentage: 0.6, categoryPercentage: 0.55,
+        borderColor: '#2C4A1E', borderWidth: 1, borderRadius: 3,
+        barPercentage: anchoBarra, categoryPercentage: anchoCategoria,
       },
       {
         label: 'Cancelados S/',
-        data: todosDias.map(d => { const i = diasC.indexOf(d); return i >= 0 ? montoC[i] : 0; }),
+        data: montoC.length ? montoC : [0],
         backgroundColor: 'rgba(139,26,26,0.6)',
-        borderColor: '#8B1A1A', borderWidth: 2, borderRadius: 4,
-        barPercentage: 0.6, categoryPercentage: 0.55,
+        borderColor: '#8B1A1A', borderWidth: 1, borderRadius: 3,
+        barPercentage: anchoBarra, categoryPercentage: anchoCategoria,
       }
     ]
   },
   options: {
     responsive: true,
     plugins: { legend: { position: 'top' } },
-    scales: { y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } } }
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } },
+      x: { ticks: { autoSkip: true, maxRotation: 60, minRotation: numDias > 20 ? 60 : 0 } }
+    }
   }
 });
 
@@ -297,19 +308,31 @@ new Chart(document.getElementById('chartGanancias').getContext('2d'), {
   type: 'bar',
   data: {
     labels: diasG.length ? diasG : ['Sin datos'],
-    datasets: [{ label: 'S/', data: diasG.length ? montosG : [0], backgroundColor: 'rgba(44,74,30,0.7)', borderColor: '#2C4A1E', borderWidth: 2, borderRadius: 6, barPercentage: 0.5, categoryPercentage: 0.5 }]
+    datasets: [{ label: 'S/', data: diasG.length ? montosG : [0], backgroundColor: 'rgba(44,74,30,0.7)', borderColor: '#2C4A1E', borderWidth: 1, borderRadius: 4, barPercentage: anchoBarra, categoryPercentage: anchoCategoria }]
   },
-  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } } } }
+  options: {
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } },
+      x: { ticks: { autoSkip: true, maxRotation: 60, minRotation: numDias > 20 ? 60 : 0 } }
+    }
+  }
 });
 
-// Gráfica cancelados
+// Gráfica cancelados (barras, igual que ganancias)
 new Chart(document.getElementById('chartCancelados').getContext('2d'), {
-  type: 'line',
+  type: 'bar',
   data: {
     labels: diasC.length ? diasC : ['Sin datos'],
-    datasets: [{ label: 'Cancelados', data: diasC.length ? cantC : [0], borderColor: '#8B1A1A', backgroundColor: 'rgba(139,26,26,0.1)', borderWidth: 2, fill: true, tension: 0.4, pointBackgroundColor: '#8B1A1A' }]
+    datasets: [{ label: 'Cancelados S/', data: diasC.length ? montoC : [0], backgroundColor: 'rgba(139,26,26,0.6)', borderColor: '#8B1A1A', borderWidth: 1, borderRadius: 4, barPercentage: anchoBarra, categoryPercentage: anchoCategoria }]
   },
-  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  options: {
+    responsive: true, plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, ticks: { callback: v => 'S/'+v } },
+      x: { ticks: { autoSkip: true, maxRotation: 60, minRotation: numDias > 20 ? 60 : 0 } }
+    }
+  }
 });
 </script>
 {% endblock %}
