@@ -1,4 +1,5 @@
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -177,11 +178,12 @@
         </div>
 
         <div class="pedido-body" id="body-{{ ped[0] }}">
+          {% set menu = es_menu.get(ped[0], False) %}
           <table class="detalle-table">
             <thead>
               <tr>
-                <th>Plato</th><th>Cant.</th><th>Precio unit.</th>
-                <th>Personalizaciones</th><th style="text-align:right">Subtotal</th>
+                <th>Plato</th><th>Cant.</th><th>{% if menu %}Precio{% else %}Precio unit.{% endif %}</th>
+                <th>Personalizaciones</th><th style="text-align:right">{% if menu %}Extra{% else %}Subtotal{% endif %}</th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +191,13 @@
               <tr>
                 <td><strong>{{ det.nombre }}</strong></td>
                 <td>{{ det.cantidad }}</td>
-                <td>S/ {{ "%.2f"|format(det.precio_unitario) }}</td>
+                <td>
+                  {% if menu %}
+                    <span style="color:var(--gris);font-size:.82rem">Incluido en menú</span>
+                  {% else %}
+                    S/ {{ "%.2f"|format(det.precio_unitario) }}
+                  {% endif %}
+                </td>
                 <td>
                   {% if det.personalizaciones %}
                     {% for pers in det.personalizaciones %}
@@ -200,12 +208,26 @@
                   {% endif %}
                 </td>
                 <td style="text-align:right;font-weight:700;color:var(--verde)">
-                  S/ {{ "%.2f"|format(det.subtotal) }}
+                  {% if menu %}
+                    {% if det.costo_extra > 0 %}S/ {{ "%.2f"|format(det.costo_extra * det.cantidad) }}{% else %}—{% endif %}
+                  {% else %}
+                    S/ {{ "%.2f"|format(det.subtotal) }}
+                  {% endif %}
                 </td>
               </tr>
               {% endfor %}
             </tbody>
             <tfoot>
+              {% if menu %}
+              <tr>
+                <td colspan="4" style="text-align:right;color:var(--dorado);font-weight:600;padding-top:.8rem">
+                  🍱 {{ pares[ped[0]] }} menú{% if pares[ped[0]] != 1 %}s{% endif %} completo{% if pares[ped[0]] != 1 %}s{% endif %} × S/ 11.00
+                </td>
+                <td style="text-align:right;color:var(--dorado);font-weight:600;padding-top:.8rem">
+                  S/ {{ "%.2f"|format(pares[ped[0]] * 11) }}
+                </td>
+              </tr>
+              {% endif %}
               <tr>
                 <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo);font-size:1rem;padding-top:.8rem">Total del pedido:</td>
                 <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.1rem;padding-top:.8rem">S/ {{ "%.2f"|format(ped[5]) }}</td>
@@ -394,9 +416,18 @@ function generarBoleta(data, nombre, doc) {
     sep,
   ];
   for (const det of data.detalles) {
-    lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    if (data.es_menu) {
+      const extra = det.costo_extra_unitario * det.cantidad;
+      lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido'));
+    } else {
+      lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    }
     for (const p of det.pers)
       lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
+  }
+  if (data.es_menu) {
+    lines.push(sep);
+    lines.push(fila(`${data.pares} MENU${data.pares!==1?'S':''} COMPLETO${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2)));
   }
   const igv = data.total * 0.18 / 1.18;
   lines.push(sep);
@@ -484,12 +515,22 @@ function verPDF() {
 
       // ── Detalles ──
       for (const det of data.detalles) {
-        addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        if (data.es_menu) {
+          const extra = det.costo_extra_unitario * det.cantidad;
+          addFila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido', 8);
+        } else {
+          addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        }
         for (const p of det.pers) {
           pdf.setFontSize(7); pdf.setFont('courier', 'normal');
           pdf.text('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''), LEFT, y);
           y += LS - 1;
         }
+      }
+      if (data.es_menu) {
+        addSep();
+        pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
+        addFila(`${data.pares} MENU${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2), 7.5);
       }
 
       // ── Totales ──
