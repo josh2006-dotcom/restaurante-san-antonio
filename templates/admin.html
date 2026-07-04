@@ -1,5 +1,6 @@
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -513,9 +514,18 @@ function generarBoleta(data, nombre, doc) {
     sep,
   ];
   for (const det of data.detalles) {
-    lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    if (data.es_menu) {
+      const extra = det.costo_extra_unitario * det.cantidad;
+      lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido'));
+    } else {
+      lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2)));
+    }
     for (const p of det.pers)
       lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
+  }
+  if (data.es_menu) {
+    lines.push(sep);
+    lines.push(fila(`${data.pares} MENU${data.pares!==1?'S':''} COMPLETO${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2)));
   }
   const igv = data.total * 0.18 / 1.18;
   lines.push(sep);
@@ -590,12 +600,22 @@ function verPDF() {
       addSep();
 
       for (const det of data.detalles) {
-        addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        if (data.es_menu) {
+          const extra = det.costo_extra_unitario * det.cantidad;
+          addFila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido', 8);
+        } else {
+          addFila('  ' + det.cantidad + '   ' + det.nombre, 'S/ ' + det.subtotal.toFixed(2), 8);
+        }
         for (const p of det.pers) {
           pdf.setFontSize(7); pdf.setFont('courier', 'normal');
           pdf.text('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''), LEFT, y);
           y += LS - 1;
         }
+      }
+      if (data.es_menu) {
+        addSep();
+        pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
+        addFila(`${data.pares} MENU${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2), 7.5);
       }
 
       addSep();
@@ -695,6 +715,7 @@ async function cargarDetallePedido(idPedido) {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
+    const esMenu = data.es_menu;
     let filas = '';
     for (const det of data.detalles) {
       let persHtml = '';
@@ -705,23 +726,39 @@ async function cargarDetallePedido(idPedido) {
       } else {
         persHtml = '<span style="color:var(--gris);font-size:.82rem">Sin cambios</span>';
       }
+
+      const precioCol = esMenu
+        ? '<span style="color:var(--gris);font-size:.82rem">Incluido en menú</span>'
+        : `S/ ${det.precio.toFixed(2)}`;
+      const extraTotal = det.costo_extra_unitario * det.cantidad;
+      const subtotalCol = esMenu
+        ? (extraTotal > 0 ? `S/ ${extraTotal.toFixed(2)}` : '—')
+        : `S/ ${det.subtotal.toFixed(2)}`;
+
       filas += `
         <tr>
           <td><strong>${det.nombre}</strong></td>
           <td>${det.cantidad}</td>
-          <td>S/ ${det.precio.toFixed(2)}</td>
+          <td>${precioCol}</td>
           <td>${persHtml}</td>
-          <td style="text-align:right;font-weight:700;color:var(--verde)">S/ ${det.subtotal.toFixed(2)}</td>
+          <td style="text-align:right;font-weight:700;color:var(--verde)">${subtotalCol}</td>
         </tr>`;
     }
+
+    const filaMenu = esMenu ? `
+          <tr>
+            <td colspan="4" style="text-align:right;font-weight:600;color:var(--dorado)">🍱 ${data.pares} menú${data.pares!==1?'s':''} completo${data.pares!==1?'s':''} × S/ 11.00</td>
+            <td style="text-align:right;font-weight:600;color:var(--dorado)">S/ ${data.menu_total.toFixed(2)}</td>
+          </tr>` : '';
 
     cont.innerHTML = `
       <table class="detalle-table-admin">
         <thead>
-          <tr><th>Plato</th><th>Cant.</th><th>Precio unit.</th><th>Personalizaciones</th><th style="text-align:right">Subtotal</th></tr>
+          <tr><th>Plato</th><th>Cant.</th><th>${esMenu ? 'Precio' : 'Precio unit.'}</th><th>Personalizaciones</th><th style="text-align:right">${esMenu ? 'Extra' : 'Subtotal'}</th></tr>
         </thead>
         <tbody>${filas}</tbody>
         <tfoot>
+          ${filaMenu}
           <tr>
             <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo)">Total del pedido:</td>
             <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.05rem">S/ ${data.total.toFixed(2)}</td>
