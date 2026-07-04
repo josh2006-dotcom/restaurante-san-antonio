@@ -338,6 +338,7 @@ def pedido():
         PRECIO_ENTRADA = 5.0
         PRECIO_SEGUNDO = 10.0
         PRECIO_MENU    = 11.0
+        RECARGO_DELIVERY = 1.0
 
         if not platos_ids:
             flash('Debes seleccionar al menos un plato.', 'danger')
@@ -436,14 +437,17 @@ def pedido():
             extras_totales = (total_extras_entrada - PRECIO_ENTRADA * cant_entradas) + \
                              (total_extras_segundo - PRECIO_SEGUNDO * cant_segundos)
             total_final = pares * PRECIO_MENU + extras_totales
+            if tipo_entrega == 'delivery':
+                total_final += RECARGO_DELIVERY
             cur.execute("UPDATE Pedido SET total = %s WHERE id_pedido = %s", (total_final, id_pedido))
         else:
+            recargo = RECARGO_DELIVERY if tipo_entrega == 'delivery' else 0.0
             cur.execute("""
                 UPDATE Pedido SET total = (
                     SELECT COALESCE(SUM(subtotal), 0)
                     FROM Detalle_Pedido WHERE id_pedido = %s
-                ) WHERE id_pedido = %s
-            """, (id_pedido, id_pedido))
+                ) + %s WHERE id_pedido = %s
+            """, (id_pedido, recargo, id_pedido))
 
         conn.commit()
         conn.close()
@@ -525,6 +529,68 @@ def mis_pedidos():
     return render_template('mis_pedidos.html',
                            pedidos=pedidos,
                            detalles=detalles_por_pedido)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  API: Datos del pedido para comprobante (ADMIN)      ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/pedido_comprobante/<int:id_pedido>')
+def admin_pedido_comprobante(id_pedido):
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    cur.execute("""
+        SELECT p.id_pedido, p.fecha_pedido, p.tipo_entrega, p.hora_estimada,
+               p.estado, p.total, c.nombre, c.telefono
+        FROM Pedido p
+        JOIN Cliente c ON c.id_cliente = p.id_cliente
+        WHERE p.id_pedido = %s
+    """, (id_pedido,))
+    ped = cur.fetchone()
+
+    if not ped:
+        conn.close()
+        return jsonify({'error': 'Pedido no encontrado'}), 404
+
+    cur.execute("""
+        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        WHERE dp.id_pedido = %s
+    """, (id_pedido,))
+    detalles_raw = cur.fetchall()
+
+    detalles = []
+    for det in detalles_raw:
+        cur.execute("""
+            SELECT op.accion, op.ingrediente, op.costo_extra
+            FROM Detalle_Personalizacion dp2
+            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
+            WHERE dp2.id_detalle = %s
+        """, (det[4],))
+        pers = cur.fetchall()
+        detalles.append({
+            'nombre':    det[0],
+            'cantidad':  det[1],
+            'precio':    float(det[2]),
+            'subtotal':  float(det[3]),
+            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
+        })
+
+    conn.close()
+    return jsonify({
+        'id_pedido':        ped[0],
+        'fecha':            ped[1].strftime('%d/%m/%Y'),
+        'hora':             ped[1].strftime('%H:%M'),
+        'tipo_entrega':     ped[2],
+        'estado':           ped[4],
+        'total':            float(ped[5]),
+        'cliente_nombre':   ped[6],
+        'cliente_telefono': ped[7],
+        'detalles':         detalles
+    })
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  API: Datos del pedido para comprobante              ║
@@ -651,36 +717,6 @@ def admin():
     """)
     platos_top = cur.fetchall()
 
-    # Detalles de cada pedido para el panel expandible del admin
-    detalles_por_pedido = {}
-    for ped in pedidos:
-        cur.execute("""
-            SELECT pl.nombre, pl.tipo, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
-            FROM Detalle_Pedido dp
-            JOIN Plato pl ON pl.id_plato = dp.id_plato
-            WHERE dp.id_pedido = %s
-            ORDER BY pl.tipo, pl.nombre
-        """, (ped[0],))
-        detalles = cur.fetchall()
-        detalles_con_pers = []
-        for det in detalles:
-            cur.execute("""
-                SELECT op.accion, op.ingrediente, op.costo_extra
-                FROM Detalle_Personalizacion dpers
-                JOIN Opcion_Personalizacion op ON op.id_opcion = dpers.id_opcion
-                WHERE dpers.id_detalle = %s
-            """, (det[5],))
-            pers = cur.fetchall()
-            detalles_con_pers.append({
-                'nombre':          det[0],
-                'tipo':            det[1],
-                'cantidad':        det[2],
-                'precio_unitario': det[3],
-                'subtotal':        det[4],
-                'personalizaciones': pers
-            })
-        detalles_por_pedido[ped[0]] = detalles_con_pers
-
     conn.close()
     return render_template('admin.html',
                            pedidos=pedidos,
@@ -692,8 +728,7 @@ def admin():
                            monto_cancelados=float(monto_cancelados),
                            ganancias_por_dia=ganancias_por_dia,
                            cancelados_por_dia=cancelados_por_dia,
-                           platos_top=platos_top,
-                           detalles_por_pedido=detalles_por_pedido)
+                           platos_top=platos_top)
 
 @app.route('/admin/actualizar_estado', methods=['POST'])
 def actualizar_estado():
@@ -900,7 +935,19 @@ def admin_reportes():
 # ╚══════════════════════════════════════════════════════╝
 @app.route('/reclamos')
 def reclamos():
-    return render_template('reclamos.html')
+    mis_reclamos = []
+    if 'id_cliente' in session:
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute("""
+            SELECT id_reclamo, fecha_reclamo, asunto, mensaje, estado
+            FROM Reclamo
+            WHERE id_cliente = %s
+            ORDER BY fecha_reclamo DESC
+        """, (session['id_cliente'],))
+        mis_reclamos = cur.fetchall()
+        conn.close()
+    return render_template('reclamos.html', mis_reclamos=mis_reclamos)
 
 
 @app.route('/reclamos/enviar', methods=['POST'])
@@ -916,12 +963,14 @@ def reclamos_enviar():
     if not celular and not email:
         return jsonify({'ok': False, 'error': 'Ingresa al menos un medio de contacto.'}), 400
 
+    id_cliente = session.get('id_cliente')
+
     conn = get_connection()
     cur  = conn.cursor()
     cur.execute("""
-        INSERT INTO Reclamo (nombre, celular, email, asunto, mensaje)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (nombre, celular or None, email or None, asunto, mensaje))
+        INSERT INTO Reclamo (nombre, celular, email, asunto, mensaje, id_cliente)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (nombre, celular or None, email or None, asunto, mensaje, id_cliente))
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
