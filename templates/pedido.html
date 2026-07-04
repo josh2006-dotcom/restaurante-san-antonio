@@ -1,6 +1,4 @@
 
-
-
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -68,6 +66,16 @@
     font-size: .78rem; color: var(--gris);
   }
   .modo-btn.activo .modo-nombre { color: var(--rojo); }
+  .modo-btn { position: relative; }
+  .modo-badge-count {
+    position: absolute; top: -8px; right: -8px;
+    background: var(--verde); color: #fff;
+    font-size: .7rem; font-weight: 700;
+    min-width: 20px; height: 20px; border-radius: 50%;
+    display: none; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  }
+  .modo-badge-count.visible { display: flex; }
 
   /* ── ENTREGA ─────────────────────────────────────────── */
   .entrega-box {
@@ -268,6 +276,13 @@
   }
   .menu-pares-info.visible { display: block; }
   .menu-pares-info.advertencia { background: #FFF3CD; color: #7A5200; }
+
+  .resumen-grupo-titulo {
+    font-size: .74rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--dorado);
+    padding: .6rem 0 .3rem; border-bottom: none !important;
+  }
+  .resumen-grupo-titulo:first-child { padding-top: 0; }
 </style>
 {% endblock %}
 
@@ -279,23 +294,26 @@
   <!-- COLUMNA IZQUIERDA -->
   <div>
     <h1 class="page-title">🛒 Hacer Pedido</h1>
-    <p class="page-sub">Hola, <strong>{{ session.nombre }}</strong> — elige el tipo de pedido y selecciona tus platos.</p>
+    <p class="page-sub">Hola, <strong>{{ session.nombre }}</strong> — elige el tipo de pedido y selecciona tus platos. Puedes combinar las 3 opciones en un mismo pedido.</p>
 
     <!-- SELECTOR DE MODO -->
     <div class="modo-selector">
       <h3>🍽️ ¿Qué deseas pedir?</h3>
       <div class="modo-grid">
         <button type="button" class="modo-btn" id="modo-entrada" onclick="setModo('entrada')">
+          <span class="modo-badge-count" id="badge-entrada">0</span>
           <div class="modo-icon">🥗</div>
           <span class="modo-nombre">Solo Entradas</span>
           <span class="modo-precio">S/ 5.00 c/u</span>
         </button>
         <button type="button" class="modo-btn" id="modo-segundo" onclick="setModo('segundo')">
+          <span class="modo-badge-count" id="badge-segundo">0</span>
           <div class="modo-icon">🍽️</div>
           <span class="modo-nombre">Solo Segundos</span>
           <span class="modo-precio">S/ 10.00 c/u</span>
         </button>
         <button type="button" class="modo-btn" id="modo-menu" onclick="setModo('menu')">
+          <span class="modo-badge-count" id="badge-menu">0</span>
           <div class="modo-icon">🍱</div>
           <span class="modo-nombre">Menú Completo</span>
           <span class="modo-precio">S/ 11.00 por menú</span>
@@ -359,7 +377,6 @@
                      data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}"
                      data-costo="{{ op[3] }}" data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
                 <input type="checkbox"
-                       name="opciones_{{ p[0] }}"
                        value="{{ op[0] }}"
                        onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
                 <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
@@ -369,8 +386,6 @@
               {% endfor %}
             </div>
           </div>
-          <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
-          <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
         </div>
         {% endfor %}
       </div>
@@ -403,7 +418,6 @@
                      data-plato="{{ p[0] }}" data-opcion="{{ op[0] }}"
                      data-costo="{{ op[3] }}" data-ingrediente="{{ op[2] }}" data-accion="{{ op[1] }}">
                 <input type="checkbox"
-                       name="opciones_{{ p[0] }}"
                        value="{{ op[0] }}"
                        onchange="toggleOpcion({{ p[0] }}, {{ op[0] }}, {{ op[3] }}, '{{ op[1] }}', '{{ op[2] }}', this)">
                 <span class="pers-accion {{ op[1] }}">{{ op[1] }}</span>
@@ -413,8 +427,6 @@
               {% endfor %}
             </div>
           </div>
-          <input type="checkbox" name="platos" value="{{ p[0] }}" id="plato-input-{{ p[0] }}" style="display:none">
-          <input type="hidden" name="cantidad_{{ p[0] }}" id="cantidad-input-{{ p[0] }}" value="1">
         </div>
         {% endfor %}
       </div>
@@ -428,7 +440,7 @@
       <div class="resumen-header">
         <h3>📋 Tu Pedido</h3>
         <p>Resumen en tiempo real</p>
-        <span class="resumen-modo-badge" id="resumen-modo-badge" style="display:none"></span>
+        <div id="resumen-badges" style="margin-top:.4rem;display:flex;flex-wrap:wrap;gap:.4rem"></div>
       </div>
       <div class="resumen-body">
         <div class="resumen-vacio" id="resumen-vacio">
@@ -473,63 +485,88 @@
 <script>
 /* ══════════════════════════════════════════════════════
    ESTADO GLOBAL
+   Dos "carritos" independientes que conviven en el mismo pedido:
+   - carritoSuelto: platos de "Solo Entradas" (S/5 c/u) y "Solo Segundos" (S/10 c/u)
+   - carritoMenu:   pares entrada+segundo de "Menú Completo" (S/11 el par)
 ══════════════════════════════════════════════════════ */
-const carrito = {};   // { id: { nombre, precioBase, tipo, cantidad, extras:{} } }
-let modoActual = null; // 'entrada' | 'segundo' | 'menu'
+const carritoSuelto = {};
+const carritoMenu   = {};
+let tabActual = null; // 'entrada' | 'segundo' | 'menu' — solo indica qué pestaña estás EDITANDO
 
 const PRECIO_ENTRADA = 5;
 const PRECIO_SEGUNDO = 10;
 const PRECIO_MENU    = 11;
 const RECARGO_DELIVERY = 1;
 
+function bucketActual() {
+  return tabActual === 'menu' ? carritoMenu : carritoSuelto;
+}
+
 /* ══════════════════════════════════════════════════════
-   MODO DE PEDIDO
+   PESTAÑA ACTIVA (ya no resetea lo elegido en las otras)
 ══════════════════════════════════════════════════════ */
 function setModo(modo) {
-  if (modoActual === modo) return;
+  tabActual = modo;
 
-  // Limpiar selecciones anteriores
-  Object.keys(carrito).forEach(id => deseleccionarPlato(parseInt(id)));
-
-  modoActual = modo;
-
-  // UI botones modo
   document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('activo'));
   document.getElementById('modo-' + modo).classList.add('activo');
 
-  // Badge resumen
-  const badge = document.getElementById('resumen-modo-badge');
-  const labels = { entrada: '🥗 Solo Entradas', segundo: '🍽️ Solo Segundos', menu: '🍱 Menú Completo' };
-  badge.textContent = labels[modo];
-  badge.style.display = 'inline-block';
-
-  // Bloquear / desbloquear secciones
   aplicarBloqueos();
 
-  // Banner informativo
   const banner = document.getElementById('banner-modo');
   const bannerTxt = document.getElementById('banner-texto');
   const msgs = {
-    entrada: 'Modo Solo Entradas — precio fijo S/ 5.00 por cada entrada.',
-    segundo: 'Modo Solo Segundos — precio fijo S/ 10.00 por cada segundo.',
-    menu:    'Modo Menú Completo — S/ 11.00 por par entrada + segundo. Las cantidades de entradas y segundos deben ser iguales.'
+    entrada: 'Pestaña Solo Entradas — precio fijo S/ 5.00 por cada entrada. Se suma a lo que ya elegiste en las otras pestañas.',
+    segundo: 'Pestaña Solo Segundos — precio fijo S/ 10.00 por cada segundo. Se suma a lo que ya elegiste en las otras pestañas.',
+    menu:    'Pestaña Menú Completo — S/ 11.00 por par entrada + segundo. Las cantidades elegidas AQUÍ deben ser iguales entre sí.'
   };
   bannerTxt.textContent = msgs[modo];
   banner.classList.add('visible');
 
   ocultarErrorMenu();
+  refrescarCheckboxesTab();
   actualizarResumen();
 }
 
 function aplicarBloqueos() {
   document.querySelectorAll('.plato-item').forEach(item => {
     const tipo = item.dataset.tipo;
-    if (modoActual === 'entrada' && tipo === 'segundo') {
+    if (tabActual === 'entrada' && tipo === 'segundo') {
       item.classList.add('bloqueado');
-    } else if (modoActual === 'segundo' && tipo === 'entrada') {
+    } else if (tabActual === 'segundo' && tipo === 'entrada') {
       item.classList.add('bloqueado');
     } else {
       item.classList.remove('bloqueado');
+    }
+  });
+}
+
+/* Al cambiar de pestaña, cada plato debe mostrar SU estado en el bucket
+   correspondiente a la pestaña activa (un mismo plato puede estar elegido
+   como suelto Y como parte de un menú al mismo tiempo, por separado). */
+function refrescarCheckboxesTab() {
+  const bucket = bucketActual();
+  document.querySelectorAll('.plato-item').forEach(item => {
+    const id = parseInt(item.dataset.id);
+    const entry = bucket[id];
+    if (entry) {
+      item.classList.add('seleccionado');
+      document.getElementById(`check-${id}`).innerHTML = '✓';
+      document.getElementById(`cantidad-num-${id}`).textContent = entry.cantidad;
+      item.querySelectorAll('.pers-opcion').forEach(label => {
+        const opId = label.dataset.opcion;
+        const marcado = !!entry.extras[opId];
+        label.querySelector('input[type="checkbox"]').checked = marcado;
+        label.classList.toggle('marcada', marcado);
+      });
+    } else {
+      item.classList.remove('seleccionado');
+      document.getElementById(`check-${id}`).innerHTML = '';
+      document.getElementById(`cantidad-num-${id}`).textContent = '1';
+      item.querySelectorAll('.pers-opcion').forEach(label => {
+        label.querySelector('input[type="checkbox"]').checked = false;
+        label.classList.remove('marcada');
+      });
     }
   });
 }
@@ -538,14 +575,14 @@ function aplicarBloqueos() {
    TOGGLE PLATO
 ══════════════════════════════════════════════════════ */
 function togglePlato(idPlato, event) {
-  if (!modoActual) {
+  if (!tabActual) {
     mostrarErrorMenu('⚠️ Primero selecciona un tipo de pedido arriba.');
     return;
   }
   const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
   if (item.classList.contains('bloqueado')) return;
 
-  if (item.classList.contains('seleccionado')) {
+  if (bucketActual()[idPlato]) {
     deseleccionarPlato(idPlato);
   } else {
     seleccionarPlato(idPlato);
@@ -558,17 +595,10 @@ function seleccionarPlato(idPlato) {
   const item = document.querySelector(`.plato-item[data-id="${idPlato}"]`);
   item.classList.add('seleccionado');
   document.getElementById(`check-${idPlato}`).innerHTML = '✓';
-  document.getElementById(`plato-input-${idPlato}`).checked = true;
 
   const nombre = item.dataset.nombre;
   const tipo   = item.dataset.tipo;
-  // precio base según modo
-  let precioBase;
-  if (modoActual === 'menu')    precioBase = tipo === 'entrada' ? PRECIO_ENTRADA : PRECIO_SEGUNDO;
-  else if (modoActual === 'entrada') precioBase = PRECIO_ENTRADA;
-  else                          precioBase = PRECIO_SEGUNDO;
-
-  carrito[idPlato] = { nombre, precioBase, tipo, cantidad: 1, extras: {} };
+  bucketActual()[idPlato] = { nombre, tipo, cantidad: 1, extras: {} };
 }
 
 function deseleccionarPlato(idPlato) {
@@ -576,25 +606,23 @@ function deseleccionarPlato(idPlato) {
   if (!item) return;
   item.classList.remove('seleccionado');
   document.getElementById(`check-${idPlato}`).innerHTML = '';
-  document.getElementById(`plato-input-${idPlato}`).checked = false;
   document.getElementById(`cantidad-num-${idPlato}`).textContent = '1';
-  document.getElementById(`cantidad-input-${idPlato}`).value = '1';
-  item.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+  item.querySelectorAll('.pers-opcion input[type="checkbox"]').forEach(cb => {
     cb.checked = false;
     cb.closest('.pers-opcion').classList.remove('marcada');
   });
-  delete carrito[idPlato];
+  delete bucketActual()[idPlato];
 }
 
 /* ══════════════════════════════════════════════════════
    CANTIDAD
 ══════════════════════════════════════════════════════ */
 function cambiarCantidad(idPlato, delta) {
-  if (!carrito[idPlato]) return;
-  const nueva = Math.max(1, (carrito[idPlato].cantidad || 1) + delta);
-  carrito[idPlato].cantidad = nueva;
+  const bucket = bucketActual();
+  if (!bucket[idPlato]) return;
+  const nueva = Math.max(1, (bucket[idPlato].cantidad || 1) + delta);
+  bucket[idPlato].cantidad = nueva;
   document.getElementById(`cantidad-num-${idPlato}`).textContent = nueva;
-  document.getElementById(`cantidad-input-${idPlato}`).value = nueva;
   ocultarErrorMenu();
   actualizarResumen();
 }
@@ -603,13 +631,14 @@ function cambiarCantidad(idPlato, delta) {
    PERSONALIZACIÓN
 ══════════════════════════════════════════════════════ */
 function toggleOpcion(idPlato, idOpcion, costo, accion, ingrediente, checkbox) {
-  if (!carrito[idPlato]) return;
+  const bucket = bucketActual();
+  if (!bucket[idPlato]) return;
   const label = checkbox.closest('.pers-opcion');
   if (checkbox.checked) {
-    carrito[idPlato].extras[idOpcion] = { nombre: `${accion} ${ingrediente}`, costo: parseFloat(costo) };
+    bucket[idPlato].extras[idOpcion] = { nombre: `${accion} ${ingrediente}`, costo: parseFloat(costo) };
     label.classList.add('marcada');
   } else {
-    delete carrito[idPlato].extras[idOpcion];
+    delete bucket[idPlato].extras[idOpcion];
     label.classList.remove('marcada');
   }
   actualizarResumen();
@@ -618,15 +647,8 @@ function toggleOpcion(idPlato, idOpcion, costo, accion, ingrediente, checkbox) {
 /* ══════════════════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════════════════ */
-function totalEntradas() {
-  return Object.values(carrito)
-    .filter(p => p.tipo === 'entrada')
-    .reduce((s, p) => s + p.cantidad, 0);
-}
-function totalSegundos() {
-  return Object.values(carrito)
-    .filter(p => p.tipo === 'segundo')
-    .reduce((s, p) => s + p.cantidad, 0);
+function contarPorTipo(bucket, tipo) {
+  return Object.values(bucket).filter(p => p.tipo === tipo).reduce((s, p) => s + p.cantidad, 0);
 }
 
 function mostrarErrorMenu(msg) {
@@ -639,24 +661,28 @@ function ocultarErrorMenu() {
 }
 
 /* ══════════════════════════════════════════════════════
-   RESUMEN
+   RESUMEN (combina sueltos + menú a la vez)
 ══════════════════════════════════════════════════════ */
 function actualizarResumen() {
-  const ids = Object.keys(carrito);
-  const vacio     = document.getElementById('resumen-vacio');
-  const itemsList = document.getElementById('resumen-items');
+  const idsSuelto = Object.keys(carritoSuelto);
+  const idsMenu   = Object.keys(carritoMenu);
+  const vacio      = document.getElementById('resumen-vacio');
+  const itemsList  = document.getElementById('resumen-items');
   const totalesDiv = document.getElementById('resumen-totales');
   const btnConfirmar = document.getElementById('btn-confirmar');
-  const paresInfo = document.getElementById('menu-pares-info');
+  const paresInfo  = document.getElementById('menu-pares-info');
 
   paresInfo.classList.remove('visible', 'advertencia');
+  actualizarBadgesTabs();
 
-  if (ids.length === 0 || !modoActual) {
+  const hayAlgo = idsSuelto.length > 0 || idsMenu.length > 0;
+
+  if (!hayAlgo) {
     vacio.style.display = 'block';
     itemsList.style.display = 'none';
     totalesDiv.style.display = 'none';
     btnConfirmar.classList.remove('activo');
-    paresInfo.classList.remove('visible');
+    actualizarBadgesResumen();
     return;
   }
 
@@ -665,76 +691,83 @@ function actualizarResumen() {
   totalesDiv.style.display = 'block';
 
   let html = '';
-  let total = 0;
-  let subtotalPlatos = 0;
-  let subtotalExtras = 0;
+  let subtotalSueltos = 0;
+  let extrasTotales   = 0;
+  let cntE_menu = 0, cntS_menu = 0;
 
-  // Mostrar/ocultar líneas
-  document.getElementById('res-linea-subtotal').style.display = 'none';
-  document.getElementById('res-linea-extras').style.display   = 'none';
-  document.getElementById('res-linea-menus').style.display    = 'none';
-
-  if (modoActual === 'entrada') {
-    /* ── CASO 1: SOLO ENTRADAS ── */
-    for (const id of ids) {
-      const p = carrito[id];
+  // ── Grupo: Platos sueltos ──
+  if (idsSuelto.length > 0) {
+    html += `<li class="resumen-grupo-titulo">🍽️ Platos sueltos</li>`;
+    for (const id of idsSuelto) {
+      const p = carritoSuelto[id];
+      const precioBase = p.tipo === 'entrada' ? PRECIO_ENTRADA : PRECIO_SEGUNDO;
       const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
-      const totalItem = (PRECIO_ENTRADA + costoExtras) * p.cantidad;
-      subtotalPlatos += PRECIO_ENTRADA * p.cantidad;
-      subtotalExtras += costoExtras * p.cantidad;
-      html += buildResumenItem(p, PRECIO_ENTRADA, totalItem);
+      const totalItem = (precioBase + costoExtras) * p.cantidad;
+      subtotalSueltos += precioBase * p.cantidad;
+      extrasTotales   += costoExtras * p.cantidad;
+      html += buildResumenItem(p, precioBase, totalItem);
     }
-    total = subtotalPlatos + subtotalExtras;
-    document.getElementById('res-linea-subtotal').style.display = 'flex';
-    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
+  }
 
-  } else if (modoActual === 'segundo') {
-    /* ── CASO 2: SOLO SEGUNDOS ── */
-    for (const id of ids) {
-      const p = carrito[id];
-      const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
-      const totalItem = (PRECIO_SEGUNDO + costoExtras) * p.cantidad;
-      subtotalPlatos += PRECIO_SEGUNDO * p.cantidad;
-      subtotalExtras += costoExtras * p.cantidad;
-      html += buildResumenItem(p, PRECIO_SEGUNDO, totalItem);
-    }
-    total = subtotalPlatos + subtotalExtras;
-    document.getElementById('res-linea-subtotal').style.display = 'flex';
-    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
+  // ── Grupo: Menú Completo ──
+  if (idsMenu.length > 0) {
+    cntE_menu = contarPorTipo(carritoMenu, 'entrada');
+    cntS_menu = contarPorTipo(carritoMenu, 'segundo');
+    const pares = Math.min(cntE_menu, cntS_menu);
 
-  } else if (modoActual === 'menu') {
-    /* ── CASO 3: MENÚ COMPLETO ── */
-    const cntE = totalEntradas();
-    const cntS = totalSegundos();
-    const pares = Math.min(cntE, cntS);
-
-    // Info de pares
     paresInfo.classList.add('visible');
-    if (cntE === cntS && cntE > 0) {
-      paresInfo.textContent = `✅ ${pares} menú${pares > 1 ? 's' : ''} completo${pares > 1 ? 's' : ''} (${cntE} entrada${cntE>1?'s':''} + ${cntS} segundo${cntS>1?'s':''})`;
+    if (cntE_menu === cntS_menu && cntE_menu > 0) {
+      paresInfo.textContent = `✅ ${pares} menú${pares > 1 ? 's' : ''} completo${pares > 1 ? 's' : ''} (${cntE_menu} entrada${cntE_menu>1?'s':''} + ${cntS_menu} segundo${cntS_menu>1?'s':''})`;
       paresInfo.classList.remove('advertencia');
-    } else if (cntE > 0 || cntS > 0) {
-      paresInfo.textContent = `⚠️ ${cntE} entrada${cntE!==1?'s':''} / ${cntS} segundo${cntS!==1?'s':''} — deben ser iguales para confirmar.`;
+    } else {
+      paresInfo.textContent = `⚠️ Menú Completo: ${cntE_menu} entrada${cntE_menu!==1?'s':''} / ${cntS_menu} segundo${cntS_menu!==1?'s':''} — deben ser iguales.`;
       paresInfo.classList.add('advertencia');
     }
 
-    for (const id of ids) {
-      const p = carrito[id];
+    html += `<li class="resumen-grupo-titulo">🍱 Menú Completo</li>`;
+    for (const id of idsMenu) {
+      const p = carritoMenu[id];
       const costoExtras = Object.values(p.extras).reduce((s, e) => s + e.costo, 0);
       const totalItem = costoExtras * p.cantidad;
-      subtotalExtras += costoExtras * p.cantidad;
+      extrasTotales += costoExtras * p.cantidad;
       html += buildResumenItemMenu(p, totalItem);
     }
-
-    total = pares * PRECIO_MENU + subtotalExtras;
-
-    document.getElementById('res-linea-menus').style.display = 'flex';
-    document.getElementById('res-menus-label').textContent = `${pares} menú${pares!==1?'s':''} × S/ ${PRECIO_MENU}`;
-    document.getElementById('res-menus-val').textContent   = `S/ ${(pares * PRECIO_MENU).toFixed(2)}`;
-    if (subtotalExtras > 0) document.getElementById('res-linea-extras').style.display = 'flex';
   }
 
   itemsList.innerHTML = html;
+
+  const pares = Math.min(cntE_menu, cntS_menu);
+  const menuTotal = idsMenu.length > 0 ? pares * PRECIO_MENU : 0;
+
+  // Línea "Subtotal platos" (solo sueltos)
+  const lineaSubtotal = document.getElementById('res-linea-subtotal');
+  if (idsSuelto.length > 0) {
+    lineaSubtotal.style.display = 'flex';
+    document.getElementById('res-subtotal').textContent = `S/ ${subtotalSueltos.toFixed(2)}`;
+  } else {
+    lineaSubtotal.style.display = 'none';
+  }
+
+  // Línea "Personalizaciones" (sueltos + menú combinados)
+  const lineaExtras = document.getElementById('res-linea-extras');
+  if (extrasTotales > 0) {
+    lineaExtras.style.display = 'flex';
+    document.getElementById('res-extras').textContent = `S/ ${extrasTotales.toFixed(2)}`;
+  } else {
+    lineaExtras.style.display = 'none';
+  }
+
+  // Línea "Menús completos"
+  const lineaMenus = document.getElementById('res-linea-menus');
+  if (idsMenu.length > 0) {
+    lineaMenus.style.display = 'flex';
+    document.getElementById('res-menus-label').textContent = `${pares} menú${pares!==1?'s':''} × S/ ${PRECIO_MENU}`;
+    document.getElementById('res-menus-val').textContent   = `S/ ${menuTotal.toFixed(2)}`;
+  } else {
+    lineaMenus.style.display = 'none';
+  }
+
+  let total = subtotalSueltos + extrasTotales + menuTotal;
 
   // Recargo por delivery
   const esDelivery = document.getElementById('tipo-entrega-select').value === 'delivery';
@@ -746,15 +779,41 @@ function actualizarResumen() {
     lineaDelivery.style.display = 'none';
   }
 
-  document.getElementById('res-subtotal').textContent = `S/ ${subtotalPlatos.toFixed(2)}`;
-  document.getElementById('res-extras').textContent   = `S/ ${subtotalExtras.toFixed(2)}`;
-  document.getElementById('res-total').textContent    = `S/ ${total.toFixed(2)}`;
+  document.getElementById('res-total').textContent = `S/ ${total.toFixed(2)}`;
 
-  // Habilitar botón confirmar
-  const puedeConfirmar = ids.length > 0 && (
-    modoActual !== 'menu' || totalEntradas() === totalSegundos()
-  );
-  btnConfirmar.classList.toggle('activo', puedeConfirmar);
+  actualizarBadgesResumen();
+
+  // Habilitar botón confirmar: debe haber algo, y si hay menú, debe estar balanceado
+  const menuOk = idsMenu.length === 0 || (cntE_menu === cntS_menu && cntE_menu > 0);
+  btnConfirmar.classList.toggle('activo', hayAlgo && menuOk);
+}
+
+/* Indicadores numéricos en los 3 botones de arriba */
+function actualizarBadgesTabs() {
+  const cntEntSuelta = contarPorTipo(carritoSuelto, 'entrada');
+  const cntSegSuelto = contarPorTipo(carritoSuelto, 'segundo');
+  const cntMenu = Object.values(carritoMenu).reduce((s, p) => s + p.cantidad, 0);
+
+  const bEntrada = document.getElementById('badge-entrada');
+  const bSegundo = document.getElementById('badge-segundo');
+  const bMenu    = document.getElementById('badge-menu');
+
+  bEntrada.textContent = cntEntSuelta;
+  bEntrada.classList.toggle('visible', cntEntSuelta > 0);
+  bSegundo.textContent = cntSegSuelto;
+  bSegundo.classList.toggle('visible', cntSegSuelto > 0);
+  bMenu.textContent = cntMenu;
+  bMenu.classList.toggle('visible', cntMenu > 0);
+}
+
+/* Badges dentro de la tarjeta "Tu Pedido" */
+function actualizarBadgesResumen() {
+  const cont = document.getElementById('resumen-badges');
+  let html = '';
+  if (contarPorTipo(carritoSuelto, 'entrada') > 0) html += `<span class="resumen-modo-badge">🥗 Entradas sueltas</span>`;
+  if (contarPorTipo(carritoSuelto, 'segundo') > 0) html += `<span class="resumen-modo-badge">🍽️ Segundos sueltos</span>`;
+  if (Object.keys(carritoMenu).length > 0) html += `<span class="resumen-modo-badge">🍱 Menú Completo</span>`;
+  cont.innerHTML = html;
 }
 
 function buildResumenItem(p, precioBase, totalItem) {
@@ -790,39 +849,65 @@ function buildResumenItemMenu(p, totalExtrasItem) {
 }
 
 /* ══════════════════════════════════════════════════════
-   VALIDACIÓN ANTES DE ENVIAR
+   VALIDACIÓN Y ARMADO DEL ENVÍO
 ══════════════════════════════════════════════════════ */
 function validarEnvio() {
-  if (!modoActual) {
-    mostrarErrorMenu('Selecciona un tipo de pedido antes de confirmar.');
-    return false;
-  }
-  if (Object.keys(carrito).length === 0) {
+  const idsSuelto = Object.keys(carritoSuelto);
+  const idsMenu   = Object.keys(carritoMenu);
+
+  if (idsSuelto.length === 0 && idsMenu.length === 0) {
     mostrarErrorMenu('Selecciona al menos un plato.');
     return false;
   }
-  if (modoActual === 'menu') {
-    const cntE = totalEntradas();
-    const cntS = totalSegundos();
+
+  if (idsMenu.length > 0) {
+    const cntE = contarPorTipo(carritoMenu, 'entrada');
+    const cntS = contarPorTipo(carritoMenu, 'segundo');
     if (cntE === 0 || cntS === 0) {
-      mostrarErrorMenu(`El Menú Completo requiere al menos 1 entrada y 1 segundo.`);
+      mostrarErrorMenu('El Menú Completo requiere al menos 1 entrada y 1 segundo.');
       return false;
     }
     if (cntE !== cntS) {
-      mostrarErrorMenu(`Las cantidades no coinciden: tienes ${cntE} entrada${cntE!==1?'s':''} y ${cntS} segundo${cntS!==1?'s':''}. Deben ser iguales.`);
+      mostrarErrorMenu(`Menú Completo: tienes ${cntE} entrada${cntE!==1?'s':''} y ${cntS} segundo${cntS!==1?'s':''}. Deben ser iguales.`);
       window.scrollTo({ top: document.getElementById('error-menu').offsetTop - 80, behavior: 'smooth' });
       return false;
     }
   }
 
-  // Agregar campo oculto con el modo
-  const modoInput = document.createElement('input');
-  modoInput.type  = 'hidden';
-  modoInput.name  = 'modo_pedido';
-  modoInput.value = modoActual;
-  document.getElementById('form-pedido').appendChild(modoInput);
-
+  construirCamposEnvio();
   return true;
+}
+
+/* Genera dinámicamente los campos ocultos del formulario a partir
+   de los dos carritos (un mismo plato puede ir en ambos a la vez). */
+function construirCamposEnvio() {
+  const form = document.getElementById('form-pedido');
+
+  function addHidden(name, value) {
+    const inp = document.createElement('input');
+    inp.type  = 'hidden';
+    inp.name  = name;
+    inp.value = value;
+    form.appendChild(inp);
+  }
+
+  for (const id of Object.keys(carritoSuelto)) {
+    const p = carritoSuelto[id];
+    addHidden('platos_suelto', id);
+    addHidden(`cantidad_suelto_${id}`, p.cantidad);
+    for (const opId of Object.keys(p.extras)) {
+      addHidden(`opciones_suelto_${id}`, opId);
+    }
+  }
+
+  for (const id of Object.keys(carritoMenu)) {
+    const p = carritoMenu[id];
+    addHidden('platos_menu', id);
+    addHidden(`cantidad_menu_${id}`, p.cantidad);
+    for (const opId of Object.keys(p.extras)) {
+      addHidden(`opciones_menu_${id}`, opId);
+    }
+  }
 }
 </script>
 {% endblock %}
