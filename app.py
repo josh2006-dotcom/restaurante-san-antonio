@@ -489,7 +489,8 @@ def mis_pedidos():
 
     cur.execute("""
         SELECT p.id_pedido, p.fecha_pedido, p.tipo_entrega,
-               p.hora_estimada, p.estado, p.total
+               p.hora_estimada, p.estado, p.total,
+               COALESCE(p.solicitud_cancelacion, FALSE), p.motivo_cancelacion
         FROM Pedido p
         WHERE p.id_cliente = %s
         ORDER BY p.fecha_pedido DESC
@@ -504,6 +505,48 @@ def mis_pedidos():
     return render_template('mis_pedidos.html',
                            pedidos=pedidos,
                            info=info_por_pedido)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  SOLICITAR CANCELACIÓN DE PEDIDO (cliente)           ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/pedido/solicitar_cancelacion', methods=['POST'])
+def solicitar_cancelacion():
+    if 'id_cliente' not in session:
+        return jsonify({'ok': False, 'error': 'No autorizado'}), 403
+
+    id_pedido = request.form.get('id_pedido')
+    motivo    = request.form.get('motivo', '').strip()
+
+    if not motivo:
+        return jsonify({'ok': False, 'error': 'Debes indicar el motivo.'}), 400
+
+    conn = get_connection()
+    cur  = conn.cursor()
+
+    cur.execute("""
+        SELECT estado FROM Pedido WHERE id_pedido = %s AND id_cliente = %s
+    """, (id_pedido, session['id_cliente']))
+    row = cur.fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({'ok': False, 'error': 'Pedido no encontrado.'}), 404
+
+    if row[0] in ('entregado', 'cancelado'):
+        conn.close()
+        return jsonify({'ok': False, 'error': 'Este pedido ya no se puede cancelar.'}), 400
+
+    cur.execute("""
+        UPDATE Pedido
+        SET solicitud_cancelacion = TRUE,
+            motivo_cancelacion = %s,
+            fecha_solicitud_cancelacion = NOW()
+        WHERE id_pedido = %s
+    """, (motivo, id_pedido))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'ok': True})
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  Helper: detalle de un pedido + detección de menú    ║
@@ -679,12 +722,16 @@ def admin():
 
     cur.execute("""
         SELECT p.id_pedido, c.nombre, p.fecha_pedido,
-               p.tipo_entrega, p.hora_estimada, p.estado, p.total
+               p.tipo_entrega, p.hora_estimada, p.estado, p.total,
+               COALESCE(p.solicitud_cancelacion, FALSE), p.motivo_cancelacion
         FROM Pedido p
         JOIN Cliente c ON c.id_cliente = p.id_cliente
-        ORDER BY p.fecha_pedido DESC
+        ORDER BY COALESCE(p.solicitud_cancelacion, FALSE) DESC, p.fecha_pedido DESC
     """)
     pedidos = cur.fetchall()
+
+    cur.execute("SELECT COUNT(*) FROM Pedido WHERE COALESCE(solicitud_cancelacion, FALSE) = TRUE")
+    solicitudes_cancelacion = cur.fetchone()[0]
 
     cur.execute("SELECT COUNT(*) FROM Pedido")
     total_pedidos = cur.fetchone()[0]
@@ -734,6 +781,7 @@ def admin():
     return render_template('admin.html',
                            pedidos=pedidos,
                            total_pedidos=total_pedidos,
+                           solicitudes_cancelacion=solicitudes_cancelacion,
                            pendientes=pendientes,
                            ingresos=float(ingresos),
                            total_clientes=total_clientes,
@@ -761,6 +809,43 @@ def actualizar_estado():
     conn.commit()
     conn.close()
     return jsonify({'ok': True, 'nuevo_estado': nuevo_estado})
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  SOLICITUD DE CANCELACIÓN — acciones del admin       ║
+# ╚══════════════════════════════════════════════════════╝
+@app.route('/admin/cancelacion/confirmar', methods=['POST'])
+def admin_confirmar_cancelacion():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    id_pedido = request.form.get('id_pedido')
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        UPDATE Pedido
+        SET estado = 'cancelado', solicitud_cancelacion = FALSE
+        WHERE id_pedido = %s
+    """, (id_pedido,))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+@app.route('/admin/cancelacion/descartar', methods=['POST'])
+def admin_descartar_cancelacion():
+    if not session.get('es_admin'):
+        return jsonify({'error': 'No autorizado'}), 403
+
+    id_pedido = request.form.get('id_pedido')
+    conn = get_connection()
+    cur  = conn.cursor()
+    cur.execute("""
+        UPDATE Pedido
+        SET solicitud_cancelacion = FALSE
+        WHERE id_pedido = %s
+    """, (id_pedido,))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
 
 
 @app.route('/admin/eliminar_pedido', methods=['POST'])
