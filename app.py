@@ -331,40 +331,43 @@ def pedido():
     if request.method == 'POST':
         tipo_entrega  = request.form.get('tipo_entrega', 'delivery')
         hora_estimada = request.form.get('hora_estimada', '').strip()
-        platos_ids    = request.form.getlist('platos')
-        modo_pedido   = request.form.get('modo_pedido', 'entrada')  # entrada | segundo | menu
 
-        # Precios fijos por modo
+        platos_suelto_ids = request.form.getlist('platos_suelto')
+        platos_menu_ids   = request.form.getlist('platos_menu')
+
         PRECIO_ENTRADA = 5.0
         PRECIO_SEGUNDO = 10.0
         PRECIO_MENU    = 11.0
         RECARGO_DELIVERY = 1.0
 
-        if not platos_ids:
+        if not platos_suelto_ids and not platos_menu_ids:
             flash('Debes seleccionar al menos un plato.', 'danger')
             conn.close()
             return redirect(url_for('pedido'))
 
-        # Obtener tipo de cada plato seleccionado
+        # Obtener tipo de cada plato involucrado (unión de ambos buckets)
+        todos_ids = set(platos_suelto_ids) | set(platos_menu_ids)
         tipos_plato = {}
-        for id_plato in platos_ids:
+        for id_plato in todos_ids:
             cur.execute("SELECT tipo FROM Plato WHERE id_plato = %s", (id_plato,))
             row = cur.fetchone()
             if row:
                 tipos_plato[id_plato] = row[0]
 
-        # Validar modo menú: cantidades iguales de entradas y segundos
-        if modo_pedido == 'menu':
-            cant_entradas = sum(
-                int(request.form.get(f'cantidad_{pid}', 1))
-                for pid in platos_ids if tipos_plato.get(pid) == 'entrada'
+        # Validar balance del bucket "menú": cantidades iguales de entradas y segundos
+        cant_entradas_menu = 0
+        cant_segundos_menu = 0
+        if platos_menu_ids:
+            cant_entradas_menu = sum(
+                int(request.form.get(f'cantidad_menu_{pid}', 1))
+                for pid in platos_menu_ids if tipos_plato.get(pid) == 'entrada'
             )
-            cant_segundos = sum(
-                int(request.form.get(f'cantidad_{pid}', 1))
-                for pid in platos_ids if tipos_plato.get(pid) == 'segundo'
+            cant_segundos_menu = sum(
+                int(request.form.get(f'cantidad_menu_{pid}', 1))
+                for pid in platos_menu_ids if tipos_plato.get(pid) == 'segundo'
             )
-            if cant_entradas == 0 or cant_segundos == 0 or cant_entradas != cant_segundos:
-                flash(f'Menú Completo: debes tener igual cantidad de entradas y segundos ({cant_entradas} entradas / {cant_segundos} segundos).', 'danger')
+            if cant_entradas_menu == 0 or cant_segundos_menu == 0 or cant_entradas_menu != cant_segundos_menu:
+                flash(f'Menú Completo: debes tener igual cantidad de entradas y segundos ({cant_entradas_menu} entradas / {cant_segundos_menu} segundos).', 'danger')
                 conn.close()
                 return redirect(url_for('pedido'))
 
@@ -376,18 +379,12 @@ def pedido():
         id_pedido = cur.fetchone()[0]
         conn.commit()
 
-        for id_plato in platos_ids:
-            tipo_plato = tipos_plato.get(id_plato, 'segundo')
+        def _insertar_detalle(id_plato, modo_precio, prefijo):
+            """Inserta una línea de Detalle_Pedido para un bucket dado ('suelto' o 'menu')."""
+            tipo_plato   = tipos_plato.get(id_plato, 'segundo')
+            precio_base  = PRECIO_ENTRADA if tipo_plato == 'entrada' else PRECIO_SEGUNDO
 
-            # Precio base según modo
-            if modo_pedido == 'entrada':
-                precio_base = PRECIO_ENTRADA
-            elif modo_pedido == 'segundo':
-                precio_base = PRECIO_SEGUNDO
-            else:  # menu
-                precio_base = PRECIO_ENTRADA if tipo_plato == 'entrada' else PRECIO_SEGUNDO
-
-            opciones_ids = request.form.getlist(f'opciones_{id_plato}')
+            opciones_ids = request.form.getlist(f'opciones_{prefijo}_{id_plato}')
             costo_extra  = 0.0
             for op_id in opciones_ids:
                 cur.execute("SELECT costo_extra FROM Opcion_Personalizacion WHERE id_opcion = %s", (op_id,))
@@ -396,14 +393,14 @@ def pedido():
                     costo_extra += float(op_row[0])
 
             precio_final = precio_base + costo_extra
-            cantidad     = int(request.form.get(f'cantidad_{id_plato}', 1))
+            cantidad     = int(request.form.get(f'cantidad_{prefijo}_{id_plato}', 1))
             subtotal     = precio_final * cantidad
 
             cur.execute("""
-                INSERT INTO Detalle_Pedido (id_pedido, id_plato, cantidad, precio_unitario, subtotal)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO Detalle_Pedido (id_pedido, id_plato, cantidad, precio_unitario, subtotal, modo_precio)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING id_detalle
-            """, (id_pedido, id_plato, cantidad, precio_final, subtotal))
+            """, (id_pedido, id_plato, cantidad, precio_final, subtotal, modo_precio))
             id_detalle = cur.fetchone()[0]
 
             for op_id in opciones_ids:
@@ -412,43 +409,46 @@ def pedido():
                     VALUES (%s, %s)
                 """, (id_detalle, op_id))
 
+        for id_plato in platos_suelto_ids:
+            _insertar_detalle(id_plato, 'suelto', 'suelto')
+
+        for id_plato in platos_menu_ids:
+            _insertar_detalle(id_plato, 'menu', 'menu')
+
         conn.commit()
 
-        # Para menú completo, recalcular total = pares × 11 + extras
-        if modo_pedido == 'menu':
+        # ── Recalcular total real ──
+        cur.execute("""
+            SELECT COALESCE(SUM(subtotal), 0) FROM Detalle_Pedido
+            WHERE id_pedido = %s AND modo_precio = 'suelto'
+        """, (id_pedido,))
+        total_suelto = float(cur.fetchone()[0])
+
+        menu_total = 0.0
+        if platos_menu_ids:
             cur.execute("""
                 SELECT COALESCE(SUM(dp.subtotal), 0)
-                FROM Detalle_Pedido dp
-                JOIN Plato pl ON pl.id_plato = dp.id_plato
-                WHERE dp.id_pedido = %s AND pl.tipo = 'entrada'
+                FROM Detalle_Pedido dp JOIN Plato pl ON pl.id_plato = dp.id_plato
+                WHERE dp.id_pedido = %s AND dp.modo_precio = 'menu' AND pl.tipo = 'entrada'
             """, (id_pedido,))
-            total_extras_entrada = float(cur.fetchone()[0])
+            subtotal_entradas_menu = float(cur.fetchone()[0])
 
             cur.execute("""
                 SELECT COALESCE(SUM(dp.subtotal), 0)
-                FROM Detalle_Pedido dp
-                JOIN Plato pl ON pl.id_plato = dp.id_plato
-                WHERE dp.id_pedido = %s AND pl.tipo = 'segundo'
+                FROM Detalle_Pedido dp JOIN Plato pl ON pl.id_plato = dp.id_plato
+                WHERE dp.id_pedido = %s AND dp.modo_precio = 'menu' AND pl.tipo = 'segundo'
             """, (id_pedido,))
-            total_extras_segundo = float(cur.fetchone()[0])
+            subtotal_segundos_menu = float(cur.fetchone()[0])
 
-            pares = cant_entradas  # ya validado que son iguales
-            # subtotal real = precio_base * cantidad (sin extras), extras = subtotal - precio_base*cantidad
-            extras_totales = (total_extras_entrada - PRECIO_ENTRADA * cant_entradas) + \
-                             (total_extras_segundo - PRECIO_SEGUNDO * cant_segundos)
-            total_final = pares * PRECIO_MENU + extras_totales
-            if tipo_entrega == 'delivery':
-                total_final += RECARGO_DELIVERY
-            cur.execute("UPDATE Pedido SET total = %s WHERE id_pedido = %s", (total_final, id_pedido))
-        else:
-            recargo = RECARGO_DELIVERY if tipo_entrega == 'delivery' else 0.0
-            cur.execute("""
-                UPDATE Pedido SET total = (
-                    SELECT COALESCE(SUM(subtotal), 0)
-                    FROM Detalle_Pedido WHERE id_pedido = %s
-                ) + %s WHERE id_pedido = %s
-            """, (id_pedido, recargo, id_pedido))
+            pares = cant_entradas_menu  # ya validado que son iguales
+            extras_menu = (subtotal_entradas_menu - PRECIO_ENTRADA * cant_entradas_menu) + \
+                          (subtotal_segundos_menu - PRECIO_SEGUNDO * cant_segundos_menu)
+            menu_total = pares * PRECIO_MENU + extras_menu
 
+        recargo = RECARGO_DELIVERY if tipo_entrega == 'delivery' else 0.0
+        total_final = total_suelto + menu_total + recargo
+
+        cur.execute("UPDATE Pedido SET total = %s WHERE id_pedido = %s", (total_final, id_pedido))
         conn.commit()
         conn.close()
 
@@ -496,54 +496,14 @@ def mis_pedidos():
     """, (session['id_cliente'],))
     pedidos = cur.fetchall()
 
-    detalles_por_pedido = {}
-    es_menu_por_pedido = {}
-    pares_por_pedido = {}
+    info_por_pedido = {}
     for ped in pedidos:
-        cur.execute("""
-            SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal,
-                   dp.id_detalle, pl.tipo
-            FROM Detalle_Pedido dp
-            JOIN Plato pl ON pl.id_plato = dp.id_plato
-            WHERE dp.id_pedido = %s
-        """, (ped[0],))
-        detalles = cur.fetchall()
-
-        tipos_presentes = set(det[5] for det in detalles)
-        es_menu = 'entrada' in tipos_presentes and 'segundo' in tipos_presentes
-        es_menu_por_pedido[ped[0]] = es_menu
-
-        cnt_entradas = sum(det[1] for det in detalles if det[5] == 'entrada')
-        cnt_segundos = sum(det[1] for det in detalles if det[5] == 'segundo')
-        pares_por_pedido[ped[0]] = min(cnt_entradas, cnt_segundos) if es_menu else 0
-
-        detalles_con_pers = []
-        for det in detalles:
-            cur.execute("""
-                SELECT op.accion, op.ingrediente, op.costo_extra
-                FROM Detalle_Personalizacion dpers
-                JOIN Opcion_Personalizacion op ON op.id_opcion = dpers.id_opcion
-                WHERE dpers.id_detalle = %s
-            """, (det[4],))
-            personalizaciones = cur.fetchall()
-            costo_extra_item = sum(float(p[2]) for p in personalizaciones)
-            detalles_con_pers.append({
-                'nombre':          det[0],
-                'cantidad':        det[1],
-                'precio_unitario': det[2],
-                'subtotal':        det[3],
-                'tipo':            det[5],
-                'costo_extra':     costo_extra_item,
-                'personalizaciones': personalizaciones
-            })
-        detalles_por_pedido[ped[0]] = detalles_con_pers
+        info_por_pedido[ped[0]] = _obtener_detalle_pedido(cur, ped[0])
 
     conn.close()
     return render_template('mis_pedidos.html',
                            pedidos=pedidos,
-                           detalles=detalles_por_pedido,
-                           es_menu=es_menu_por_pedido,
-                           pares=pares_por_pedido)
+                           info=info_por_pedido)
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  Helper: detalle de un pedido + detección de menú    ║
@@ -554,22 +514,25 @@ def _obtener_detalle_pedido(cur, id_pedido):
     PRECIO_MENU    = 11.0
 
     cur.execute("""
-        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle, pl.tipo
+        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle,
+               pl.tipo, COALESCE(dp.modo_precio, 'suelto')
         FROM Detalle_Pedido dp
         JOIN Plato pl ON pl.id_plato = dp.id_plato
         WHERE dp.id_pedido = %s
+        ORDER BY (COALESCE(dp.modo_precio, 'suelto') = 'menu'), pl.tipo
     """, (id_pedido,))
     detalles_raw = cur.fetchall()
 
-    tipos_presentes = set(det[5] for det in detalles_raw)
-    es_menu = 'entrada' in tipos_presentes and 'segundo' in tipos_presentes
-
     detalles = []
-    cnt_entradas = 0
-    cnt_segundos = 0
-    extras_totales = 0.0
+    cnt_entradas_menu = 0
+    cnt_segundos_menu = 0
+    extras_menu = 0.0
+    tiene_menu = False
+    tiene_suelto = False
 
     for det in detalles_raw:
+        modo_precio = det[6]
+
         cur.execute("""
             SELECT op.accion, op.ingrediente, op.costo_extra
             FROM Detalle_Personalizacion dp2
@@ -585,26 +548,32 @@ def _obtener_detalle_pedido(cur, id_pedido):
             'precio':    float(det[2]),
             'subtotal':  float(det[3]),
             'tipo':      det[5],
+            'modo_precio': modo_precio,
             'costo_extra_unitario': costo_extra_item,
             'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
         })
 
-        if es_menu:
+        if modo_precio == 'menu':
+            tiene_menu = True
             if det[5] == 'entrada':
-                cnt_entradas += det[1]
-                extras_totales += costo_extra_item * det[1]
+                cnt_entradas_menu += det[1]
             elif det[5] == 'segundo':
-                cnt_segundos += det[1]
-                extras_totales += costo_extra_item * det[1]
+                cnt_segundos_menu += det[1]
+            extras_menu += costo_extra_item * det[1]
+        else:
+            tiene_suelto = True
 
-    pares = min(cnt_entradas, cnt_segundos) if es_menu else 0
+    pares = min(cnt_entradas_menu, cnt_segundos_menu) if tiene_menu else 0
 
     return {
         'detalles':       detalles,
-        'es_menu':        es_menu,
+        'tiene_menu':     tiene_menu,
+        'tiene_suelto':   tiene_suelto,
+        'es_menu':        tiene_menu,   # alias retrocompatible
         'pares':          pares,
         'menu_total':     pares * PRECIO_MENU,
-        'extras_totales': extras_totales,
+        'extras_menu':    extras_menu,
+        'extras_totales': extras_menu,  # alias retrocompatible
     }
 
 # ╔══════════════════════════════════════════════════════╗
@@ -645,6 +614,8 @@ def admin_pedido_comprobante(id_pedido):
         'cliente_telefono': ped[7],
         'detalles':         info['detalles'],
         'es_menu':          info['es_menu'],
+        'tiene_menu':       info['tiene_menu'],
+        'tiene_suelto':     info['tiene_suelto'],
         'pares':            info['pares'],
         'menu_total':       info['menu_total'],
         'extras_totales':   info['extras_totales'],
@@ -688,6 +659,8 @@ def api_pedido_comprobante(id_pedido):
         'cliente_nombre': ped[6],
         'detalles':       info['detalles'],
         'es_menu':        info['es_menu'],
+        'tiene_menu':     info['tiene_menu'],
+        'tiene_suelto':   info['tiene_suelto'],
         'pares':          info['pares'],
         'menu_total':     info['menu_total'],
         'extras_totales': info['extras_totales'],
