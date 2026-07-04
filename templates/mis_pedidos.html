@@ -445,6 +445,26 @@ function generarBoleta(data, nombre, doc) {
   window._boletaData = { data, nombre, doc, numSerie, fechaImp, horaImp };
 }
 
+/* ── Calcula de antemano cuánto debe medir la boleta (evita recortes) ── */
+function calcularAlturaBoleta(data) {
+  const LS = 5, LSp = 4;
+  let y = 8;
+  y += LS * 4 + 2;   // encabezado (4 líneas) + separador
+  y += LS * 2 + 2;   // BOLETA + numSerie + separador
+  y += LS + 2;       // FECHA + separador
+  y += LS * 2 + 2;   // CLIENTE + DOC + separador
+  y += LS + 2;       // cabecera tabla + separador
+  for (const det of data.detalles) {
+    y += LS;
+    y += (det.pers ? det.pers.length : 0) * LSp;
+  }
+  if (data.es_menu) y += 2 + LS;
+  if (data.tipo_entrega === 'delivery') y += 2 + LS;
+  y += 2 + LS + 2;   // separador + TOTAL + separador
+  y += LS * 2;       // pie (2 líneas)
+  return y + 8;
+}
+
 /* ── Generar y abrir PDF ── */
 function verPDF() {
   const btn = document.getElementById('btn-pdf');
@@ -456,7 +476,8 @@ function verPDF() {
       const { jsPDF } = window.jspdf;
       const { data, nombre, doc, numSerie, fechaImp, horaImp } = window._boletaData;
 
-      const pdf   = new jsPDF({ unit: 'mm', format: [80, 200], orientation: 'portrait' });
+      const alturaTotal = calcularAlturaBoleta(data);
+      const pdf   = new jsPDF({ unit: 'mm', format: [80, alturaTotal], orientation: 'portrait' });
       const PW    = 72;   // ancho útil en mm
       const LEFT  = 4;
       let   y     = 8;
@@ -547,9 +568,6 @@ function verPDF() {
       // ── Pie ──
       addCentro('¡Gracias por su preferencia!', 7);
       addCentro('restaurante-san-antonio-q3gd.onrender.com', 6.5);
-
-      // Ajustar altura real del documento
-      pdf.internal.pageSize.height = y + 8;
 
       // Abrir en nueva pestaña
       const pdfBlob = pdf.output('blob');
