@@ -497,15 +497,25 @@ def mis_pedidos():
     pedidos = cur.fetchall()
 
     detalles_por_pedido = {}
+    es_menu_por_pedido = {}
+    pares_por_pedido = {}
     for ped in pedidos:
         cur.execute("""
             SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal,
-                   dp.id_detalle
+                   dp.id_detalle, pl.tipo
             FROM Detalle_Pedido dp
             JOIN Plato pl ON pl.id_plato = dp.id_plato
             WHERE dp.id_pedido = %s
         """, (ped[0],))
         detalles = cur.fetchall()
+
+        tipos_presentes = set(det[5] for det in detalles)
+        es_menu = 'entrada' in tipos_presentes and 'segundo' in tipos_presentes
+        es_menu_por_pedido[ped[0]] = es_menu
+
+        cnt_entradas = sum(det[1] for det in detalles if det[5] == 'entrada')
+        cnt_segundos = sum(det[1] for det in detalles if det[5] == 'segundo')
+        pares_por_pedido[ped[0]] = min(cnt_entradas, cnt_segundos) if es_menu else 0
 
         detalles_con_pers = []
         for det in detalles:
@@ -516,11 +526,14 @@ def mis_pedidos():
                 WHERE dpers.id_detalle = %s
             """, (det[4],))
             personalizaciones = cur.fetchall()
+            costo_extra_item = sum(float(p[2]) for p in personalizaciones)
             detalles_con_pers.append({
                 'nombre':          det[0],
                 'cantidad':        det[1],
                 'precio_unitario': det[2],
                 'subtotal':        det[3],
+                'tipo':            det[5],
+                'costo_extra':     costo_extra_item,
                 'personalizaciones': personalizaciones
             })
         detalles_por_pedido[ped[0]] = detalles_con_pers
@@ -528,7 +541,71 @@ def mis_pedidos():
     conn.close()
     return render_template('mis_pedidos.html',
                            pedidos=pedidos,
-                           detalles=detalles_por_pedido)
+                           detalles=detalles_por_pedido,
+                           es_menu=es_menu_por_pedido,
+                           pares=pares_por_pedido)
+
+# ╔══════════════════════════════════════════════════════╗
+# ║  Helper: detalle de un pedido + detección de menú    ║
+# ╚══════════════════════════════════════════════════════╝
+def _obtener_detalle_pedido(cur, id_pedido):
+    PRECIO_ENTRADA = 5.0
+    PRECIO_SEGUNDO = 10.0
+    PRECIO_MENU    = 11.0
+
+    cur.execute("""
+        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle, pl.tipo
+        FROM Detalle_Pedido dp
+        JOIN Plato pl ON pl.id_plato = dp.id_plato
+        WHERE dp.id_pedido = %s
+    """, (id_pedido,))
+    detalles_raw = cur.fetchall()
+
+    tipos_presentes = set(det[5] for det in detalles_raw)
+    es_menu = 'entrada' in tipos_presentes and 'segundo' in tipos_presentes
+
+    detalles = []
+    cnt_entradas = 0
+    cnt_segundos = 0
+    extras_totales = 0.0
+
+    for det in detalles_raw:
+        cur.execute("""
+            SELECT op.accion, op.ingrediente, op.costo_extra
+            FROM Detalle_Personalizacion dp2
+            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
+            WHERE dp2.id_detalle = %s
+        """, (det[4],))
+        pers = cur.fetchall()
+        costo_extra_item = sum(float(p[2]) for p in pers)
+
+        detalles.append({
+            'nombre':    det[0],
+            'cantidad':  det[1],
+            'precio':    float(det[2]),
+            'subtotal':  float(det[3]),
+            'tipo':      det[5],
+            'costo_extra_unitario': costo_extra_item,
+            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
+        })
+
+        if es_menu:
+            if det[5] == 'entrada':
+                cnt_entradas += det[1]
+                extras_totales += costo_extra_item * det[1]
+            elif det[5] == 'segundo':
+                cnt_segundos += det[1]
+                extras_totales += costo_extra_item * det[1]
+
+    pares = min(cnt_entradas, cnt_segundos) if es_menu else 0
+
+    return {
+        'detalles':       detalles,
+        'es_menu':        es_menu,
+        'pares':          pares,
+        'menu_total':     pares * PRECIO_MENU,
+        'extras_totales': extras_totales,
+    }
 
 # ╔══════════════════════════════════════════════════════╗
 # ║  API: Datos del pedido para comprobante (ADMIN)      ║
@@ -554,30 +631,7 @@ def admin_pedido_comprobante(id_pedido):
         conn.close()
         return jsonify({'error': 'Pedido no encontrado'}), 404
 
-    cur.execute("""
-        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
-        FROM Detalle_Pedido dp
-        JOIN Plato pl ON pl.id_plato = dp.id_plato
-        WHERE dp.id_pedido = %s
-    """, (id_pedido,))
-    detalles_raw = cur.fetchall()
-
-    detalles = []
-    for det in detalles_raw:
-        cur.execute("""
-            SELECT op.accion, op.ingrediente, op.costo_extra
-            FROM Detalle_Personalizacion dp2
-            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
-            WHERE dp2.id_detalle = %s
-        """, (det[4],))
-        pers = cur.fetchall()
-        detalles.append({
-            'nombre':    det[0],
-            'cantidad':  det[1],
-            'precio':    float(det[2]),
-            'subtotal':  float(det[3]),
-            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
-        })
+    info = _obtener_detalle_pedido(cur, id_pedido)
 
     conn.close()
     return jsonify({
@@ -589,7 +643,11 @@ def admin_pedido_comprobante(id_pedido):
         'total':            float(ped[5]),
         'cliente_nombre':   ped[6],
         'cliente_telefono': ped[7],
-        'detalles':         detalles
+        'detalles':         info['detalles'],
+        'es_menu':          info['es_menu'],
+        'pares':            info['pares'],
+        'menu_total':       info['menu_total'],
+        'extras_totales':   info['extras_totales'],
     })
 
 # ╔══════════════════════════════════════════════════════╗
@@ -617,40 +675,22 @@ def api_pedido_comprobante(id_pedido):
         conn.close()
         return jsonify({'error': 'Pedido no encontrado'}), 404
 
-    cur.execute("""
-        SELECT pl.nombre, dp.cantidad, dp.precio_unitario, dp.subtotal, dp.id_detalle
-        FROM Detalle_Pedido dp
-        JOIN Plato pl ON pl.id_plato = dp.id_plato
-        WHERE dp.id_pedido = %s
-    """, (id_pedido,))
-    detalles_raw = cur.fetchall()
-
-    detalles = []
-    for det in detalles_raw:
-        cur.execute("""
-            SELECT op.accion, op.ingrediente, op.costo_extra
-            FROM Detalle_Personalizacion dp2
-            JOIN Opcion_Personalizacion op ON op.id_opcion = dp2.id_opcion
-            WHERE dp2.id_detalle = %s
-        """, (det[4],))
-        pers = cur.fetchall()
-        detalles.append({
-            'nombre':    det[0],
-            'cantidad':  det[1],
-            'precio':    float(det[2]),
-            'subtotal':  float(det[3]),
-            'pers':      [{'accion': p[0], 'ingrediente': p[1], 'costo': float(p[2])} for p in pers]
-        })
+    info = _obtener_detalle_pedido(cur, id_pedido)
 
     conn.close()
     return jsonify({
-        'id_pedido':    ped[0],
-        'fecha':        ped[1].strftime('%d/%m/%Y'),
-        'hora':         ped[1].strftime('%H:%M'),
-        'tipo_entrega': ped[2],
-        'estado':       ped[4],
-        'total':        float(ped[5]),
-        'detalles':     detalles
+        'id_pedido':      ped[0],
+        'fecha':          ped[1].strftime('%d/%m/%Y'),
+        'hora':           ped[1].strftime('%H:%M'),
+        'tipo_entrega':   ped[2],
+        'estado':         ped[4],
+        'total':          float(ped[5]),
+        'cliente_nombre': ped[6],
+        'detalles':       info['detalles'],
+        'es_menu':        info['es_menu'],
+        'pares':          info['pares'],
+        'menu_total':     info['menu_total'],
+        'extras_totales': info['extras_totales'],
     })
 
 # ╔══════════════════════════════════════════════════════╗
