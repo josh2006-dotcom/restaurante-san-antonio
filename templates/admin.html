@@ -1,6 +1,7 @@
 
 
 
+
 {% extends "base.html" %}
 
 {% block extra_head %}
@@ -514,7 +515,7 @@ function generarBoleta(data, nombre, doc) {
     sep,
   ];
   for (const det of data.detalles) {
-    if (data.es_menu) {
+    if (det.modo_precio === 'menu') {
       const extra = det.costo_extra_unitario * det.cantidad;
       lines.push(fila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido'));
     } else {
@@ -523,7 +524,7 @@ function generarBoleta(data, nombre, doc) {
     for (const p of det.pers)
       lines.push('      ' + p.accion + ' ' + p.ingrediente + (p.costo > 0 ? ' +S/'+p.costo.toFixed(2) : ''));
   }
-  if (data.es_menu) {
+  if (data.tiene_menu) {
     lines.push(sep);
     lines.push(fila(`${data.pares} MENU${data.pares!==1?'S':''} COMPLETO${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2)));
   }
@@ -554,7 +555,7 @@ function calcularAlturaBoleta(data) {
     y += LS;
     y += (det.pers ? det.pers.length : 0) * LSp;
   }
-  if (data.es_menu) y += 2 + LS;
+  if (data.tiene_menu) y += 2 + LS;
   if (data.tipo_entrega === 'delivery') y += 2 + LS;
   y += 2 + LS + 2;   // separador + TOTAL + separador
   y += LS * 2;       // pie (2 líneas)
@@ -621,7 +622,7 @@ function verPDF() {
       addSep();
 
       for (const det of data.detalles) {
-        if (data.es_menu) {
+        if (det.modo_precio === 'menu') {
           const extra = det.costo_extra_unitario * det.cantidad;
           addFila('  ' + det.cantidad + '   ' + det.nombre, extra > 0 ? 'S/ ' + extra.toFixed(2) : 'Incluido', 8);
         } else {
@@ -633,7 +634,7 @@ function verPDF() {
           y += LS - 1;
         }
       }
-      if (data.es_menu) {
+      if (data.tiene_menu) {
         addSep();
         pdf.setFont('courier', 'bold'); pdf.setFontSize(7.5);
         addFila(`${data.pares} MENU${data.pares!==1?'S':''} x S/11`, 'S/ ' + data.menu_total.toFixed(2), 7.5);
@@ -735,9 +736,9 @@ async function cargarDetallePedido(idPedido) {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    const esMenu = data.es_menu;
     let filas = '';
     for (const det of data.detalles) {
+      const esMenuItem = det.modo_precio === 'menu';
       let persHtml = '';
       if (det.pers && det.pers.length > 0) {
         for (const per of det.pers) {
@@ -747,11 +748,11 @@ async function cargarDetallePedido(idPedido) {
         persHtml = '<span style="color:var(--gris);font-size:.82rem">Sin cambios</span>';
       }
 
-      const precioCol = esMenu
+      const precioCol = esMenuItem
         ? '<span style="color:var(--gris);font-size:.82rem">Incluido en menú</span>'
         : `S/ ${det.precio.toFixed(2)}`;
       const extraTotal = det.costo_extra_unitario * det.cantidad;
-      const subtotalCol = esMenu
+      const subtotalCol = esMenuItem
         ? (extraTotal > 0 ? `S/ ${extraTotal.toFixed(2)}` : '—')
         : `S/ ${det.subtotal.toFixed(2)}`;
 
@@ -765,20 +766,27 @@ async function cargarDetallePedido(idPedido) {
         </tr>`;
     }
 
-    const filaMenu = esMenu ? `
+    const filaMenu = data.tiene_menu ? `
           <tr>
             <td colspan="4" style="text-align:right;font-weight:600;color:var(--dorado)">🍱 ${data.pares} menú${data.pares!==1?'s':''} completo${data.pares!==1?'s':''} × S/ 11.00</td>
             <td style="text-align:right;font-weight:600;color:var(--dorado)">S/ ${data.menu_total.toFixed(2)}</td>
           </tr>` : '';
 
+    const filaDelivery = data.tipo_entrega === 'delivery' ? `
+          <tr>
+            <td colspan="4" style="text-align:right;font-weight:600;color:var(--dorado)">🚚 Delivery / Movilidad</td>
+            <td style="text-align:right;font-weight:600;color:var(--dorado)">S/ 1.00</td>
+          </tr>` : '';
+
     cont.innerHTML = `
       <table class="detalle-table-admin">
         <thead>
-          <tr><th>Plato</th><th>Cant.</th><th>${esMenu ? 'Precio' : 'Precio unit.'}</th><th>Personalizaciones</th><th style="text-align:right">${esMenu ? 'Extra' : 'Subtotal'}</th></tr>
+          <tr><th>Plato</th><th>Cant.</th><th>Precio</th><th>Personalizaciones</th><th style="text-align:right">Subtotal</th></tr>
         </thead>
         <tbody>${filas}</tbody>
         <tfoot>
           ${filaMenu}
+          ${filaDelivery}
           <tr>
             <td colspan="4" style="text-align:right;font-weight:700;color:var(--rojo)">Total del pedido:</td>
             <td style="text-align:right;font-weight:700;color:var(--rojo);font-size:1.05rem">S/ ${data.total.toFixed(2)}</td>
