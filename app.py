@@ -999,7 +999,7 @@ def admin_clientes_eliminar_lote():
 def admin_login():
     if request.method == 'POST':
         password = request.form.get('password')
-        if password == 'admin123':
+        if password == 'sunat123':
             session['es_admin'] = True
             return redirect(url_for('admin'))
         flash('Contraseña incorrecta.', 'danger')
